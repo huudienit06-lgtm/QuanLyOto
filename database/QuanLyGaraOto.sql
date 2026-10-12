@@ -195,7 +195,7 @@ CREATE TABLE PhieuDoiTra (
     maHoaDon VARCHAR(20) NOT NULL,
     lyDoDoiTra NVARCHAR(MAX),
     hinhThucXuLy NVARCHAR(50),
-    CONSTRAINT FK_PDT_HoaDon FOREIGN KEY (maHoaDon) REFERENCES HoaDon(maHoaDon),
+    CONSTRAINT FK_PDT_HoaDon FOREIGN KEY (maHoaDon) REFERENCES HoaDon(maHoaDon)
 );
 
 CREATE TABLE PhieuNhapXuatKho (

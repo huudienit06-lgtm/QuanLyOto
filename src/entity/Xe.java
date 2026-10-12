@@ -5,19 +5,30 @@ public class Xe {
     private String bienSo;
     private String hangXe;
     private String dongXe;
-    private String maKhachHang; // Khóa ngoại liên kết với bảng Khách hàng
+    private Integer namSanXuat;
+    private String soKhung;
+    private String soMay;
+    private String maKH;
 
     // Constructor mặc định
     public Xe() {
     }
 
     // Constructor đầy đủ tham số
-    public Xe(String maXe, String bienSo, String hangXe, String dongXe, String maKhachHang) {
+    public Xe(String maXe, String bienSo, String hangXe, String dongXe, Integer namSanXuat,
+            String soKhung, String soMay, String maKH) {
         this.maXe = maXe;
         this.bienSo = bienSo;
         this.hangXe = hangXe;
         this.dongXe = dongXe;
-        this.maKhachHang = maKhachHang;
+        this.namSanXuat = namSanXuat;
+        this.soKhung = soKhung;
+        this.soMay = soMay;
+        this.maKH = maKH;
+    }
+
+    public Xe(String maXe, String bienSo, String hangXe, String dongXe, String maKH) {
+        this(maXe, bienSo, hangXe, dongXe, null, null, null, maKH);
     }
 
     // Getter và Setter
@@ -53,17 +64,50 @@ public class Xe {
         this.dongXe = dongXe;
     }
 
-    public String getMaKhachHang() {
-        return maKhachHang;
+    public Integer getNamSanXuat() {
+        return namSanXuat;
     }
 
-    public void setMaKhachHang(String maKhachHang) {
-        this.maKhachHang = maKhachHang;
+    public void setNamSanXuat(Integer namSanXuat) {
+        this.namSanXuat = namSanXuat;
+    }
+
+    public String getSoKhung() {
+        return soKhung;
+    }
+
+    public void setSoKhung(String soKhung) {
+        this.soKhung = soKhung;
+    }
+
+    public String getSoMay() {
+        return soMay;
+    }
+
+    public void setSoMay(String soMay) {
+        this.soMay = soMay;
+    }
+
+    public String getMaKH() {
+        return maKH;
+    }
+
+    public void setMaKH(String maKH) {
+        this.maKH = maKH;
+    }
+
+    public String getMaKhachHang() {
+        return maKH;
+    }
+
+    public void setMaKhachHang(String maKH) {
+        this.maKH = maKH;
     }
 
     @Override
     public String toString() {
         return "Xe [maXe=" + maXe + ", bienSo=" + bienSo + ", hangXe=" + hangXe + ", dongXe=" + dongXe
-                + ", maKhachHang=" + maKhachHang + "]";
+                + ", namSanXuat=" + namSanXuat + ", soKhung=" + soKhung + ", soMay=" + soMay
+                + ", maKH=" + maKH + "]";
     }
 }

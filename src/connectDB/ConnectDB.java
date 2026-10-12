@@ -17,12 +17,16 @@ public class ConnectDB {
 
     public void connect() {
         try {
+            if (con != null && !con.isClosed()) {
+                return;
+            }
             // Thay đổi "your_password" thành mật khẩu SQL Server của bạn
             String url = "jdbc:sqlserver://localhost:1433;databaseName=a1;encrypt=true;trustServerCertificate=true;";
             String user = "sa";
             String password = "123456";
             con = DriverManager.getConnection(url, user, password);
         } catch (SQLException e) {
+            con = null;
             e.printStackTrace();
         }
     }
@@ -33,6 +37,8 @@ public class ConnectDB {
                 con.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+            } finally {
+                con = null;
             }
         }
     }
