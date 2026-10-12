@@ -89,7 +89,11 @@ public class BaseFrame extends JFrame {
 
 	private void addMenu(JMenuBar bar, String title, MenuIcon.Type icon, String[][] features) {
 		JMenu menu = new JMenu(title);
+<<<<<<< HEAD
 		menu.setIcon(new MenuIcon(icon));
+=======
+		menu.setIcon(new MenuIcon(icon, Color.WHITE));
+>>>>>>> feature/Entity_Dao
 		menu.setOpaque(true);
 		menu.setBackground(BLUE);
 		menu.setForeground(Color.WHITE);
