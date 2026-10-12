@@ -1,0 +1,13 @@
+# Bỏ qua các file biên dịch
+bin/
+*.class
+
+# Bỏ qua cài đặt riêng của VS Code và Eclipse
+.settings/
+.classpath
+.project
+.vscode/
+
+# Bỏ qua các file hệ thống
+.DS_Store
+Thumbs.db
