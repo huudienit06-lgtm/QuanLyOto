@@ -6,6 +6,7 @@ public class TaiKhoan {
     private String matKhau;
     private String vaiTro;
     private String trangThai;
+    private transient String hoTenNhanVien;
 
     public TaiKhoan() {
     }
@@ -20,4 +21,6 @@ public class TaiKhoan {
     public void setVaiTro(String vaiTro) { this.vaiTro = vaiTro; }
     public String getTrangThai() { return trangThai; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+    public String getHoTenNhanVien() { return hoTenNhanVien; }
+    public void setHoTenNhanVien(String hoTenNhanVien) { this.hoTenNhanVien = hoTenNhanVien; }
 }

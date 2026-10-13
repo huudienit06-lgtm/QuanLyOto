@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,15 +24,16 @@ public abstract class BaseDAO<T> {
         this.tableName = tableName;
         this.primaryKeys = Arrays.asList(primaryKeys);
         this.fields = Arrays.stream(entityType.getDeclaredFields())
-                .filter(field -> !Modifier.isStatic(field.getModifiers()))
+                .filter(field -> !Modifier.isStatic(field.getModifiers())
+                        && !Modifier.isTransient(field.getModifiers()))
                 .collect(Collectors.toList());
     }
 
     public List<T> findAll() throws SQLException {
         String sql = "SELECT * FROM " + quote(tableName);
         try (Connection connection = openConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)) {
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet resultSet = statement.executeQuery()) {
             List<T> results = new ArrayList<>();
             while (resultSet.next()) {
                 results.add(mapRow(resultSet));
@@ -54,6 +54,55 @@ public abstract class BaseDAO<T> {
             bindValues(statement, keyValues, 1);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? mapRow(resultSet) : null;
+            }
+        }
+    }
+
+    public List<T> search(String keyword) throws SQLException {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAll();
+        }
+
+        String whereClause = fields.stream()
+                .map(field -> "CONVERT(NVARCHAR(MAX), " + quote(field.getName()) + ") LIKE ? ESCAPE '\\'")
+                .collect(Collectors.joining(" OR "));
+        String sql = "SELECT * FROM " + quote(tableName) + " WHERE " + whereClause;
+        String searchValue = "%" + escapeLikePattern(keyword.trim()) + "%";
+
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            Object[] values = new Object[fields.size()];
+            Arrays.fill(values, searchValue);
+            bindValues(statement, values, 1);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<T> results = new ArrayList<>();
+                while (resultSet.next()) {
+                    results.add(mapRow(resultSet));
+                }
+                return results;
+            }
+        }
+    }
+
+    public List<T> findByField(String fieldName, Object value) throws SQLException {
+        boolean fieldExists = fields.stream().anyMatch(field -> field.getName().equals(fieldName));
+        if (!fieldExists) {
+            throw new SQLException("Không tìm thấy thuộc tính " + fieldName + " trong " + entityType.getName());
+        }
+
+        String condition = quote(fieldName) + (value == null ? " IS NULL" : " = ?");
+        String sql = "SELECT * FROM " + quote(tableName) + " WHERE " + condition;
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (value != null) {
+                statement.setObject(1, value);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<T> results = new ArrayList<>();
+                while (resultSet.next()) {
+                    results.add(mapRow(resultSet));
+                }
+                return results;
             }
         }
     }
@@ -175,6 +224,13 @@ public abstract class BaseDAO<T> {
         for (int index = 0; index < values.length; index++) {
             statement.setObject(startIndex + index, values[index]);
         }
+    }
+
+    private String escapeLikePattern(String value) {
+        return value.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+                .replace("[", "\\[");
     }
 
     private String quote(String identifier) {
