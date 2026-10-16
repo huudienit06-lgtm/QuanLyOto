@@ -47,6 +47,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý xe");
 			return;
 		}
+		if ("Phụ tùng".equals(featureName) || "Cập nhật phụ tùng".equals(featureName)) {
+            setContent(new FrmPhuTung());
+            lblStatus.setText("Quản lý phụ tùng");
+            return;
+        }
 		lblStatus.setText("Đã chọn: " + featureName);
 	}
 
