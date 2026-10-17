@@ -42,6 +42,21 @@ public class BaseFrame extends JFrame {
 			hienThiDangNhap();
 			return;
 		}
+		if ("Nhân viên".equals(featureName) || "Cập nhật nhân viên".equals(featureName)) {
+			setContent(new FrmNhanVien());
+			lblStatus.setText("Quản lý nhân viên");
+			return;
+		}
+		if ("Ca làm việc".equals(featureName)) {
+			setContent(new FrmCaLamViec());
+			lblStatus.setText("Quản lý ca làm việc");
+			return;
+		}
+		if ("Báo cáo tổng hợp".equals(featureName)) {
+			setContent(new FrmBaoCaoTongHop());
+			lblStatus.setText("Báo cáo tổng hợp");
+			return;
+		}
 		if ("Xe".equals(featureName) || "Cập nhật xe".equals(featureName)) {
 			setContent(new FrmXe());
 			lblStatus.setText("Quản lý xe");

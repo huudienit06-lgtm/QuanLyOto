@@ -166,7 +166,9 @@ public class FrmDangNhap extends JPanel {
 				return;
 			}
 			if (!taiKhoanDangHoatDong(taiKhoan.getTrangThai())) {
-				JOptionPane.showMessageDialog(this, "Tài khoản hiện không hoạt động.",
+				JOptionPane.showMessageDialog(this,
+						"Tài khoản hiện không hoạt động. Trạng thái trong TaiKhoan: ["
+								+ taiKhoan.getTrangThai() + "].",
 						"Không thể đăng nhập", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
@@ -191,14 +193,27 @@ public class FrmDangNhap extends JPanel {
 	}
 
 	private boolean taiKhoanDangHoatDong(String trangThai) {
+		// Giá trị null hoặc chuỗi rỗng được coi là không ràng buộc (mặc định cho phép)
 		if (trangThai == null || trangThai.isBlank()) {
 			return true;
 		}
-		String trangThaiChuanHoa = chuanHoa(trangThai);
-		return trangThaiChuanHoa.equals("hoat dong")
-				|| trangThaiChuanHoa.equals("dang hoat dong")
-				|| trangThaiChuanHoa.equals("active")
-				|| trangThaiChuanHoa.equals("1");
+		// Chuẩn hoá Unicode và loại bỏ dấu, sau đó loại bỏ mọi ký tự không phải chữ/ số
+		String trangThaiChuanHoa = chuanHoa(trangThai)
+				.replaceAll("[^a-z0-9\\s]", " ") // thay ký tự lạ bằng khoảng trắng
+				.replaceAll("\\s+", " ") // gộp khoảng trắng liên tiếp
+				.trim();
+
+		// Các giá trị hợp lệ (hỗ trợ nhiều biến thể và trường hợp có ký tự vô hình)
+		if (trangThaiChuanHoa.equals("hoat dong") || trangThaiChuanHoa.equals("dang hoat dong")
+				|| trangThaiChuanHoa.equals("active") || trangThaiChuanHoa.equals("1")) {
+			return true;
+		}
+
+		// Nếu chuỗi chứa cả 'hoat' và 'dong' ở bất kỳ vị trí nào thì vẫn coi là hoạt động
+		if (trangThaiChuanHoa.contains("hoat") && trangThaiChuanHoa.contains("dong")) {
+			return true;
+		}
+		return false;
 	}
 
 	private String chuanHoa(String giaTri) {

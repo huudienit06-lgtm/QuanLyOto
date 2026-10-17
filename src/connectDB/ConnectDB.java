@@ -55,8 +55,5 @@ public class ConnectDB {
         System.out.println("Kết nối thất bại, hãy kiểm tra lại cấu hình!");
     }
 }
-
-    
-
 }
 

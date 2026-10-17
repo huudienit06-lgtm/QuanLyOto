@@ -7,48 +7,34 @@ import entity.Xe;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.sql.SQLException;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
 public class FrmXe extends JPanel {
-    private static final Color BLUE = new Color(36, 99, 235);
-    private static final Color PALE_BLUE = new Color(242, 247, 255);
-    private static final Color TEXT = new Color(47, 62, 84);
-    private static final Color MUTED = new Color(112, 128, 150);
-    private static final Color BORDER = new Color(221, 231, 245);
-
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
 
-    private final JTextField txtMaXe = new JTextField(16);
-    private final JTextField txtBienSo = new JTextField(16);
-    private final JTextField txtHangXe = new JTextField(16);
-    private final JTextField txtDongXe = new JTextField(16);
-    private final JTextField txtNamSanXuat = new JTextField(16);
-    private final JTextField txtSoKhung = new JTextField(16);
-    private final JTextField txtSoMay = new JTextField(16);
-    private final JComboBox<KhachHang> cboKhachHang = new JComboBox<>();
-    private final JTextField txtTimKiem = new JTextField(22);
+    private final AppTextField txtMaXe = new AppTextField(16);
+    private final AppTextField txtBienSo = new AppTextField(16);
+    private final AppTextField txtHangXe = new AppTextField(16);
+    private final AppTextField txtDongXe = new AppTextField(16);
+    private final AppTextField txtNamSanXuat = new AppTextField(16);
+    private final AppTextField txtSoKhung = new AppTextField(16);
+    private final AppTextField txtSoMay = new AppTextField(16);
+    private final AppComboBox<KhachHang> cboKhachHang = new AppComboBox<>();
+    private final AppTextField txtTimKiem = new AppTextField(22);
     private final JLabel lblThongBao = new JLabel("Sẵn sàng");
     private final DefaultTableModel modelXe = new DefaultTableModel(
             new Object[] {"Mã xe", "Biển số", "Hãng xe", "Dòng xe", "Năm SX", "Số khung", "Số máy", "Mã KH"}, 0) {
@@ -57,11 +43,11 @@ public class FrmXe extends JPanel {
             return false;
         }
     };
-    private final JTable tblXe = new JTable(modelXe);
+    private final AppTable tblXe = new AppTable(modelXe);
 
     public FrmXe() {
         setLayout(new BorderLayout(0, 16));
-        setBackground(PALE_BLUE);
+        setBackground(UIConfig.COLOR_BACKGROUND);
         setBorder(new EmptyBorder(22, 28, 22, 28));
 
         add(createHeading(), BorderLayout.NORTH);
@@ -78,11 +64,9 @@ public class FrmXe extends JPanel {
         pnlHeading.setOpaque(false);
 
         JLabel lblTitle = new JLabel("QUẢN LÝ XE");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 23));
-        lblTitle.setForeground(new Color(32, 55, 92));
-        JLabel lblSubtitle = new JLabel("Thông tin xe và danh sách xe đã tiếp nhận");
-        lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblSubtitle.setForeground(MUTED);
+        lblTitle.setFont(UIConfig.FONT_TITLE);
+        lblTitle.setForeground(UIConfig.COLOR_TITLE);
+        JLabel lblSubtitle = new AppLabel("Thông tin xe và danh sách xe đã tiếp nhận", AppLabel.Style.MUTED);
 
         pnlHeading.add(lblTitle, BorderLayout.NORTH);
         pnlHeading.add(lblSubtitle, BorderLayout.CENTER);
@@ -115,10 +99,10 @@ public class FrmXe extends JPanel {
 
         JPanel pnlButtons = new JPanel(new GridBagLayout());
         pnlButtons.setOpaque(false);
-        JButton btnThem = createButton("Thêm xe", BLUE, Color.WHITE);
-        JButton btnSua = createButton("Cập nhật", new Color(38, 132, 93), Color.WHITE);
-        JButton btnXoa = createButton("Xóa xe", new Color(210, 65, 65), Color.WHITE);
-        JButton btnLamMoi = createButton("Làm mới", new Color(235, 241, 250), TEXT);
+        AppButton btnThem = new AppButton("Thêm xe", AppButton.Style.PRIMARY);
+        AppButton btnSua = new AppButton("Cập nhật", AppButton.Style.SUCCESS);
+        AppButton btnXoa = new AppButton("Xóa xe", AppButton.Style.DANGER);
+        AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
         btnThem.addActionListener(event -> themXe());
         btnSua.addActionListener(event -> capNhatXe());
         btnXoa.addActionListener(event -> xoaXe());
@@ -147,8 +131,8 @@ public class FrmXe extends JPanel {
         JLabel lblTableTitle = createSectionTitle("Danh sách xe đã tiếp nhận");
         JPanel pnlSearch = new JPanel(new GridBagLayout());
         pnlSearch.setOpaque(false);
-        JButton btnTimKiem = createButton("Tìm kiếm", BLUE, Color.WHITE);
-        JButton btnTaiLai = createButton("Tải lại", new Color(235, 241, 250), TEXT);
+        AppButton btnTimKiem = new AppButton("Tìm kiếm", AppButton.Style.PRIMARY);
+        AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
         btnTimKiem.addActionListener(event -> timKiemXe());
         btnTaiLai.addActionListener(event -> {
             txtTimKiem.setText("");
@@ -176,21 +160,9 @@ public class FrmXe extends JPanel {
         pnlTableHeader.add(lblTableTitle, BorderLayout.WEST);
         pnlTableHeader.add(pnlSearch, BorderLayout.EAST);
 
-        JScrollPane scrXe = new JScrollPane(tblXe);
-        scrXe.setBorder(BorderFactory.createLineBorder(BORDER));
-        scrXe.getViewport().setBackground(Color.WHITE);
+        AppScrollPane scrXe = new AppScrollPane(tblXe);
 
         tblXe.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblXe.setRowHeight(30);
-        tblXe.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tblXe.setForeground(TEXT);
-        tblXe.setGridColor(new Color(232, 238, 247));
-        tblXe.setSelectionBackground(new Color(225, 239, 255));
-        tblXe.setSelectionForeground(TEXT);
-        tblXe.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        tblXe.getTableHeader().setForeground(new Color(32, 55, 92));
-        tblXe.getTableHeader().setBackground(new Color(239, 245, 253));
-        tblXe.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 34));
         tblXe.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting() && tblXe.getSelectedRow() >= 0) {
                 hienThiXeDaChon();
@@ -205,25 +177,21 @@ public class FrmXe extends JPanel {
     private JPanel createStatusBar() {
         JPanel pnlStatus = new JPanel(new BorderLayout());
         pnlStatus.setOpaque(false);
-        lblThongBao.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblThongBao.setForeground(MUTED);
+        lblThongBao.setFont(UIConfig.FONT_REGULAR);
+        lblThongBao.setForeground(UIConfig.COLOR_MUTED);
         pnlStatus.add(lblThongBao, BorderLayout.WEST);
         return pnlStatus;
     }
 
     private JPanel createCardPanel() {
-        JPanel pnlCard = new JPanel();
-        pnlCard.setBackground(Color.WHITE);
-        pnlCard.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1, true),
-                new EmptyBorder(14, 16, 14, 16)));
+        JPanel pnlCard = AppPanel.card(new BorderLayout());
         return pnlCard;
     }
 
     private JLabel createSectionTitle(String text) {
         JLabel lblTitle = new JLabel(text);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTitle.setForeground(new Color(32, 55, 92));
+        lblTitle.setFont(UIConfig.FONT_SECTION);
+        lblTitle.setForeground(UIConfig.COLOR_TITLE);
         return lblTitle;
     }
 
@@ -234,8 +202,8 @@ public class FrmXe extends JPanel {
         gbcLabel.anchor = GridBagConstraints.WEST;
         gbcLabel.insets = new Insets(5, 0, 5, 8);
         JLabel lblField = new JLabel(label);
-        lblField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblField.setForeground(TEXT);
+        lblField.setFont(UIConfig.FONT_REGULAR);
+        lblField.setForeground(UIConfig.COLOR_TEXT);
         pnlFields.add(lblField, gbcLabel);
 
         GridBagConstraints gbcInput = new GridBagConstraints();
@@ -244,16 +212,10 @@ public class FrmXe extends JPanel {
         gbcInput.weightx = 1;
         gbcInput.fill = GridBagConstraints.HORIZONTAL;
         gbcInput.insets = new Insets(5, 0, 5, 18);
-        if (component instanceof JTextField) {
-            styleTextField((JTextField) component);
-        } else if (component instanceof JComboBox<?>) {
-            component.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        }
         pnlFields.add(component, gbcInput);
     }
 
     private void configureComponents() {
-        txtTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtTimKiem.setToolTipText("Tìm theo mã xe, biển số, hãng, dòng xe, số khung hoặc số máy");
         cboKhachHang.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -449,17 +411,6 @@ public class FrmXe extends JPanel {
         txtMaXe.requestFocusInWindow();
     }
 
-    private JButton createButton(String text, Color background, Color foreground) {
-        JButton btnButton = new JButton(text);
-        btnButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnButton.setBackground(background);
-        btnButton.setForeground(foreground);
-        btnButton.setFocusPainted(false);
-        btnButton.setBorder(new EmptyBorder(8, 13, 8, 13));
-        btnButton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-        return btnButton;
-    }
-
     private GridBagConstraints buttonConstraints(int column) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = column;
@@ -467,14 +418,6 @@ public class FrmXe extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 0, 0, 8);
         return gbc;
-    }
-
-    private void styleTextField(JTextField txtField) {
-        txtField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        txtField.setForeground(TEXT);
-        txtField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1, true),
-                new EmptyBorder(6, 9, 6, 9)));
     }
 
     private void hienThiLoi(String message) {

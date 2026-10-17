@@ -2,11 +2,10 @@
 bin/
 *.class
 
-# Bỏ qua cài đặt riêng của VS Code và Eclipse
+# Bỏ qua cài đặt riêng của VS Code và Eclipse, ngoại trừ cấu hình workspace dùng chung
 .settings/
-.classpath
-.project
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # Bỏ qua các file hệ thống
 .DS_Store

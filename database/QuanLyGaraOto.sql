@@ -1,4 +1,6 @@
 CREATE DATABASE a1
+GO
+
 USE a1
 GO
 --
@@ -216,4 +218,3 @@ CREATE TABLE ChiTietPhieuNhap (
     CONSTRAINT FK_CTPN_PhieuNhapXuat FOREIGN KEY (maPhieuNhapXuat) REFERENCES PhieuNhapXuatKho(maPhieuNhapXuat) ON DELETE CASCADE,
     CONSTRAINT FK_CTPN_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung)
 );
-
