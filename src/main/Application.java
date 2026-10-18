@@ -1,10 +1,9 @@
 package main;
 
-import javax.swing.SwingUtilities;
 
 import gui.FrmMain;
 import gui.UIConfig;
-
+import javax.swing.SwingUtilities;
 public class Application {
 	public static void main(String[] args) {
 		UIConfig.installTheme();
