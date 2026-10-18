@@ -52,6 +52,11 @@ public class BaseFrame extends JFrame {
         lblStatus.setText("Quản lý phụ tùng");
         return;
     }
+		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
+			setContent(new FrmHoaDon());
+			lblStatus.setText("Lập hóa đơn");
+			return;
+		}
 		lblStatus.setText("Đã chọn: " + featureName);
 	}
 
@@ -139,4 +144,10 @@ public class BaseFrame extends JFrame {
 		pnlStatusBar.add(lblStatus, BorderLayout.WEST);
 		return pnlStatusBar;
 	}
+
+	public BaseFrame(JPanel content) {
+		this();
+		setContent(content);
+	}
+
 }
