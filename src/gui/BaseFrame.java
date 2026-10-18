@@ -60,6 +60,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý xe");
 			return;
 		}
+		if ("Phụ tùng".equals(featureName) || "Cập nhật phụ tùng".equals(featureName)) {
+        setContent(new FrmPhuTung());
+        lblStatus.setText("Quản lý phụ tùng");
+        return;
+    }
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
 			setContent(new FrmHoaDon());
 			lblStatus.setText("Lập hóa đơn");
