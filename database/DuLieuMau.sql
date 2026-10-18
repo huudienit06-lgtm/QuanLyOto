@@ -97,19 +97,19 @@ BEGIN TRY
     ('DMKT04', 'DMTN04', 'DMKH04', 'DMXE04', 'DMNV07', N'Ắc quy yếu, hệ thống điện cần kiểm tra.', N'Cần kiểm tra và thay ắc quy nếu cần.'),
     ('DMKT05', 'DMTN05', 'DMKH05', 'DMXE05', 'DMNV08', N'Xe hoạt động bình thường.', N'Cân chỉnh góc lái và kiểm tra tổng quát.');
 
-    INSERT INTO PhieuSuaChua (maPhieuSuaChua, maPhieuKiemTra, maXe, maKH, maNV, ngayBatDau, ngayHoanThanhDuKien) VALUES
-    ('DMSC01', 'DMKT01', 'DMXE01', 'DMKH01', 'DMNV04', '2026-10-15T09:00:00', '2026-10-15T12:00:00'),
-    ('DMSC02', 'DMKT02', 'DMXE02', 'DMKH02', 'DMNV05', '2026-10-15T10:00:00', '2026-10-15T15:00:00'),
-    ('DMSC03', 'DMKT03', 'DMXE03', 'DMKH03', 'DMNV06', '2026-10-16T10:30:00', '2026-10-16T16:00:00'),
-    ('DMSC04', 'DMKT04', 'DMXE04', 'DMKH04', 'DMNV07', '2026-10-16T14:00:00', '2026-10-17T12:00:00'),
-    ('DMSC05', 'DMKT05', 'DMXE05', 'DMKH05', 'DMNV08', '2026-10-17T09:00:00', '2026-10-17T14:00:00');
+    INSERT INTO PhieuSuaChua (maPhieuSuaChua, maPhieuKiemTra, maXe, maKH, maNV, ngayBatDau, ngayHoanThanhDuKien, trangThai) VALUES
+    ('DMSC01', 'DMKT01', 'DMXE01', 'DMKH01', 'DMNV04', '2026-10-15T09:00:00', '2026-10-15T12:00:00', N'Hoàn thành'),
+    ('DMSC02', 'DMKT02', 'DMXE02', 'DMKH02', 'DMNV05', '2026-10-15T10:00:00', '2026-10-15T15:00:00', N'Hoàn thành'),
+    ('DMSC03', 'DMKT03', 'DMXE03', 'DMKH03', 'DMNV06', '2026-10-16T10:30:00', '2026-10-16T16:00:00', N'Hoàn thành'),
+    ('DMSC04', 'DMKT04', 'DMXE04', 'DMKH04', 'DMNV07', '2026-10-16T14:00:00', '2026-10-17T12:00:00', N'Hoàn thành'),
+    ('DMSC05', 'DMKT05', 'DMXE05', 'DMKH05', 'DMNV08', '2026-10-17T09:00:00', '2026-10-17T14:00:00', N'Hoàn thành');
 
-    INSERT INTO ChiTietPhieuSuaChua (maPhieuSuaChua, maPhuTung, maDV, soLuong, donGia, tienCong) VALUES
-    ('DMSC01', 'DMPT01', 'DMDV01', 1, 180000, 100000),
-    ('DMSC02', 'DMPT04', 'DMDV02', 1, 650000, 250000),
-    ('DMSC03', 'DMPT02', 'DMDV03', 1, 220000, 80000),
-    ('DMSC04', 'DMPT05', 'DMDV04', 1, 1550000, 120000),
-    ('DMSC05', 'DMPT03', 'DMDV05', 1, 130000, 200000);
+    INSERT INTO ChiTietPhieuSuaChua (maPhieuSuaChua, maPhuTung, maDV, maNV, soLuong, donGia, tienCong) VALUES
+    ('DMSC01', 'DMPT01', 'DMDV01', 'DMNV04', 1, 180000, 100000),
+    ('DMSC02', 'DMPT04', 'DMDV02', 'DMNV05', 1, 650000, 250000),
+    ('DMSC03', 'DMPT02', 'DMDV03', 'DMNV06', 1, 220000, 80000),
+    ('DMSC04', 'DMPT05', 'DMDV04', 'DMNV07', 1, 1550000, 120000),
+    ('DMSC05', 'DMPT03', 'DMDV05', 'DMNV08', 1, 130000, 200000);
 
     INSERT INTO HoaDon (maHoaDon, maPhieuSuaChua, maNV, maKM, ngayLap, tienGiamGia, thueVAT, soTien, trangThai) VALUES
     ('DMHD01', 'DMSC01', 'DMNV01', 'DMKM03', '2026-10-15T12:00:00', 37100, 8, 532332, N'Đã thanh toán'),

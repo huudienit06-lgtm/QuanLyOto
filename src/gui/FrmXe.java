@@ -4,25 +4,50 @@ import dao.KhachHangDAO;
 import dao.XeDAO;
 import entity.KhachHang;
 import entity.Xe;
+import gui.AppLabel.Style;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Point;
 import java.sql.SQLException;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JWindow;
 import javax.swing.ListSelectionModel;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.RowFilter;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.SwingUtilities;
 
 public class FrmXe extends JPanel {
+    private static final Set<String> MA_KHACH_HANG_DA_BIET = new HashSet<>();
+
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
 
@@ -33,8 +58,17 @@ public class FrmXe extends JPanel {
     private final AppTextField txtNamSanXuat = new AppTextField(16);
     private final AppTextField txtSoKhung = new AppTextField(16);
     private final AppTextField txtSoMay = new AppTextField(16);
-    private final AppComboBox<KhachHang> cboKhachHang = new AppComboBox<>();
-    private final AppTextField txtTimKiem = new AppTextField(22);
+    private final AppTextField txtKhachHang = new AppTextField(16);
+    private final DefaultListModel<KhachHang> modelGoiYKhachHang = new DefaultListModel<>();
+    private final JList<KhachHang> lstGoiYKhachHang = new JList<>(modelGoiYKhachHang);
+    private JWindow wndGoiYKhachHang;
+    private final List<KhachHang> danhSachKhachHang = new ArrayList<>();
+    private KhachHang khachHangDuocChon;
+    private boolean dangCapNhatOKhachHang;
+    private final AppTextField txtLocMaXe = new AppTextField(12);
+    private final AppTextField txtLocBienSo = new AppTextField(12);
+    private final AppTextField txtLocHangXe = new AppTextField(12);
+    private final AppTextField txtLocDongXe = new AppTextField(12);
     private final JLabel lblThongBao = new JLabel("Sẵn sàng");
     private final DefaultTableModel modelXe = new DefaultTableModel(
             new Object[] {"Mã xe", "Biển số", "Hãng xe", "Dòng xe", "Năm SX", "Số khung", "Số máy", "Mã KH"}, 0) {
@@ -44,11 +78,12 @@ public class FrmXe extends JPanel {
         }
     };
     private final AppTable tblXe = new AppTable(modelXe);
+    private final TableRowSorter<DefaultTableModel> sorterXe = new TableRowSorter<>(modelXe);
 
     public FrmXe() {
-        setLayout(new BorderLayout(0, 16));
+        setLayout(new BorderLayout(0, 8));
         setBackground(UIConfig.COLOR_BACKGROUND);
-        setBorder(new EmptyBorder(22, 28, 22, 28));
+        setBorder(new EmptyBorder(14, 22, 14, 22));
 
         add(createHeading(), BorderLayout.NORTH);
         add(createContent(), BorderLayout.CENTER);
@@ -74,16 +109,27 @@ public class FrmXe extends JPanel {
     }
 
     private JPanel createContent() {
-        JPanel pnlContent = new JPanel(new BorderLayout(0, 14));
+        JPanel pnlContent = new JPanel(new BorderLayout());
         pnlContent.setOpaque(false);
-        pnlContent.add(createFormPanel(), BorderLayout.NORTH);
-        pnlContent.add(createTablePanel(), BorderLayout.CENTER);
+        JPanel pnlForm = createFormPanel();
+        pnlForm.setMinimumSize(new java.awt.Dimension(0, 255));
+        JSplitPane splContent = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT, pnlForm, createTablePanel());
+        splContent.setBorder(null);
+        splContent.setResizeWeight(0.36);
+        splContent.setDividerSize(7);
+        splContent.setEnabled(false);
+        SwingUtilities.invokeLater(() -> splContent.setDividerLocation(0.36));
+        pnlContent.add(splContent, BorderLayout.CENTER);
         return pnlContent;
     }
 
     private JPanel createFormPanel() {
         JPanel pnlFormCard = createCardPanel();
-        pnlFormCard.setLayout(new BorderLayout(0, 12));
+        pnlFormCard.setLayout(new BorderLayout(0, 3));
+        pnlFormCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UIConfig.COLOR_BORDER, 1, true),
+                new EmptyBorder(7, 12, 7, 12)));
 
         JLabel lblFormTitle = createSectionTitle("Thông tin xe");
         JPanel pnlFields = new JPanel(new GridBagLayout());
@@ -93,7 +139,7 @@ public class FrmXe extends JPanel {
         addField(pnlFields, "Hãng xe", txtHangXe, 0, 1);
         addField(pnlFields, "Dòng xe", txtDongXe, 2, 1);
         addField(pnlFields, "Năm sản xuất", txtNamSanXuat, 0, 2);
-        addField(pnlFields, "Khách hàng *", cboKhachHang, 2, 2);
+        addField(pnlFields, "Khách hàng *", txtKhachHang, 2, 2);
         addField(pnlFields, "Số khung", txtSoKhung, 0, 3);
         addField(pnlFields, "Số máy", txtSoMay, 2, 3);
 
@@ -128,41 +174,40 @@ public class FrmXe extends JPanel {
 
         JPanel pnlTableHeader = new JPanel(new BorderLayout(12, 0));
         pnlTableHeader.setOpaque(false);
+        JPanel pnlTitleBar = new JPanel(new BorderLayout(8, 0));
+        pnlTitleBar.setOpaque(false);
         JLabel lblTableTitle = createSectionTitle("Danh sách xe đã tiếp nhận");
-        JPanel pnlSearch = new JPanel(new GridBagLayout());
-        pnlSearch.setOpaque(false);
-        AppButton btnTimKiem = new AppButton("Tìm kiếm", AppButton.Style.PRIMARY);
         AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
-        btnTimKiem.addActionListener(event -> timKiemXe());
         btnTaiLai.addActionListener(event -> {
-            txtTimKiem.setText("");
+            xoaBoLocXe();
             napDanhSachXe();
         });
-        txtTimKiem.addActionListener(event -> timKiemXe());
-
-        GridBagConstraints gbcSearchField = new GridBagConstraints();
-        gbcSearchField.gridx = 0;
-        gbcSearchField.gridy = 0;
-        gbcSearchField.weightx = 1;
-        gbcSearchField.fill = GridBagConstraints.HORIZONTAL;
-        gbcSearchField.insets = new Insets(0, 0, 0, 8);
-        pnlSearch.add(txtTimKiem, gbcSearchField);
-        GridBagConstraints gbcSearchButton = new GridBagConstraints();
-        gbcSearchButton.gridx = 1;
-        gbcSearchButton.gridy = 0;
-        gbcSearchButton.insets = new Insets(0, 0, 0, 8);
-        pnlSearch.add(btnTimKiem, gbcSearchButton);
-        GridBagConstraints gbcReloadButton = new GridBagConstraints();
-        gbcReloadButton.gridx = 2;
-        gbcReloadButton.gridy = 0;
-        pnlSearch.add(btnTaiLai, gbcReloadButton);
-
-        pnlTableHeader.add(lblTableTitle, BorderLayout.WEST);
-        pnlTableHeader.add(pnlSearch, BorderLayout.EAST);
+        pnlTitleBar.add(lblTableTitle, BorderLayout.WEST);
+        pnlTitleBar.add(btnTaiLai, BorderLayout.EAST);
+        JPanel pnlLoc = new JPanel(new GridLayout(1, 4, 10, 0));
+        pnlLoc.setOpaque(false);
+        pnlLoc.add(createSearchField("Mã xe", txtLocMaXe));
+        pnlLoc.add(createSearchField("Biển số", txtLocBienSo));
+        pnlLoc.add(createSearchField("Hãng xe", txtLocHangXe));
+        pnlLoc.add(createSearchField("Dòng xe", txtLocDongXe));
+        pnlTableHeader.setLayout(new BorderLayout(0, 8));
+        pnlTableHeader.add(pnlTitleBar, BorderLayout.NORTH);
+        pnlTableHeader.add(pnlLoc, BorderLayout.CENTER);
+        themBoLangNghe(txtLocMaXe);
+        themBoLangNghe(txtLocBienSo);
+        themBoLangNghe(txtLocHangXe);
+        themBoLangNghe(txtLocDongXe);
 
         AppScrollPane scrXe = new AppScrollPane(tblXe);
 
+        tblXe.setRowSorter(sorterXe);
         tblXe.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblXe.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        tblXe.setFillsViewportHeight(true);
+        int[] doRongCot = {85, 105, 125, 120, 75, 150, 150, 85};
+        for (int cot = 0; cot < doRongCot.length; cot++) {
+            tblXe.getColumnModel().getColumn(cot).setPreferredWidth(doRongCot[cot]);
+        }
         tblXe.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting() && tblXe.getSelectedRow() >= 0) {
                 hienThiXeDaChon();
@@ -200,7 +245,7 @@ public class FrmXe extends JPanel {
         gbcLabel.gridx = column;
         gbcLabel.gridy = row;
         gbcLabel.anchor = GridBagConstraints.WEST;
-        gbcLabel.insets = new Insets(5, 0, 5, 8);
+        gbcLabel.insets = new Insets(2, 0, 2, 8);
         JLabel lblField = new JLabel(label);
         lblField.setFont(UIConfig.FONT_REGULAR);
         lblField.setForeground(UIConfig.COLOR_TEXT);
@@ -211,31 +256,96 @@ public class FrmXe extends JPanel {
         gbcInput.gridy = row;
         gbcInput.weightx = 1;
         gbcInput.fill = GridBagConstraints.HORIZONTAL;
-        gbcInput.insets = new Insets(5, 0, 5, 18);
+        gbcInput.insets = new Insets(2, 0, 2, 12);
         pnlFields.add(component, gbcInput);
     }
 
     private void configureComponents() {
-        txtTimKiem.setToolTipText("Tìm theo mã xe, biển số, hãng, dòng xe, số khung hoặc số máy");
-        cboKhachHang.setRenderer(new DefaultListCellRenderer() {
+        txtKhachHang.setToolTipText("Nhập mã, họ tên, số điện thoại, email hoặc địa chỉ để tìm khách hàng");
+        lstGoiYKhachHang.setFocusable(false);
+        lstGoiYKhachHang.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lstGoiYKhachHang.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(
                     JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JLabel lblKhachHang = (JLabel) super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus);
                 if (value instanceof KhachHang) {
                     KhachHang khachHang = (KhachHang) value;
-                    setText(khachHang.getMaKH() + " - " + khachHang.getHoTen());
+                    lblKhachHang.setText(khachHang.getMaKH() + " - " + khachHang.getHoTen()
+                            + " | " + cellText(khachHang.getSoDT())
+                            + " | " + cellText(khachHang.getEmail()));
                 }
-                return this;
+                return lblKhachHang;
+            }
+        });
+        lstGoiYKhachHang.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 1) {
+                    KhachHang khachHang = lstGoiYKhachHang.getSelectedValue();
+                    if (khachHang != null) {
+                        chonKhachHang(khachHang);
+                    }
+                }
+            }
+        });
+        txtKhachHang.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                timKhachHangTheoThongTinNhap();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                timKhachHangTheoThongTinNhap();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                timKhachHangTheoThongTinNhap();
+            }
+        });
+        txtKhachHang.addActionListener(event -> chonKhachHangNeuDuyNhat());
+        txtKhachHang.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent event) {
+                napKhachHang(false);
+                timKhachHangTheoThongTinNhap();
+            }
+
+            @Override
+            public void focusLost(FocusEvent event) {
+                SwingUtilities.invokeLater(() -> {
+                    if (!txtKhachHang.isFocusOwner()) {
+                        anGoiYKhachHang();
+                    }
+                });
             }
         });
     }
 
     private void napKhachHang() {
+        napKhachHang(true);
+    }
+
+    private void napKhachHang(boolean thongBaoNeuChuaCoKhachHang) {
         try {
-            List<KhachHang> danhSachKhachHang = khachHangDAO.findAll();
-            cboKhachHang.setModel(new DefaultComboBoxModel<>(danhSachKhachHang.toArray(new KhachHang[0])));
-            if (danhSachKhachHang.isEmpty()) {
+            List<KhachHang> danhSachMoi = khachHangDAO.findAll();
+            List<KhachHang> khachHangMoiThem = new ArrayList<>();
+            List<KhachHang> khachHangDaCo = new ArrayList<>();
+            for (KhachHang khachHang : danhSachMoi) {
+                if (MA_KHACH_HANG_DA_BIET.contains(khachHang.getMaKH())) {
+                    khachHangDaCo.add(khachHang);
+                } else {
+                    khachHangMoiThem.add(khachHang);
+                    MA_KHACH_HANG_DA_BIET.add(khachHang.getMaKH());
+                }
+            }
+            danhSachKhachHang.clear();
+            danhSachKhachHang.addAll(khachHangMoiThem);
+            danhSachKhachHang.addAll(khachHangDaCo);
+            if (thongBaoNeuChuaCoKhachHang && danhSachKhachHang.isEmpty()) {
                 hienThiLoi("Chưa có khách hàng. Hãy thêm khách hàng trước khi nhập xe.");
             }
         } catch (SQLException exception) {
@@ -246,7 +356,7 @@ public class FrmXe extends JPanel {
     private void napDanhSachXe() {
         try {
             hienThiDanhSach(xeDAO.findAll());
-            lblThongBao.setText("Đã tải " + modelXe.getRowCount() + " xe");
+            locDanhSachXe();
         } catch (SQLException exception) {
             hienThiLoi("Không thể tải danh sách xe: " + exception.getMessage());
         }
@@ -322,25 +432,68 @@ public class FrmXe extends JPanel {
         }
     }
 
-    private void timKiemXe() {
-        try {
-            List<Xe> ketQua = xeDAO.search(txtTimKiem.getText());
-            hienThiDanhSach(ketQua);
-            lblThongBao.setText("Tìm thấy " + ketQua.size() + " xe");
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể tìm kiếm xe: " + exception.getMessage());
+    private JPanel createSearchField(String labelText, AppTextField txtField) {
+        JPanel pnlField = new JPanel(new BorderLayout(0, 3));
+        pnlField.setOpaque(false);
+        JLabel lblField = new JLabel(labelText);
+        lblField.setFont(UIConfig.FONT_REGULAR);
+        lblField.setForeground(UIConfig.COLOR_MUTED);
+        pnlField.add(lblField, BorderLayout.NORTH);
+        pnlField.add(txtField, BorderLayout.CENTER);
+        return pnlField;
+    }
+
+    private void themBoLangNghe(AppTextField txtField) {
+        txtField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                locDanhSachXe();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                locDanhSachXe();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                locDanhSachXe();
+            }
+        });
+    }
+
+    private void locDanhSachXe() {
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+        themBoLoc(filters, txtLocMaXe.getText(), 0);
+        themBoLoc(filters, txtLocBienSo.getText(), 1);
+        themBoLoc(filters, txtLocHangXe.getText(), 2);
+        themBoLoc(filters, txtLocDongXe.getText(), 3);
+        sorterXe.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
+        lblThongBao.setText("Hiển thị " + sorterXe.getViewRowCount() + " / " + modelXe.getRowCount() + " xe");
+    }
+
+    private void themBoLoc(List<RowFilter<Object, Object>> filters, String giaTri, int cot) {
+        String tuKhoa = giaTri.trim();
+        if (!tuKhoa.isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?iu)" + Pattern.quote(tuKhoa), cot));
         }
+    }
+
+    private void xoaBoLocXe() {
+        txtLocMaXe.setText("");
+        txtLocBienSo.setText("");
+        txtLocHangXe.setText("");
+        txtLocDongXe.setText("");
     }
 
     private Xe docThongTinXe() {
         String maXe = txtMaXe.getText().trim();
         String bienSo = txtBienSo.getText().trim();
-        KhachHang khachHang = (KhachHang) cboKhachHang.getSelectedItem();
         if (maXe.isEmpty() || bienSo.isEmpty()) {
             throw new IllegalArgumentException("Mã xe và biển số không được để trống.");
         }
-        if (khachHang == null) {
-            throw new IllegalArgumentException("Hãy chọn khách hàng sở hữu xe.");
+        if (khachHangDuocChon == null) {
+            throw new IllegalArgumentException("Hãy tìm và chọn khách hàng từ danh sách gợi ý.");
         }
 
         Integer namSanXuat = null;
@@ -360,7 +513,103 @@ public class FrmXe extends JPanel {
                 namSanXuat,
                 giaTriRongLaNull(txtSoKhung.getText()),
                 giaTriRongLaNull(txtSoMay.getText()),
-                khachHang.getMaKH());
+                khachHangDuocChon.getMaKH());
+    }
+
+    private void timKhachHangTheoThongTinNhap() {
+        if (dangCapNhatOKhachHang) {
+            return;
+        }
+        khachHangDuocChon = null;
+        String tuKhoa = chuanHoaTimKiem(txtKhachHang.getText().trim());
+        List<KhachHang> ketQua = new ArrayList<>();
+        for (KhachHang khachHang : danhSachKhachHang) {
+            String thongTin = chuanHoaTimKiem(String.join(" ",
+                    cellText(khachHang.getMaKH()),
+                    cellText(khachHang.getHoTen()),
+                    cellText(khachHang.getSoDT()),
+                    cellText(khachHang.getEmail()),
+                    cellText(khachHang.getDiaChi())));
+            if (tuKhoa.isEmpty() || thongTin.contains(tuKhoa)) {
+                ketQua.add(khachHang);
+            }
+        }
+
+        String noiDungNhap = txtKhachHang.getText();
+        SwingUtilities.invokeLater(() -> hienThiGoiYKhachHang(ketQua, noiDungNhap));
+    }
+
+    private void hienThiGoiYKhachHang(List<KhachHang> ketQua, String noiDungNhap) {
+        if (!txtKhachHang.isShowing() || !noiDungNhap.equals(txtKhachHang.getText())) {
+            return;
+        }
+        int soGoiY = Math.min(ketQua.size(), 8);
+        modelGoiYKhachHang.clear();
+        for (int index = 0; index < soGoiY; index++) {
+            modelGoiYKhachHang.addElement(ketQua.get(index));
+        }
+        if (soGoiY == 0) {
+            anGoiYKhachHang();
+            return;
+        }
+        int chieuRong = Math.max(txtKhachHang.getWidth(), 520);
+        int chieuCao = Math.min(soGoiY * 28, 224);
+        if (wndGoiYKhachHang == null) {
+            java.awt.Window cuaSoCha = SwingUtilities.getWindowAncestor(txtKhachHang);
+            wndGoiYKhachHang = new JWindow(cuaSoCha);
+            wndGoiYKhachHang.setFocusableWindowState(false);
+            wndGoiYKhachHang.setType(java.awt.Window.Type.POPUP);
+            wndGoiYKhachHang.setContentPane(new JScrollPane(lstGoiYKhachHang));
+        }
+        wndGoiYKhachHang.setSize(chieuRong, chieuCao);
+        Point viTri = txtKhachHang.getLocationOnScreen();
+        wndGoiYKhachHang.setLocation(viTri.x, viTri.y + txtKhachHang.getHeight());
+        wndGoiYKhachHang.setVisible(true);
+    }
+
+    private void anGoiYKhachHang() {
+        if (wndGoiYKhachHang != null) {
+            wndGoiYKhachHang.setVisible(false);
+        }
+    }
+
+    private void chonKhachHang(KhachHang khachHang) {
+        khachHangDuocChon = khachHang;
+        dangCapNhatOKhachHang = true;
+        txtKhachHang.setText(khachHang.getMaKH() + " - " + khachHang.getHoTen()
+                + " | " + cellText(khachHang.getSoDT()));
+        dangCapNhatOKhachHang = false;
+        anGoiYKhachHang();
+    }
+
+    private void chonKhachHangNeuDuyNhat() {
+        String tuKhoa = chuanHoaTimKiem(txtKhachHang.getText().trim());
+        KhachHang khachHangPhuHop = null;
+        for (KhachHang khachHang : danhSachKhachHang) {
+            String thongTin = chuanHoaTimKiem(String.join(" ",
+                    cellText(khachHang.getMaKH()),
+                    cellText(khachHang.getHoTen()),
+                    cellText(khachHang.getSoDT()),
+                    cellText(khachHang.getEmail()),
+                    cellText(khachHang.getDiaChi())));
+            if (thongTin.contains(tuKhoa)) {
+                if (khachHangPhuHop != null) {
+                    return;
+                }
+                khachHangPhuHop = khachHang;
+            }
+        }
+        if (khachHangPhuHop != null) {
+            chonKhachHang(khachHangPhuHop);
+        }
+    }
+
+    private String chuanHoaTimKiem(String giaTri) {
+        return Normalizer.normalize(giaTri, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
+                .toLowerCase(Locale.ROOT);
     }
 
     private String giaTriRongLaNull(String value) {
@@ -383,10 +632,13 @@ public class FrmXe extends JPanel {
         txtSoMay.setText(cellText(modelXe.getValueAt(modelRow, 6)));
 
         String maKhachHang = cellText(modelXe.getValueAt(modelRow, 7));
-        for (int index = 0; index < cboKhachHang.getItemCount(); index++) {
-            KhachHang khachHang = cboKhachHang.getItemAt(index);
+        khachHangDuocChon = null;
+        dangCapNhatOKhachHang = true;
+        txtKhachHang.setText("");
+        dangCapNhatOKhachHang = false;
+        for (KhachHang khachHang : danhSachKhachHang) {
             if (khachHang.getMaKH().equals(maKhachHang)) {
-                cboKhachHang.setSelectedIndex(index);
+                chonKhachHang(khachHang);
                 break;
             }
         }
@@ -404,9 +656,11 @@ public class FrmXe extends JPanel {
         txtNamSanXuat.setText("");
         txtSoKhung.setText("");
         txtSoMay.setText("");
-        if (cboKhachHang.getItemCount() > 0) {
-            cboKhachHang.setSelectedIndex(0);
-        }
+        khachHangDuocChon = null;
+        dangCapNhatOKhachHang = true;
+        txtKhachHang.setText("");
+        dangCapNhatOKhachHang = false;
+        anGoiYKhachHang();
         tblXe.clearSelection();
         txtMaXe.requestFocusInWindow();
     }

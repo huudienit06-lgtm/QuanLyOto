@@ -3,16 +3,25 @@ package gui;
 import dao.NhanVienDAO;
 import entity.NhanVien;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.RowFilter;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.SwingUtilities;
 
 public class FrmNhanVien extends JPanel implements ActionListener {
     private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
@@ -20,7 +29,11 @@ public class FrmNhanVien extends JPanel implements ActionListener {
     private final AppTextField txtHoTen = new AppTextField(16);
     private final AppTextField txtSoDienThoai = new AppTextField(16);
     private final AppTextField txtEmail = new AppTextField(16);
-    private final AppTextField txtTimKiem = new AppTextField(18);
+    private final AppTextField txtLocMaNV = new AppTextField(10);
+    private final AppTextField txtLocHoTen = new AppTextField(12);
+    private final AppTextField txtLocSoDienThoai = new AppTextField(12);
+    private final AppTextField txtLocEmail = new AppTextField(12);
+    private final JLabel lblThongBao = new AppLabel("Sẵn sàng", AppLabel.Style.MUTED);
     private final AppComboBox<String> cboChucVu = new AppComboBox<>();
     private final AppComboBox<String> cboTrangThai = new AppComboBox<>();
     private String maNVDangChon;
@@ -32,6 +45,7 @@ public class FrmNhanVien extends JPanel implements ActionListener {
         }
     };
     private final javax.swing.JTable tblNhanVien = FormUI.createTable(modelNhanVien);
+    private final TableRowSorter<DefaultTableModel> sorterNhanVien = new TableRowSorter<>(modelNhanVien);
 
     public FrmNhanVien() {
         setLayout(new BorderLayout(0, 10));
@@ -39,16 +53,29 @@ public class FrmNhanVien extends JPanel implements ActionListener {
 
         JPanel pnlContent = new JPanel(new BorderLayout(0, 8));
         pnlContent.setOpaque(false);
-        pnlContent.add(createFormCard(), BorderLayout.NORTH);
-        pnlContent.add(FormUI.createTableCard("Danh sách nhân viên", createSearchToolbar(),
-                new AppScrollPane(tblNhanVien)), BorderLayout.CENTER);
+        JSplitPane splContent = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                createFormCard(), FormUI.createTableCard("Danh sách nhân viên", createSearchToolbar(),
+                        new AppScrollPane(tblNhanVien)));
+        splContent.setBorder(null);
+        splContent.setResizeWeight(0.38);
+        splContent.setDividerSize(7);
+        splContent.setEnabled(false);
+        SwingUtilities.invokeLater(() -> splContent.setDividerLocation(0.38));
+        pnlContent.add(splContent, BorderLayout.CENTER);
 
         add(FormUI.createPage("QUẢN LÝ NHÂN VIÊN",
                 "Thông tin nhân viên và danh sách nhân sự của gara", pnlContent), BorderLayout.CENTER);
-        add(FormUI.createStatus("Sẵn sàng"), BorderLayout.SOUTH);
+        add(createStatusPanel(), BorderLayout.SOUTH);
 
+        tblNhanVien.setRowSorter(sorterNhanVien);
         tblNhanVien.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblNhanVien.setRowHeight(26);
+        tblNhanVien.setRowHeight(30);
+        tblNhanVien.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        tblNhanVien.setFillsViewportHeight(true);
+        int[] doRongCot = {105, 180, 145, 145, 220, 140};
+        for (int cot = 0; cot < doRongCot.length; cot++) {
+            tblNhanVien.getColumnModel().getColumn(cot).setPreferredWidth(doRongCot[cot]);
+        }
         tblNhanVien.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting() && tblNhanVien.getSelectedRow() >= 0) {
                 hienThiNhanVienDangChon();
@@ -58,19 +85,58 @@ public class FrmNhanVien extends JPanel implements ActionListener {
     }
 
     private JPanel createSearchToolbar() {
-        JPanel pnlSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel pnlSearch = new JPanel(new BorderLayout(8, 0));
         pnlSearch.setOpaque(false);
-
-        AppButton btnTimKiem = new AppButton("Tìm kiếm");
+        JPanel pnlLoc = new JPanel(new GridLayout(1, 4, 8, 0));
+        pnlLoc.setOpaque(false);
+        pnlLoc.add(createSearchField("Mã nhân viên", txtLocMaNV));
+        pnlLoc.add(createSearchField("Họ và tên", txtLocHoTen));
+        pnlLoc.add(createSearchField("Số điện thoại", txtLocSoDienThoai));
+        pnlLoc.add(createSearchField("Email", txtLocEmail));
         AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
-        btnTimKiem.addActionListener(this);
         btnTaiLai.addActionListener(this);
-        txtTimKiem.setToolTipText("Tìm theo mã, họ tên, chức vụ, số điện thoại hoặc email");
-        txtTimKiem.addActionListener(event -> timKiemNhanVien());
-        pnlSearch.add(txtTimKiem);
-        pnlSearch.add(btnTimKiem);
-        pnlSearch.add(btnTaiLai);
+        pnlSearch.add(pnlLoc, BorderLayout.CENTER);
+        pnlSearch.add(btnTaiLai, BorderLayout.EAST);
+        themBoLangNghe(txtLocMaNV);
+        themBoLangNghe(txtLocHoTen);
+        themBoLangNghe(txtLocSoDienThoai);
+        themBoLangNghe(txtLocEmail);
         return pnlSearch;
+    }
+
+    private JPanel createSearchField(String labelText, AppTextField txtField) {
+        JPanel pnlField = new JPanel(new BorderLayout(0, 3));
+        pnlField.setOpaque(false);
+        JLabel lblField = new AppLabel(labelText, AppLabel.Style.MUTED);
+        pnlField.add(lblField, BorderLayout.NORTH);
+        pnlField.add(txtField, BorderLayout.CENTER);
+        return pnlField;
+    }
+
+    private JPanel createStatusPanel() {
+        JPanel pnlStatus = new JPanel(new BorderLayout());
+        pnlStatus.setOpaque(false);
+        pnlStatus.add(lblThongBao, BorderLayout.WEST);
+        return pnlStatus;
+    }
+
+    private void themBoLangNghe(AppTextField txtField) {
+        txtField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                locDanhSachNhanVien();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                locDanhSachNhanVien();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                locDanhSachNhanVien();
+            }
+        });
     }
 
     private JPanel createFormCard() {
@@ -175,6 +241,7 @@ public class FrmNhanVien extends JPanel implements ActionListener {
     private void taiDanhSachNhanVien() {
         try {
             hienThiDanhSach(nhanVienDAO.findAll());
+            locDanhSachNhanVien();
         } catch (SQLException exception) {
             FormUI.showError("Không thể tải danh sách nhân viên: " + exception.getMessage());
         }
@@ -190,20 +257,21 @@ public class FrmNhanVien extends JPanel implements ActionListener {
         }
     }
 
-    private void timKiemNhanVien() {
-        try {
-            List<NhanVien> ketQua = nhanVienDAO.search(txtTimKiem.getText());
-            maNVDangChon = null;
-            lamMoiThongTinNhanVien();
-            hienThiDanhSach(ketQua);
-            if (ketQua.size() == 1) {
-                int viewRow = tblNhanVien.convertRowIndexToView(0);
-                tblNhanVien.setRowSelectionInterval(viewRow, viewRow);
-            } else if (ketQua.isEmpty()) {
-                FormUI.showError("Không tìm thấy nhân viên phù hợp.");
-            }
-        } catch (SQLException exception) {
-            FormUI.showError("Không thể tìm kiếm nhân viên: " + exception.getMessage());
+    private void locDanhSachNhanVien() {
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+        themBoLoc(filters, txtLocMaNV.getText(), 0);
+        themBoLoc(filters, txtLocHoTen.getText(), 1);
+        themBoLoc(filters, txtLocSoDienThoai.getText(), 3);
+        themBoLoc(filters, txtLocEmail.getText(), 4);
+        sorterNhanVien.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
+        lblThongBao.setText("Hiển thị " + sorterNhanVien.getViewRowCount() + " / "
+                + modelNhanVien.getRowCount() + " nhân viên");
+    }
+
+    private void themBoLoc(List<RowFilter<Object, Object>> filters, String giaTri, int cot) {
+        String tuKhoa = giaTri.trim();
+        if (!tuKhoa.isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?iu)" + Pattern.quote(tuKhoa), cot));
         }
     }
 
@@ -231,7 +299,10 @@ public class FrmNhanVien extends JPanel implements ActionListener {
         tblNhanVien.clearSelection();
         maNVDangChon = null;
         lamMoiThongTinNhanVien();
-        txtTimKiem.setText("");
+        txtLocMaNV.setText("");
+        txtLocHoTen.setText("");
+        txtLocSoDienThoai.setText("");
+        txtLocEmail.setText("");
         taiDanhSachNhanVien();
     }
 
@@ -294,7 +365,8 @@ public class FrmNhanVien extends JPanel implements ActionListener {
             FormUI.showError("Vui lòng chọn một nhân viên để xóa.");
             return;
         }
-        String maNV = (String) modelNhanVien.getValueAt(selectedRow, 0);
+        int modelRow = tblNhanVien.convertRowIndexToModel(selectedRow);
+        String maNV = (String) modelNhanVien.getValueAt(modelRow, 0);
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn xóa nhân viên có mã: " + maNV + "?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
@@ -327,8 +399,6 @@ public class FrmNhanVien extends JPanel implements ActionListener {
         }
         else if("Cập nhật".equals(actionCommand)) {
             capNhatNhanVien();
-        } else if ("Tìm kiếm".equals(actionCommand)) {
-            timKiemNhanVien();
         } else if ("Tải lại".equals(actionCommand)) {
             lamMoiForm();
         } else if ("Xóa".equals(actionCommand)) {
