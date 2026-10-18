@@ -1,15 +1,7 @@
 package gui;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-
 import connectDB.ConnectDB;
 import dao.HoaDonDAO;
-
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,6 +13,12 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
 
 /**
  * Màn hình lập hóa đơn.
@@ -914,7 +912,7 @@ public class FrmHoaDon extends JPanel {
         }
 
         FrmThanhToan frm = new FrmThanhToan(maHD);
-        frm.setLocationRelativeTo(this);
+        frm.setLocationRelativeTo(null);
         frm.setVisible(true);
     }
 
@@ -1887,15 +1885,4 @@ public class FrmHoaDon extends JPanel {
         return btn;
     }
 
-    // =========================================================
-    // MAIN: CHẠY RIÊNG GIAO DIỆN
-    // =========================================================
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            BaseFrame frame = new BaseFrame();
-            frame.setContent(new FrmHoaDon());
-            frame.setVisible(true);
-        });
-    }
 }
