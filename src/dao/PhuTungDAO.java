@@ -8,26 +8,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import connectDB.ConnectDB;
-/**
- * Lớp DAO quản lý thao tác Cơ sở dữ liệu cho Phụ tùng
- * Kế thừa các hàm truy vấn tự động bằng Reflection từ BaseDAO<PhuTung>
- */
 public class PhuTungDAO extends BaseDAO<PhuTung> {
-
-    /**
-     * Khởi tạo DAO, cấu hình ánh xạ với CSDL
-     * - Class entity: PhuTung.class
-     * - Tên bảng SQL: "PhuTung"
-     * - Khóa chính: "maPhuTung"
-     */
     public PhuTungDAO() {
         super(PhuTung.class, "PhuTung", "maPhuTung");
     }
-    // CÁC HÀM TƯƠNG TÁC VỚI GIAO DIỆN FRMPHUTUNG
-    /**
-     * 1. Lấy toàn bộ danh sách phụ tùng để đổ lên bảng
-     * Sử dụng hàm findAll() tích hợp sẵn của BaseDAO
-     */
+    // 1. Lấy toàn bộ danh sách phụ tùng để đổ lên bảng sử dụng hàm findAll() tích hợp sẵn của BaseDAO
     public List<PhuTung> layTatCaPhuTung() {
         try {
             return findAll();
@@ -36,10 +21,8 @@ public class PhuTungDAO extends BaseDAO<PhuTung> {
             return java.util.Collections.emptyList();
         }
     }
-    /**
-     * 2. Thêm phụ tùng mới vào kho
-     * Sử dụng hàm insert() tích hợp sẵn của BaseDAO
-     */
+    //2. Thêm phụ tùng mới vào kho Sử dụng hàm insert() tích hợp sẵn của BaseDAO
+  
     public boolean themPhuTung(PhuTung pt) {
         try {
             return insert(pt);
@@ -49,10 +32,7 @@ public class PhuTungDAO extends BaseDAO<PhuTung> {
         }
     }
 
-    /**
-     * 3. Cập nhật thông tin và giá bán phụ tùng
-     * Sử dụng hàm update() tích hợp sẵn của BaseDAO
-     */
+    // 3. Cập nhật thông tin và giá bán phụ tùng Sử dụng hàm update() tích hợp sẵn của BaseDAO
     public boolean capNhatPhuTung(PhuTung pt) {
         try {
             return update(pt);
@@ -61,11 +41,7 @@ public class PhuTungDAO extends BaseDAO<PhuTung> {
             return false;
         }
     }
-
-    /**
-     * 4. Xóa phụ tùng khỏi hệ thống
-     * Sử dụng hàm deleteById() tích hợp sẵn của BaseDAO
-     */
+    //4. Xóa phụ tùng khỏi hệ thống
     public boolean xoaPhuTung(String maPhuTung) {
         try {
             return deleteById(maPhuTung);
@@ -102,4 +78,13 @@ public List<String> layDanhSachNhaCungCap() {
     }
     return dsNCC;
 }
+// 6. Hàm: Lấy phụ tùng theo mã
+    public PhuTung layPhuTungTheoMa(String maPT) {
+        try {
+            return findById(maPT); // Gọi trực tiếp hàm của BaseDAO
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
