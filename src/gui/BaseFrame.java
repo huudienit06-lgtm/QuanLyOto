@@ -69,9 +69,6 @@ public class BaseFrame extends JFrame {
 		if ("Phụ tùng tồn kho".equals(featureName)) {
 			setContent(new FrmThongKeTonKho());
 			lblStatus.setText("Thống kê tồn kho phụ tùng");
-
-        setContent(new FrmPhuTung());
-        lblStatus.setText("Quản lý phụ tùng");
         return;
     }
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
