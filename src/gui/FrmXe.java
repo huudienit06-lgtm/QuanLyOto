@@ -4,8 +4,6 @@ import dao.KhachHangDAO;
 import dao.XeDAO;
 import entity.KhachHang;
 import entity.Xe;
-import gui.AppLabel.Style;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -13,11 +11,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.Point;
 import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -38,12 +36,12 @@ import javax.swing.JSplitPane;
 import javax.swing.JWindow;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import javax.swing.SwingUtilities;
 
 public class FrmXe extends JPanel {
     private static final Set<String> MA_KHACH_HANG_DA_BIET = new HashSet<>();
