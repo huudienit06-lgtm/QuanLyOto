@@ -51,6 +51,7 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Phụ tùng".equals(featureName) || "Cập nhật phụ tùng".equals(featureName)) {
+
             setContent(new FrmPhuTung());
             lblStatus.setText("Quản lý phụ tùng");
             return;
@@ -68,6 +69,14 @@ public class BaseFrame extends JFrame {
 		if ("Phụ tùng tồn kho".equals(featureName)) {
 			setContent(new FrmThongKeTonKho());
 			lblStatus.setText("Thống kê tồn kho phụ tùng");
+
+        setContent(new FrmPhuTung());
+        lblStatus.setText("Quản lý phụ tùng");
+        return;
+    }
+		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
+			setContent(new FrmHoaDon());
+			lblStatus.setText("Lập hóa đơn");
 			return;
 		}
 		lblStatus.setText("Đã chọn: " + featureName);
@@ -157,4 +166,10 @@ public class BaseFrame extends JFrame {
 		pnlStatusBar.add(lblStatus, BorderLayout.WEST);
 		return pnlStatusBar;
 	}
+
+	public BaseFrame(JPanel content) {
+		this();
+		setContent(content);
+	}
+
 }
