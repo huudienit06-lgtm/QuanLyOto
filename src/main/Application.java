@@ -1,6 +1,5 @@
 package main;
 
-
 import gui.FrmMain;
 import gui.UIConfig;
 import javax.swing.SwingUtilities;

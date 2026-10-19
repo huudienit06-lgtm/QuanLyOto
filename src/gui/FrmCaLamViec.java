@@ -6,40 +6,46 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseAdapter;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
+import javax.swing.DefaultCellEditor;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTable;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.JButton;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import dao.CaLamViecDAO;
+import dao.LichLamViecDAO;
+import dao.LichLamViecDAO.PhanCong;
+import dao.NhanVienDAO;
+import entity.CaLamViec;
+import entity.NhanVien;
 
 public class FrmCaLamViec extends JPanel {
     private static final String CHUA_PHAN_CONG = "Chưa phân công";
-    private static final LocalTime[] GIO_BAT_DAU_CA = {
-            LocalTime.of(7, 0), LocalTime.of(13, 0), LocalTime.of(17, 0)
-    };
-    private static final LocalTime[] GIO_KET_THUC_CA = {
-            LocalTime.of(12, 0), LocalTime.of(17, 0), LocalTime.of(21, 0)
-    };
-    private static final String[] TEN_CA = {"Ca sáng", "Ca chiều", "Ca tối"};
     private static final String[] TEN_THU = {
             "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"
     };
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DINH_DANG_GIO = DateTimeFormatter.ofPattern("HH:mm");
     private final DefaultTableModel modelLichTuan = new DefaultTableModel(
             new Object[] {"Ca làm việc", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5",
                     "Thứ 6", "Thứ 7", "Chủ nhật"}, 0) {
@@ -49,15 +55,15 @@ public class FrmCaLamViec extends JPanel {
         }
     };
     private final DefaultTableModel modelDiemDanh = new DefaultTableModel(
-            new Object[] {"Mã nhân viên", "Họ và tên", "Giờ vào", "Có mặt", "Ghi chú"}, 0) {
+            new Object[] {"Mã nhân viên", "Họ và tên", "Có mặt"}, 0) {
         @Override
         public Class<?> getColumnClass(int column) {
-            return column == 3 ? Boolean.class : String.class;
+            return column == 2 ? Boolean.class : String.class;
         }
 
         @Override
         public boolean isCellEditable(int row, int column) {
-            return column == 3;
+            return column == 2;
         }
     };
     private final JTable tblLichTuan = FormUI.createTable(modelLichTuan);
@@ -71,7 +77,14 @@ public class FrmCaLamViec extends JPanel {
     private final JLabel lblTuanHienThi = new AppLabel("", AppLabel.Style.MUTED);
     private final LichCaCellRenderer rendererLichCa = new LichCaCellRenderer();
     private final Timer timerCapNhatThoiGian = new Timer(30_000, event -> capNhatCaHienTai());
+    private final CaLamViecDAO caLamViecDAO = new CaLamViecDAO();
+    private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
+    private final LichLamViecDAO lichLamViecDAO = new LichLamViecDAO();
+    private List<CaLamViec> danhSachCa = List.of();
+    private List<PhanCong> phanCongTuan = List.of();
     private AppScrollPane scrNoiDung;
+    private String maLichDangChon;
+    private boolean dangNapDiemDanh;
     private int caHienTai = -1;
     private int cotNgayHienTai = -1;
     private LocalDate ngayDauTuan = LocalDate.now().with(DayOfWeek.MONDAY);
@@ -80,12 +93,12 @@ public class FrmCaLamViec extends JPanel {
         setLayout(new BorderLayout(0, 12));
         setOpaque(false);
 
-        napKhungCa();
         cauHinhLuaChon();
-        cauHinhBangLich();
-        cauHinhBangDiemDanh();
         capNhatTieuDeCotNgay();
         capNhatTieuDeNgay();
+        cauHinhBangLich();
+        cauHinhBangDiemDanh();
+        napPhanCongTuan();
         capNhatCaHienTai();
 
         JPanel pnlNoiDung = new JPanel(new BorderLayout(0, 12));
@@ -120,11 +133,16 @@ public class FrmCaLamViec extends JPanel {
         FormUI.addField(pnlFields, "Ca làm việc", cboCaLamViec, 2, 0);
         FormUI.addField(pnlFields, "Ngày làm việc", pnlChonNgayLamViec, 0, 1);
 
+        AppButton btnThem = new AppButton("Thêm phân công");
+        AppButton btnSua = new AppButton("Sửa phân công", AppButton.Style.SUCCESS);
+        AppButton btnXoa = new AppButton("Xóa phân công", AppButton.Style.DANGER);
+        AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
+        btnThem.addActionListener(event -> themPhanCong());
+        btnSua.addActionListener(event -> capNhatPhanCong());
+        btnXoa.addActionListener(event -> xoaPhanCong());
+        btnLamMoi.addActionListener(event -> lamMoiPhanCong());
         JPanel pnlButtons = FormUI.createButtonRow(
-                new AppButton("Thêm phân công"),
-                new AppButton("Sửa phân công", AppButton.Style.SUCCESS),
-                new AppButton("Xóa phân công", AppButton.Style.DANGER),
-                new AppButton("Làm mới", AppButton.Style.SECONDARY));
+                btnThem, btnSua, btnXoa, btnLamMoi);
         pnlPhanCong.add(FormUI.createSectionTitle("Thông tin phân công ca"), BorderLayout.NORTH);
         pnlPhanCong.add(pnlFields, BorderLayout.CENTER);
         pnlPhanCong.add(pnlButtons, BorderLayout.SOUTH);
@@ -153,10 +171,18 @@ public class FrmCaLamViec extends JPanel {
     private void cauHinhLuaChon() {
         cboNhanVien.addItem("Chọn nhân viên");
         cboCaLamViec.addItem("Chọn ca làm việc");
-        for (int index = 0; index < TEN_CA.length; index++) {
-            cboCaLamViec.addItem(TEN_CA[index] + " ("
-                    + GIO_BAT_DAU_CA[index].format(DateTimeFormatter.ofPattern("HH:mm")) + " - "
-                    + GIO_KET_THUC_CA[index].format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
+        try {
+            danhSachCa = caLamViecDAO.findAll();
+            for (CaLamViec ca : danhSachCa) {
+                cboCaLamViec.addItem(ca.getMaCa() + " ("
+                        + ca.getGioBatDau().toLocalTime().format(DINH_DANG_GIO) + " - "
+                        + ca.getGioKetThuc().toLocalTime().format(DINH_DANG_GIO) + ")");
+            }
+            for (NhanVien nhanVien : nhanVienDAO.findAll()) {
+                cboNhanVien.addItem(nhanVien.getMaNV() + " - " + nhanVien.getHoTen());
+            }
+        } catch (java.sql.SQLException exception) {
+            hienThiLoiCSDL("Không thể tải danh sách ca làm việc và nhân viên.", exception);
         }
     }
 
@@ -182,20 +208,10 @@ public class FrmCaLamViec extends JPanel {
         return pnlDiemDanh;
     }
 
-    private void napKhungCa() {
-        for (int index = 0; index < TEN_CA.length; index++) {
-            String khungGio = GIO_BAT_DAU_CA[index].format(DateTimeFormatter.ofPattern("HH:mm"))
-                    + " - " + GIO_KET_THUC_CA[index].format(DateTimeFormatter.ofPattern("HH:mm"));
-            modelLichTuan.addRow(new Object[] {
-                    TEN_CA[index] + "\n" + khungGio,
-                    CHUA_PHAN_CONG, CHUA_PHAN_CONG, CHUA_PHAN_CONG, CHUA_PHAN_CONG,
-                    CHUA_PHAN_CONG, CHUA_PHAN_CONG, CHUA_PHAN_CONG
-            });
-        }
-    }
-
     private void cauHinhBangLich() {
         tblLichTuan.setAutoCreateRowSorter(false);
+        tblLichTuan.setCellSelectionEnabled(true);
+        tblLichTuan.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         tblLichTuan.setRowHeight(62);
         tblLichTuan.setShowVerticalLines(true);
         tblLichTuan.setShowHorizontalLines(true);
@@ -211,6 +227,17 @@ public class FrmCaLamViec extends JPanel {
         tblLichTuan.getTableHeader().setReorderingAllowed(false);
         tblLichTuan.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 38));
         tblLichTuan.addMouseWheelListener(event -> chuyenCuonRaTrangNeuCan(tblLichTuan, event));
+        tblLichTuan.getSelectionModel().addListSelectionListener(event -> {
+            if (!event.getValueIsAdjusting()) {
+                chonPhanCongTuBang();
+            }
+        });
+        tblLichTuan.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent event) {
+                chonPhanCongTuBang();
+            }
+        });
     }
 
     private void dichTuan(int soTuan) {
@@ -219,11 +246,219 @@ public class FrmCaLamViec extends JPanel {
         capNhatTuan(ngayDauTuan.plusDays(ngayTrongTuan));
     }
 
+    private void napPhanCongTuan() {
+        modelLichTuan.setRowCount(0);
+        try {
+            phanCongTuan = lichLamViecDAO.layPhanCong(ngayDauTuan, ngayDauTuan.plusDays(7));
+            for (CaLamViec ca : danhSachCa) {
+                String khungGio = ca.getGioBatDau().toLocalTime().format(DINH_DANG_GIO)
+                        + " - " + ca.getGioKetThuc().toLocalTime().format(DINH_DANG_GIO);
+                Object[] dong = new Object[8];
+                dong[0] = ca.getMaCa() + "\n" + khungGio;
+                for (int ngay = 0; ngay < 7; ngay++) {
+                    LocalDate ngayTrongTuan = ngayDauTuan.plusDays(ngay);
+                    List<String> tenNhanVien = phanCongTuan.stream()
+                            .filter(phanCong -> phanCong.maCa().equals(ca.getMaCa())
+                                    && phanCong.ngayLamViec().equals(ngayTrongTuan))
+                            .map(phanCong -> phanCong.hoTen()
+                                    + ("Có mặt".equals(phanCong.trangThai()) ? " (Có mặt)"
+                                            : "Vắng mặt".equals(phanCong.trangThai()) ? " (Vắng)" : ""))
+                            .toList();
+                    dong[ngay + 1] = tenNhanVien.isEmpty()
+                            ? CHUA_PHAN_CONG : String.join("\n", tenNhanVien);
+                }
+                modelLichTuan.addRow(dong);
+            }
+        } catch (java.sql.SQLException exception) {
+            phanCongTuan = List.of();
+            lblTrangThaiDiemDanh.setText("Không thể tải lịch phân công.");
+            hienThiLoiCSDL("Không thể tải lịch làm việc.", exception);
+        }
+        tblLichTuan.setDefaultRenderer(Object.class, rendererLichCa);
+        tblLichTuan.repaint();
+        napDiemDanh();
+    }
+
+    private void themPhanCong() {
+        String maCa = layMaCaDuocChon();
+        String maNV = layMaNhanVienDuocChon();
+        if (maCa == null || maNV == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên và ca làm việc.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String maLich = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        try {
+            if (lichLamViecDAO.themPhanCong(maLich, maCa, maNV, pnlChonNgayLamViec.getSelectedDate())) {
+                napPhanCongTuan();
+                lblTrangThaiDiemDanh.setText("Đã thêm phân công.");
+            }
+        } catch (java.sql.SQLException exception) {
+            hienThiLoiCSDL("Không thể thêm phân công.", exception);
+        }
+    }
+
+    private void capNhatPhanCong() {
+        String maCa = layMaCaDuocChon();
+        String maNV = layMaNhanVienDuocChon();
+        if (maLichDangChon == null || maCa == null || maNV == null) {
+            JOptionPane.showMessageDialog(this, "Chọn một phân công trên lịch và kiểm tra thông tin cần sửa.",
+                    "Chưa chọn phân công", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            if (lichLamViecDAO.capNhatPhanCong(maLichDangChon, maCa, maNV,
+                    pnlChonNgayLamViec.getSelectedDate())) {
+                napPhanCongTuan();
+                lblTrangThaiDiemDanh.setText("Đã cập nhật phân công.");
+            }
+        } catch (java.sql.SQLException exception) {
+            hienThiLoiCSDL("Không thể cập nhật phân công.", exception);
+        }
+    }
+
+    private void xoaPhanCong() {
+        if (maLichDangChon == null) {
+            JOptionPane.showMessageDialog(this, "Chọn một phân công trên lịch trước khi xóa.",
+                    "Chưa chọn phân công", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int luaChon = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa phân công đã chọn?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+        if (luaChon != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            if (lichLamViecDAO.xoaPhanCong(maLichDangChon)) {
+                lamMoiPhanCong();
+                lblTrangThaiDiemDanh.setText("Đã xóa phân công.");
+            }
+        } catch (java.sql.SQLException exception) {
+            hienThiLoiCSDL("Không thể xóa phân công.", exception);
+        }
+    }
+
+    private void lamMoiPhanCong() {
+        maLichDangChon = null;
+        cboNhanVien.setSelectedIndex(0);
+        cboCaLamViec.setSelectedIndex(0);
+        napPhanCongTuan();
+        capNhatCaHienTai();
+    }
+
+    private String layMaCaDuocChon() {
+        int selectedIndex = cboCaLamViec.getSelectedIndex() - 1;
+        return selectedIndex >= 0 && selectedIndex < danhSachCa.size()
+                ? danhSachCa.get(selectedIndex).getMaCa() : null;
+    }
+
+    private String layMaNhanVienDuocChon() {
+        String selected = (String) cboNhanVien.getSelectedItem();
+        if (selected == null || cboNhanVien.getSelectedIndex() <= 0) {
+            return null;
+        }
+        int separator = selected.indexOf(" - ");
+        return separator > 0 ? selected.substring(0, separator) : null;
+    }
+
+    private void chonPhanCongTuBang() {
+        int row = tblLichTuan.getSelectedRow();
+        int column = tblLichTuan.getSelectedColumn();
+        if (row < 0 || column < 1 || column > 7 || row >= danhSachCa.size()) {
+            return;
+        }
+        String maCa = danhSachCa.get(row).getMaCa();
+        LocalDate ngay = ngayDauTuan.plusDays(column - 1);
+        List<PhanCong> cacPhanCong = phanCongTuan.stream()
+                .filter(phanCong -> phanCong.maCa().equals(maCa) && phanCong.ngayLamViec().equals(ngay))
+                .toList();
+        if (cacPhanCong.isEmpty()) {
+            return;
+        }
+        PhanCong selected = cacPhanCong.get(0);
+        if (cacPhanCong.size() > 1) {
+            String[] luaChon = cacPhanCong.stream()
+                    .map(phanCong -> phanCong.maNV() + " - " + phanCong.hoTen())
+                    .toArray(String[]::new);
+            Object luaChonNhanVien = JOptionPane.showInputDialog(this,
+                    "Chọn phân công cần thao tác:", "Chọn phân công",
+                    JOptionPane.QUESTION_MESSAGE, null, luaChon, luaChon[0]);
+            if (luaChonNhanVien == null) {
+                return;
+            }
+            int index = java.util.Arrays.asList(luaChon).indexOf(luaChonNhanVien.toString());
+            if (index < 0) {
+                return;
+            }
+            selected = cacPhanCong.get(index);
+        }
+        maLichDangChon = selected.maLich();
+        pnlChonNgayLamViec.setSelectedDate(ngay);
+        cboCaLamViec.setSelectedIndex(row + 1);
+        for (int index = 1; index < cboNhanVien.getItemCount(); index++) {
+            if (cboNhanVien.getItemAt(index).startsWith(selected.maNV() + " - ")) {
+                cboNhanVien.setSelectedIndex(index);
+                break;
+            }
+        }
+    }
+
+    private void napDiemDanh() {
+        dangNapDiemDanh = true;
+        modelDiemDanh.setRowCount(0);
+        LocalDate homNay = LocalDate.now();
+        if (caHienTai >= 0 && caHienTai < danhSachCa.size()) {
+            String maCa = danhSachCa.get(caHienTai).getMaCa();
+            for (PhanCong phanCong : phanCongTuan) {
+                if (phanCong.maCa().equals(maCa) && phanCong.ngayLamViec().equals(homNay)) {
+                    modelDiemDanh.addRow(new Object[] {
+                            phanCong.maNV(), phanCong.hoTen(),
+                            "Có mặt".equals(phanCong.trangThai())
+                    });
+                }
+            }
+        }
+        dangNapDiemDanh = false;
+        lblTrangThaiDiemDanh.setText(modelDiemDanh.getRowCount() == 0
+                ? (caHienTai >= 0 ? "Chưa có dữ liệu phân công cho ca hiện tại" : "Không có ca đang diễn ra")
+                : "Đánh dấu trạng thái có mặt của nhân viên trong ca");
+    }
+
+    private void capNhatDiemDanh(int row) {
+        if (row < 0 || row >= modelDiemDanh.getRowCount()
+                || caHienTai < 0 || caHienTai >= danhSachCa.size()) {
+            return;
+        }
+        String maNV = modelDiemDanh.getValueAt(row, 0).toString();
+        LocalDate homNay = LocalDate.now();
+        String maCa = danhSachCa.get(caHienTai).getMaCa();
+        PhanCong phanCong = phanCongTuan.stream()
+                .filter(item -> item.maNV().equals(maNV) && item.maCa().equals(maCa)
+                        && item.ngayLamViec().equals(homNay))
+                .findFirst().orElse(null);
+        if (phanCong == null) {
+            return;
+        }
+        try {
+            lichLamViecDAO.capNhatTrangThai(phanCong.maLich(),
+                    Boolean.TRUE.equals(modelDiemDanh.getValueAt(row, 2)));
+            napPhanCongTuan();
+        } catch (java.sql.SQLException exception) {
+            hienThiLoiCSDL("Không thể lưu trạng thái điểm danh.", exception);
+            napDiemDanh();
+        }
+    }
+
+    private void hienThiLoiCSDL(String thongBao, Exception exception) {
+        JOptionPane.showMessageDialog(this, thongBao + "\n" + exception.getMessage(),
+                "Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void capNhatTuan(LocalDate ngayDuocChon) {
         capNhatTieuDeCotNgay();
-        cauHinhBangLich();
         pnlChonNgayLamViec.setSelectedDate(ngayDuocChon);
         capNhatTieuDeNgay();
+        napPhanCongTuan();
         capNhatCaHienTai();
         tblLichTuan.repaint();
     }
@@ -251,10 +486,14 @@ public class FrmCaLamViec extends JPanel {
         tblDiemDanh.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 32));
         tblDiemDanh.getColumnModel().getColumn(0).setPreferredWidth(115);
         tblDiemDanh.getColumnModel().getColumn(1).setPreferredWidth(210);
-        tblDiemDanh.getColumnModel().getColumn(2).setPreferredWidth(100);
-        tblDiemDanh.getColumnModel().getColumn(3).setPreferredWidth(85);
-        tblDiemDanh.getColumnModel().getColumn(4).setPreferredWidth(180);
+        tblDiemDanh.getColumnModel().getColumn(2).setPreferredWidth(85);
         tblDiemDanh.addMouseWheelListener(event -> chuyenCuonRaTrangNeuCan(tblDiemDanh, event));
+        tblDiemDanh.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(new javax.swing.JCheckBox()));
+        modelDiemDanh.addTableModelListener(event -> {
+            if (!dangNapDiemDanh && event.getType() == TableModelEvent.UPDATE && event.getColumn() == 2) {
+                capNhatDiemDanh(event.getFirstRow());
+            }
+        });
     }
 
     private void chuyenCuonRaTrangNeuCan(JTable tblNguon, MouseWheelEvent event) {
@@ -302,22 +541,23 @@ public class FrmCaLamViec extends JPanel {
         String ngayHienTai = homNay.format(DINH_DANG_NGAY);
         String thoiGian = gioHienTai.format(DateTimeFormatter.ofPattern("HH:mm"));
         if (caHienTai >= 0) {
+            CaLamViec ca = danhSachCa.get(caHienTai);
             lblCaHienTai.setText("Hôm nay " + ngayHienTai + "  |  " + thoiGian
-                    + "  |  ĐANG DIỄN RA: " + TEN_CA[caHienTai]);
+                    + "  |  ĐANG DIỄN RA: " + ca.getMaCa());
             lblCaHienTai.setForeground(UIConfig.COLOR_SUCCESS);
-            lblTrangThaiDiemDanh.setText("Chưa có dữ liệu phân công cho " + TEN_CA[caHienTai]);
         } else {
             lblCaHienTai.setText("Hôm nay " + ngayHienTai + "  |  " + thoiGian
                     + "  |  Hiện không nằm trong khung giờ ca làm");
             lblCaHienTai.setForeground(UIConfig.COLOR_MUTED);
-            lblTrangThaiDiemDanh.setText("Không có ca đang diễn ra");
         }
+        napDiemDanh();
     }
 
     private int timCaHienTai(LocalTime gioHienTai) {
-        for (int index = 0; index < GIO_BAT_DAU_CA.length; index++) {
-            if (!gioHienTai.isBefore(GIO_BAT_DAU_CA[index])
-                    && gioHienTai.isBefore(GIO_KET_THUC_CA[index])) {
+        for (int index = 0; index < danhSachCa.size(); index++) {
+            LocalTime gioBatDau = danhSachCa.get(index).getGioBatDau().toLocalTime();
+            LocalTime gioKetThuc = danhSachCa.get(index).getGioKetThuc().toLocalTime();
+            if (!gioHienTai.isBefore(gioBatDau) && gioHienTai.isBefore(gioKetThuc)) {
                 return index;
             }
         }

@@ -139,6 +139,13 @@ BEGIN TRY
     ('DMBH04', 'DMNV07', 'DMKH04', 'DMXE04', '2027-10-17', N'Bảo hành ắc quy đã thay.', N'Áp dụng theo điều kiện nhà sản xuất.'),
     ('DMBH05', 'DMNV08', 'DMKH05', 'DMXE05', '2027-10-17', N'Bảo hành công việc cân chỉnh.', N'Liên hệ gara nếu lỗi tái diễn.');
 
+    INSERT INTO PhieuBanGiao (maPhieuBanGiao, maXe, maKH, tenKhachHang, maNV, tinhTrangXeHienTai, tenNguoiNhan, soDienThoaiNguoiNhan) VALUES
+    ('DMBG01', 'DMXE01', 'DMKH01', N'Nguyễn Minh Anh', 'DMNV01', N'Xe đã thay dầu, kiểm tra tổng quát và hoạt động bình thường.', N'Nguyễn Minh Anh', '0901234567'),
+    ('DMBG02', 'DMXE02', 'DMKH02', N'Trần Quốc Bảo', 'DMNV02', N'Đã thay má phanh trước, hệ thống phanh hoạt động tốt.', N'Trần Quốc Bảo', '0912345678'),
+    ('DMBG03', 'DMXE03', 'DMKH03', N'Lê Thu Hà', 'DMNV03', N'Đã vệ sinh lọc gió và thay dầu động cơ.', N'Lê Thu Hà', '0923456789'),
+    ('DMBG04', 'DMXE04', 'DMKH04', N'Phạm Đức Long', 'DMNV01', N'Đã thay ắc quy và kiểm tra hệ thống điện.', N'Phạm Đức Long', '0934567890'),
+    ('DMBG05', 'DMXE05', 'DMKH05', N'Võ Ngọc Mai', 'DMNV02', N'Đã cân chỉnh góc lái và kiểm tra tổng quát.', N'Võ Ngọc Mai', '0945678901');
+
     INSERT INTO PhieuDoiTra (maPhieuDoiTra, maHoaDon, lyDoDoiTra, hinhThucXuLy) VALUES
     ('DMDT01', 'DMHD01', N'Khách báo phụ tùng không phù hợp.', N'Đổi phụ tùng'),
     ('DMDT02', 'DMHD02', N'Khách yêu cầu kiểm tra lại má phanh.', N'Kiểm tra lại'),
