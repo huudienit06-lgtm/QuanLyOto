@@ -103,6 +103,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Lập phiếu sửa chữa");
 			return;
 		}
+		if ("Bàn giao xe".equals(featureName)) {
+			setContent(new FrmBanGiaoXe());
+			lblStatus.setText("Bàn giao xe");
+			return;
+		}
 		lblStatus.setText("Đã chọn: " + featureName);
 	}
 
