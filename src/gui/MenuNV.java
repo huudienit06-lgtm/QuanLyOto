@@ -27,7 +27,7 @@ public class MenuNV extends JMenuBar {
 		themItem(mnuUpdate, "Cập nhật khách hàng", "Cập nhật xe",
 				"Cập nhật phụ tùng", "Cập nhật dịch vụ");
 		themItem(mnuProcess, "Tiếp nhận xe", "Kiểm tra xe", "Lập phiếu sửa chữa",
-				"Xuất phụ tùng", "Lập hóa đơn", "Thanh toán",
+				"Nhập/Xuất phụ tùng", "Lập hóa đơn", "Thanh toán",
 				"Bàn giao xe");
 		themItem(mnuSearch, "Khách hàng", "Xe", "Lịch sử sửa chữa", "Phiếu tiếp nhận",
 				"Phiếu sửa chữa", "Hóa đơn", "Phụ tùng");

@@ -108,6 +108,12 @@ public abstract class BaseDAO<T> {
     }
 
     public boolean insert(T entity) throws SQLException {
+        try (Connection connection = openConnection()) {
+            return insert(connection, entity);
+        }
+    }
+
+    protected boolean insert(Connection connection, T entity) throws SQLException {
         List<Field> insertFields = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (Field field : fields) {
@@ -129,8 +135,7 @@ public abstract class BaseDAO<T> {
                 .collect(Collectors.joining(", "));
         String sql = "INSERT INTO " + quote(tableName) + " (" + columns + ") VALUES (" + placeholders + ")";
 
-        try (Connection connection = openConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             bindValues(statement, values.toArray(), 1);
             return statement.executeUpdate() > 0;
         }

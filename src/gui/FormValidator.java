@@ -19,7 +19,7 @@ public final class FormValidator {
     public static final String REGEX_NGAY_ISO = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
     public static final String REGEX_GIO = "^[0-9]{2}:[0-9]{2}$";
 
-    private static final Pattern MA_DINH_DANH_PATTERN = Pattern.compile(REGEX_MA_DINH_DANH);
+    // private static final Pattern MA_DINH_DANH_PATTERN = Pattern.compile(REGEX_MA_DINH_DANH);
     private static final Pattern HO_TEN_PATTERN = Pattern.compile(REGEX_HO_TEN);
     private static final Pattern SO_DIEN_THOAI_PATTERN = Pattern.compile(REGEX_SO_DIEN_THOAI);
     private static final Pattern EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
