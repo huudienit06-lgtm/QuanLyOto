@@ -27,13 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-
-/**
- * Màn hình Quản lý Phụ Tùng
- * Chuẩn hóa giao diện theo FrmXe và tích hợp trực tiếp tầng DAO xử lý sự kiện
- */
-public class FrmPhuTung extends JPanel {
-
+ class FrmPhuTung extends JPanel {
     // Hệ màu chuẩn giao diện Gara
     private static final Color COLOR_BG_MAIN = new Color(244, 247, 252);
     private static final Color COLOR_PANEL_BG = Color.WHITE;
@@ -266,7 +260,7 @@ public class FrmPhuTung extends JPanel {
 
         return panel;
     }
-    // 3. LOGIC XỬ LÝ SỰ KIỆN VÀ DAO BINDING
+    // 3. LOGIC
     private void setupViewLogic() {
         // Đổ dữ liệu từ Bảng lên Form khi click chọn dòng
         tblPhuTung.getSelectionModel().addListSelectionListener(e -> {
@@ -322,7 +316,7 @@ public class FrmPhuTung extends JPanel {
             }
         });
 
-        // 3. Nút Xóa Phụ Tùng (Có Popup xác nhận)
+        // 3. Nút Xóa Phụ Tùng
         btnXoa.addActionListener(e -> {
             int row = tblPhuTung.getSelectedRow();
             if (row >= 0) {
@@ -394,7 +388,7 @@ public class FrmPhuTung extends JPanel {
             lblTrangThaiTai.setText("Tìm thấy " + count + " phụ tùng thỏa mãn");
         });
     }
-    // 4. CÁC HÀM TIỆN ÍCH, VALIDATION & NẠP DỮ LIỆU TỪ DAO
+    // 4.VALIDATION & NẠP DỮ LIỆU TỪ DAO
     private void napDanhSachPhuTung() {
         List<PhuTung> list = phuTungDAO.layTatCaPhuTung();
         modelPhuTung.setRowCount(0);
@@ -465,10 +459,7 @@ public class FrmPhuTung extends JPanel {
         btnCapNhat.setEnabled(false);
         btnXoa.setEnabled(false);
     }
-
-    /**
-     * Hàm kiểm tra tính hợp lệ dữ liệu (Data Validation)
-     */
+    /* Hàm kiểm tra tính hợp lệ dữ liệu (Data Validation) */
     private boolean kiemTraDuLieu() {
         if (txtMaPT.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập Mã phụ tùng!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
