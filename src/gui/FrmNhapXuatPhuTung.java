@@ -1,12 +1,11 @@
 package gui;
 
-import dao.PhuTungDAO;
 import dao.PhieuNhapXuatKhoDAO;
-import entity.PhuTung;
-import entity.PhieuNhapXuatKho;
+import dao.PhuTungDAO;
 import entity.ChiTietPhieuNhap;
+import entity.PhieuNhapXuatKho;
+import entity.PhuTung;
 import entity.TaiKhoan;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -81,7 +80,7 @@ public class FrmNhapXuatPhuTung extends JPanel {
 
     // Bắt buộc khởi tạo Form với tài khoản đăng nhập để lưu DB
    // SỬA LẠI HÀM KHỞI TẠO NÀY TRONG FrmNhapXuatPhuTung.java
-    public FrmNhapXuatPhuTung(TaiKhoan taiKhoan) {
+    public FrmNhapXuatPhuTung ( TaiKhoan taiKhoan) {
         // NẾU BÊN NGOÀI TRUYỀN NULL VÀO, TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN GIẢ ĐỂ CHỐNG LỖI
         if (taiKhoan == null) {
             this.taiKhoanHienTai = new TaiKhoan();

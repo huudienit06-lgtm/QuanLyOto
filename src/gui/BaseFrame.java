@@ -1,5 +1,6 @@
 package gui;
 
+import entity.TaiKhoan;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,8 +12,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-
-import entity.TaiKhoan;
 
 public class BaseFrame extends JFrame {
 	private static final Color PALE_BLUE = new Color(242, 247, 255);
@@ -64,25 +63,19 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Phụ tùng".equals(featureName) || "Cập nhật phụ tùng".equals(featureName)) {
-
             setContent(new FrmPhuTung());
             lblStatus.setText("Quản lý phụ tùng");
             return;
         }
-		if ("Nhập phụ tùng".equals(featureName)) {
+		if ("Nhập phụ tùng".equals(featureName)|| "Xuất phụ tùng".equals(featureName)) {
 			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
             lblStatus.setText("Lập phiếu nhập kho phụ tùng");
-            return;
-        }
-		if ("Xuất phụ tùng".equals(featureName)) {
-			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
-            lblStatus.setText("Lập phiếu xuất kho phục vụ sửa chữa & bán lẻ");
             return;
         }
 		if ("Phụ tùng tồn kho".equals(featureName)) {
 			setContent(new FrmThongKeTonKho());
 			lblStatus.setText("Thống kê tồn kho phụ tùng");
-        return;
+        	return;
     }
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
 			setContent(new FrmHoaDon());

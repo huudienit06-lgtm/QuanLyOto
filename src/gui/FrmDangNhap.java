@@ -213,7 +213,8 @@ public class FrmDangNhap extends JPanel {
 		if (trangThaiChuanHoa.contains("hoat") && trangThaiChuanHoa.contains("dong")) {
 			return true;
 		}
-		return false;
+
+		return false;
 	}
 
 	private String chuanHoa(String giaTri) {
@@ -223,6 +224,7 @@ public class FrmDangNhap extends JPanel {
 		return Normalizer.normalize(giaTri, Normalizer.Form.NFD)
 				.replaceAll("\\p{M}", "")
 				.toLowerCase()
+				.replace('đ', 'd')
 				.trim();
 	}
 }
