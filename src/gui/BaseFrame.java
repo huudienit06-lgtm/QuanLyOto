@@ -63,11 +63,11 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Phụ tùng".equals(featureName) || "Cập nhật phụ tùng".equals(featureName)) {
-            setContent(new FrmPhuTung());
-            lblStatus.setText("Quản lý phụ tùng");
-            return;
-        }
-		if ("Nhập phụ tùng".equals(featureName)|| "Xuất phụ tùng".equals(featureName)) {
+			setContent(new FrmPhuTung());
+			lblStatus.setText("Quản lý phụ tùng");
+			return;
+		}
+		if ("Nhập/Xuất phụ tùng".equals(featureName)) {
 			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
             lblStatus.setText("Lập phiếu nhập kho phụ tùng");
             return;
@@ -80,6 +80,16 @@ public class BaseFrame extends JFrame {
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
 			setContent(new FrmHoaDon());
 			lblStatus.setText("Lập hóa đơn");
+			return;
+		}
+		if ("Dịch vụ sửa chữa".equals(featureName)) {
+			setContent(new FrmDichVu());
+			lblStatus.setText("Dịch vụ sửa chữa");
+			return;
+		}
+		if ("Lập phiếu sửa chữa".equals(featureName)) {
+			setContent(new FrmPhieuSuaChua());
+			lblStatus.setText("Lập phiếu sửa chữa");
 			return;
 		}
 		lblStatus.setText("Đã chọn: " + featureName);
@@ -107,24 +117,6 @@ public class BaseFrame extends JFrame {
 		repaint();
 	}
 
-	// private JPanel createTitleBar() {
-	// 	JPanel pnlTitleBar = new JPanel(new GridBagLayout());
-	// 	pnlTitleBar.setBackground(Color.WHITE);
-	// 	pnlTitleBar.setBorder(BorderFactory.createCompoundBorder(
-	// 			BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 230, 244)),
-	// 			new EmptyBorder(8, 20, 8, 20)));
-	// 	pnlTitleBar.setPreferredSize(new Dimension(0, 64));
-
-	// 	JLabel lblTitle = new JLabel("Quản Lý Gara Oto", SwingConstants.CENTER);
-	// 	lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-	// 	lblTitle.setForeground(new Color(32, 55, 92));
-	// 	GridBagConstraints gbcTitle = new GridBagConstraints();
-	// 	gbcTitle.gridx = 0;
-	// 	gbcTitle.gridy = 0;
-	// 	gbcTitle.anchor = GridBagConstraints.CENTER;
-	// 	pnlTitleBar.add(lblTitle, gbcTitle);
-	// 	return pnlTitleBar;
-	// }
 
 	private JPanel createWorkspace() {
 		JPanel pnlWorkspace = new JPanel(new BorderLayout(0, 20));

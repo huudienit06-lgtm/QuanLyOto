@@ -27,7 +27,7 @@ public final class MainMenu extends JMenuBar {
 				"Cập nhật nhân viên", "Cập nhật phụ tùng", "Cập nhật giá phụ tùng",
 				"Cập nhật dịch vụ", "Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
 		addItems(frame, mnuProcess, "Tiếp nhận xe", "Kiểm tra xe", "Lập phiếu sửa chữa",
-				"Nhập phụ tùng", "Xuất phụ tùng", "Lập hóa đơn",
+				"Nhập/Xuất phụ tùng", "Lập hóa đơn",
 				"Thanh toán", "Quản lý công nợ", "Bàn giao xe");
 		addItems(frame, mnuSearch, "Khách hàng", "Xe", "Lịch sử sửa chữa",
 				"Phiếu tiếp nhận", "Phiếu sửa chữa", "Hóa đơn", "Phụ tùng", "Nhân viên");

@@ -55,6 +55,26 @@ public class LichLamViecDAO extends BaseDAO<LichLamViec> {
         }
     }
 
+    public boolean daTrungPhanCong(String maCa, String maNV, LocalDate ngayLamViec,
+            String maLichBoQua) throws SQLException {
+        String sql = "SELECT 1 FROM LichLamViec WHERE maCa = ? AND maNV = ? AND ngayLamViec = ?";
+        if (maLichBoQua != null) {
+            sql += " AND maLich <> ?";
+        }
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, maCa);
+            statement.setString(2, maNV);
+            statement.setDate(3, Date.valueOf(ngayLamViec));
+            if (maLichBoQua != null) {
+                statement.setString(4, maLichBoQua);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
     public boolean capNhatPhanCong(String maLich, String maCa, String maNV, LocalDate ngayLamViec)
             throws SQLException {
         String sql = "UPDATE LichLamViec SET maCa = ?, maNV = ?, ngayLamViec = ? WHERE maLich = ?";

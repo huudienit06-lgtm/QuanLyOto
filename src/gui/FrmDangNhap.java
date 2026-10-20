@@ -51,11 +51,11 @@ public class FrmDangNhap extends JPanel {
 		JPanel pnlHeader = new JPanel(new BorderLayout(0, 7));
 		pnlHeader.setBackground(BLUE);
 		pnlHeader.setBorder(new EmptyBorder(24, 30, 22, 30));
-		JLabel lblTitle = new JLabel("ĐĂNG NHẬP", SwingConstants.CENTER);
-		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 23));
+		JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÍ GARA OTO", SwingConstants.CENTER);
+		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 21));
 		lblTitle.setForeground(Color.WHITE);
-		JLabel lblSubtitle = new JLabel("Hệ thống quản lý gara ô tô", SwingConstants.CENTER);
-		lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		JLabel lblSubtitle = new JLabel("Đăng Nhập", SwingConstants.CENTER);
+		lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
 		lblSubtitle.setForeground(new Color(225, 235, 255));
 		pnlHeader.add(lblTitle, BorderLayout.CENTER);
 		pnlHeader.add(lblSubtitle, BorderLayout.SOUTH);

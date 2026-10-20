@@ -70,6 +70,9 @@ public class FrmCaLamViec extends JPanel {
     private final JTable tblDiemDanh = FormUI.createTable(modelDiemDanh);
     private final AppComboBox<String> cboNhanVien = new AppComboBox<>();
     private final AppComboBox<String> cboCaLamViec = new AppComboBox<>();
+    private final AppButton btnThem = new AppButton("Thêm phân công");
+    private final AppButton btnSua = new AppButton("Sửa phân công", AppButton.Style.SUCCESS);
+    private final AppButton btnXoa = new AppButton("Xóa phân công", AppButton.Style.DANGER);
     private final DatePickerPanel pnlChonNgayLamViec = new DatePickerPanel(
             LocalDate.now(), this::chonNgayLamViec);
     private final JLabel lblCaHienTai = new AppLabel("", AppLabel.Style.BODY);
@@ -133,13 +136,11 @@ public class FrmCaLamViec extends JPanel {
         FormUI.addField(pnlFields, "Ca làm việc", cboCaLamViec, 2, 0);
         FormUI.addField(pnlFields, "Ngày làm việc", pnlChonNgayLamViec, 0, 1);
 
-        AppButton btnThem = new AppButton("Thêm phân công");
-        AppButton btnSua = new AppButton("Sửa phân công", AppButton.Style.SUCCESS);
-        AppButton btnXoa = new AppButton("Xóa phân công", AppButton.Style.DANGER);
         AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
         btnThem.addActionListener(event -> themPhanCong());
         btnSua.addActionListener(event -> capNhatPhanCong());
         btnXoa.addActionListener(event -> xoaPhanCong());
+        capNhatTrangThaiNutPhanCong();
         btnLamMoi.addActionListener(event -> lamMoiPhanCong());
         JPanel pnlButtons = FormUI.createButtonRow(
                 btnThem, btnSua, btnXoa, btnLamMoi);
@@ -192,6 +193,7 @@ public class FrmCaLamViec extends JPanel {
             ngayDauTuan = dauTuanChon;
             capNhatTuan(ngayChon);
         }
+        capNhatTrangThaiNutPhanCong();
     }
 
     private JPanel createDiemDanhCard() {
@@ -229,13 +231,15 @@ public class FrmCaLamViec extends JPanel {
         tblLichTuan.addMouseWheelListener(event -> chuyenCuonRaTrangNeuCan(tblLichTuan, event));
         tblLichTuan.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting()) {
-                chonPhanCongTuBang();
+                chonOTrongLich();
             }
         });
         tblLichTuan.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent event) {
-                chonPhanCongTuBang();
+                if (event.getClickCount() == 2) {
+                    chonPhanCongDeSua();
+                }
             }
         });
     }
@@ -282,13 +286,24 @@ public class FrmCaLamViec extends JPanel {
     private void themPhanCong() {
         String maCa = layMaCaDuocChon();
         String maNV = layMaNhanVienDuocChon();
+        if (ngayLamViecTrongQuaKhu()) {
+            hienThiCanhBaoNgayQuaKhu();
+            return;
+        }
         if (maCa == null || maNV == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên và ca làm việc.",
                     "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        String maLich = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
         try {
+            if (lichLamViecDAO.daTrungPhanCong(
+                    maCa, maNV, pnlChonNgayLamViec.getSelectedDate(), null)) {
+                JOptionPane.showMessageDialog(this,
+                        "Nhân viên này đã được xếp vào ca đã chọn trong ngày này.",
+                        "Phân công bị trùng", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String maLich = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
             if (lichLamViecDAO.themPhanCong(maLich, maCa, maNV, pnlChonNgayLamViec.getSelectedDate())) {
                 napPhanCongTuan();
                 lblTrangThaiDiemDanh.setText("Đã thêm phân công.");
@@ -301,12 +316,23 @@ public class FrmCaLamViec extends JPanel {
     private void capNhatPhanCong() {
         String maCa = layMaCaDuocChon();
         String maNV = layMaNhanVienDuocChon();
+        if (ngayLamViecTrongQuaKhu()) {
+            hienThiCanhBaoNgayQuaKhu();
+            return;
+        }
         if (maLichDangChon == null || maCa == null || maNV == null) {
             JOptionPane.showMessageDialog(this, "Chọn một phân công trên lịch và kiểm tra thông tin cần sửa.",
                     "Chưa chọn phân công", JOptionPane.WARNING_MESSAGE);
             return;
         }
         try {
+            if (lichLamViecDAO.daTrungPhanCong(
+                    maCa, maNV, pnlChonNgayLamViec.getSelectedDate(), maLichDangChon)) {
+                JOptionPane.showMessageDialog(this,
+                        "Nhân viên này đã được xếp vào ca đã chọn trong ngày này.",
+                        "Phân công bị trùng", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             if (lichLamViecDAO.capNhatPhanCong(maLichDangChon, maCa, maNV,
                     pnlChonNgayLamViec.getSelectedDate())) {
                 napPhanCongTuan();
@@ -318,6 +344,10 @@ public class FrmCaLamViec extends JPanel {
     }
 
     private void xoaPhanCong() {
+        if (ngayLamViecTrongQuaKhu()) {
+            hienThiCanhBaoNgayQuaKhu();
+            return;
+        }
         if (maLichDangChon == null) {
             JOptionPane.showMessageDialog(this, "Chọn một phân công trên lịch trước khi xóa.",
                     "Chưa chọn phân công", JOptionPane.WARNING_MESSAGE);
@@ -342,6 +372,7 @@ public class FrmCaLamViec extends JPanel {
         maLichDangChon = null;
         cboNhanVien.setSelectedIndex(0);
         cboCaLamViec.setSelectedIndex(0);
+        capNhatTrangThaiNutPhanCong();
         napPhanCongTuan();
         capNhatCaHienTai();
     }
@@ -361,14 +392,31 @@ public class FrmCaLamViec extends JPanel {
         return separator > 0 ? selected.substring(0, separator) : null;
     }
 
-    private void chonPhanCongTuBang() {
+    private void chonOTrongLich() {
         int row = tblLichTuan.getSelectedRow();
         int column = tblLichTuan.getSelectedColumn();
         if (row < 0 || column < 1 || column > 7 || row >= danhSachCa.size()) {
             return;
         }
-        String maCa = danhSachCa.get(row).getMaCa();
         LocalDate ngay = ngayDauTuan.plusDays(column - 1);
+        maLichDangChon = null;
+        cboNhanVien.setSelectedIndex(0);
+        pnlChonNgayLamViec.setSelectedDate(ngay);
+        cboCaLamViec.setSelectedIndex(row + 1);
+        capNhatTrangThaiNutPhanCong();
+    }
+
+    private void chonPhanCongDeSua() {
+        int row = tblLichTuan.getSelectedRow();
+        int column = tblLichTuan.getSelectedColumn();
+        if (row < 0 || column < 1 || column > 7 || row >= danhSachCa.size()) {
+            return;
+        }
+        LocalDate ngay = ngayDauTuan.plusDays(column - 1);
+        if (ngay.isBefore(LocalDate.now())) {
+            return;
+        }
+        String maCa = danhSachCa.get(row).getMaCa();
         List<PhanCong> cacPhanCong = phanCongTuan.stream()
                 .filter(phanCong -> phanCong.maCa().equals(maCa) && phanCong.ngayLamViec().equals(ngay))
                 .toList();
@@ -401,6 +449,7 @@ public class FrmCaLamViec extends JPanel {
                 break;
             }
         }
+        capNhatTrangThaiNutPhanCong();
     }
 
     private void napDiemDanh() {
@@ -452,6 +501,23 @@ public class FrmCaLamViec extends JPanel {
     private void hienThiLoiCSDL(String thongBao, Exception exception) {
         JOptionPane.showMessageDialog(this, thongBao + "\n" + exception.getMessage(),
                 "Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private boolean ngayLamViecTrongQuaKhu() {
+        return pnlChonNgayLamViec.getSelectedDate().isBefore(LocalDate.now());
+    }
+
+    private void capNhatTrangThaiNutPhanCong() {
+        boolean ngayDuocSua = !ngayLamViecTrongQuaKhu();
+        btnThem.setEnabled(ngayDuocSua);
+        btnSua.setEnabled(ngayDuocSua && maLichDangChon != null);
+        btnXoa.setEnabled(ngayDuocSua && maLichDangChon != null);
+    }
+
+    private void hienThiCanhBaoNgayQuaKhu() {
+        JOptionPane.showMessageDialog(this,
+                "Không thể thêm, sửa hoặc xóa phân công của ngày đã qua.",
+                "Không thể cập nhật", JOptionPane.WARNING_MESSAGE);
     }
 
     private void capNhatTuan(LocalDate ngayDuocChon) {
@@ -697,7 +763,7 @@ public class FrmCaLamViec extends JPanel {
         }
     }
 
-    private static final class LichCaCellRenderer extends DefaultTableCellRenderer {
+    private final class LichCaCellRenderer extends DefaultTableCellRenderer {
         private final JTextArea txaNhanVien = new JTextArea();
         private int caHienTai = -1;
         private int cotNgayHienTai = -1;
@@ -722,6 +788,8 @@ public class FrmCaLamViec extends JPanel {
             String text = value == null ? "" : value.toString();
             boolean laCaHienTai = row == caHienTai;
             boolean laNgayHienTai = column == cotNgayHienTai;
+            boolean laNgayQuaKhu = column > 0
+                    && ngayDauTuan.plusDays(column - 1L).isBefore(LocalDate.now());
 
             if (column == 0) {
                 JLabel lblCa = (JLabel) super.getTableCellRendererComponent(
@@ -741,7 +809,9 @@ public class FrmCaLamViec extends JPanel {
             }
 
             txaNhanVien.setText(text);
-            if (isSelected) {
+            if (laNgayQuaKhu) {
+                txaNhanVien.setBackground(new Color(232, 232, 232));
+            } else if (isSelected) {
                 txaNhanVien.setBackground(UIConfig.COLOR_SELECTION);
             } else if (laCaHienTai && laNgayHienTai) {
                 txaNhanVien.setBackground(new Color(207, 241, 220));
@@ -750,7 +820,7 @@ public class FrmCaLamViec extends JPanel {
             } else {
                 txaNhanVien.setBackground(Color.WHITE);
             }
-            txaNhanVien.setForeground(CHUA_PHAN_CONG.equals(text)
+            txaNhanVien.setForeground(laNgayQuaKhu || CHUA_PHAN_CONG.equals(text)
                     ? UIConfig.COLOR_MUTED
                     : UIConfig.COLOR_TEXT);
             txaNhanVien.setBorder(BorderFactory.createEmptyBorder(7, 8, 7, 8));
