@@ -12,11 +12,14 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import entity.TaiKhoan;
+
 public class BaseFrame extends JFrame {
 	private static final Color PALE_BLUE = new Color(242, 247, 255);
 	private static final Color MUTED = new Color(112, 128, 150);
 	private final JLabel lblStatus = new JLabel("Sẵn sàng");
 	private JPanel pnlCurrentContent;
+	private TaiKhoan taiKhoanDangNhap;
 
 	public BaseFrame() {
 		this("Quản Lý Gara Oto");
@@ -65,6 +68,26 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý phụ tùng");
 			return;
 		}
+
+            setContent(new FrmPhuTung());
+            lblStatus.setText("Quản lý phụ tùng");
+            return;
+        }
+		if ("Nhập phụ tùng".equals(featureName)) {
+			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
+            lblStatus.setText("Lập phiếu nhập kho phụ tùng");
+            return;
+        }
+		if ("Xuất phụ tùng".equals(featureName)) {
+			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
+            lblStatus.setText("Lập phiếu xuất kho phục vụ sửa chữa & bán lẻ");
+            return;
+        }
+		if ("Phụ tùng tồn kho".equals(featureName)) {
+			setContent(new FrmThongKeTonKho());
+			lblStatus.setText("Thống kê tồn kho phụ tùng");
+        return;
+    }
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
 			setContent(new FrmHoaDon());
 			lblStatus.setText("Lập hóa đơn");
