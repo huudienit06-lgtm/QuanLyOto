@@ -1,4 +1,6 @@
 CREATE DATABASE a1
+GO
+
 USE a1
 GO
 --
@@ -110,6 +112,7 @@ CREATE TABLE PhieuSuaChua (
     maNV VARCHAR(20) NOT NULL,
     ngayBatDau DATETIME,
     ngayHoanThanhDuKien DATETIME,
+    trangThai NVARCHAR(20) NOT NULL CONSTRAINT DF_PSC_trangThai DEFAULT N'Chờ sửa chữa',
     CONSTRAINT FK_PSC_PKT FOREIGN KEY (maPhieuKiemTra) REFERENCES PhieuKiemTra(maPhieuKiemTra),
     CONSTRAINT FK_PSC_Xe FOREIGN KEY (maXe) REFERENCES Xe(maXe),
     CONSTRAINT FK_PSC_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
@@ -120,13 +123,15 @@ CREATE TABLE ChiTietPhieuSuaChua (
     maPhieuSuaChua VARCHAR(20) NOT NULL,
     maPhuTung VARCHAR(20) NOT NULL,
     maDV VARCHAR(20) NOT NULL,
+    maNV VARCHAR(20) NOT NULL,
     soLuong INT DEFAULT 1,
     donGia DECIMAL(18,2),
     tienCong DECIMAL(18,2),
     PRIMARY KEY (maPhieuSuaChua, maDV), -- Khóa chính phức hợp gồm mã phiếu sửa chữa và mã dịch vụ
     CONSTRAINT FK_CTPSC_PhieuSuaChua FOREIGN KEY (maPhieuSuaChua) REFERENCES PhieuSuaChua(maPhieuSuaChua) ON DELETE CASCADE,
     CONSTRAINT FK_CTPSC_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung),
-    CONSTRAINT FK_CTPSC_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV)
+    CONSTRAINT FK_CTPSC_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
+    CONSTRAINT FK_CTPSC_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV)
 );
 
 CREATE TABLE ChuongTrinhKhuyenMai (
@@ -216,4 +221,3 @@ CREATE TABLE ChiTietPhieuNhap (
     CONSTRAINT FK_CTPN_PhieuNhapXuat FOREIGN KEY (maPhieuNhapXuat) REFERENCES PhieuNhapXuatKho(maPhieuNhapXuat) ON DELETE CASCADE,
     CONSTRAINT FK_CTPN_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung)
 );
-

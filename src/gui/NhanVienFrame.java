@@ -160,7 +160,7 @@ public class NhanVienFrame extends JFrame {
 		});
 		addMenu(mnbMain, "Xử lý", MenuIcon.Type.TOOL, new String[][] {
 			{"Tiếp nhận xe", "CAR"}, {"Kiểm tra xe", "SEARCH"},
-			{"Lập phiếu sửa chữa", "DOCUMENT"}, {"Phân công sửa chữa", "USERS"},
+			{"Lập phiếu sửa chữa", "DOCUMENT"},
 			{"Xuất phụ tùng", "PART"},
 			{"Lập hóa đơn", "DOCUMENT"}, {"Thanh toán", "MONEY"},
 			{"Bàn giao xe", "KEY"}
@@ -173,7 +173,7 @@ public class NhanVienFrame extends JFrame {
 		addMenu(mnbMain, "Báo biểu/thống kê", MenuIcon.Type.CHART, new String[][] {
 			{"Doanh thu", "MONEY"}, {"Sửa chữa", "TOOL"}, {"Khách hàng", "USER"},
 			{"Phụ tùng tồn kho", "PART"}, {"Công nợ", "MONEY"},
-			{"Hiệu suất nhân viên", "CHART"}, {"Số lượng xe sửa chữa", "CAR"}
+			{"Số lượng xe sửa chữa", "CAR"}
 		
 		});
 		return mnbMain;

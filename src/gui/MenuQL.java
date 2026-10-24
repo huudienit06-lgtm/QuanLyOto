@@ -30,12 +30,12 @@ public class MenuQL extends JMenuBar {
 				"Cập nhật phụ tùng", "Cập nhật giá phụ tùng", "Cập nhật dịch vụ",
 				"Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
 		themItem(mnuProcess, "Tiếp nhận xe", "Kiểm tra xe", "Lập phiếu sửa chữa",
-				"Phân công sửa chữa", "Nhập phụ tùng", "Xuất phụ tùng", "Lập hóa đơn",
+				"Nhập phụ tùng", "Xuất phụ tùng", "Lập hóa đơn",
 				"Thanh toán", "Quản lý công nợ", "Bàn giao xe");
 		themItem(mnuSearch, "Khách hàng", "Xe", "Lịch sử sửa chữa", "Phiếu tiếp nhận",
-				"Phiếu sửa chữa", "Hóa đơn", "Phụ tùng", "Nhân viên");
+				"Phiếu sửa chữa", "Hóa đơn", "Phụ tùng", "Tìm kiếm nhân viên");
 		themItem(mnuReports, "Doanh thu", "Sửa chữa", "Khách hàng", "Phụ tùng tồn kho",
-				"Công nợ", "Hiệu suất nhân viên", "Số lượng xe sửa chữa", "Báo cáo tổng hợp");
+				"Công nợ", "Số lượng xe sửa chữa", "Báo cáo tổng hợp");
 
 		MenuBarSupport.configure(this,
 				new JMenu[] {mnuSystem, mnuCatalog, mnuUpdate, mnuProcess, mnuSearch, mnuReports},

@@ -6,6 +6,7 @@ public class ChiTietPhieuSuaChua {
     private String maPhieuSuaChua;
     private String maPhuTung;
     private String maDV;
+    private String maNV;
     private Integer soLuong;
     private BigDecimal donGia;
     private BigDecimal tienCong;
@@ -19,6 +20,8 @@ public class ChiTietPhieuSuaChua {
     public void setMaPhuTung(String maPhuTung) { this.maPhuTung = maPhuTung; }
     public String getMaDV() { return maDV; }
     public void setMaDV(String maDV) { this.maDV = maDV; }
+    public String getMaNV() { return maNV; }
+    public void setMaNV(String maNV) { this.maNV = maNV; }
     public Integer getSoLuong() { return soLuong; }
     public void setSoLuong(Integer soLuong) { this.soLuong = soLuong; }
     public BigDecimal getDonGia() { return donGia; }

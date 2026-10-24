@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -30,12 +28,12 @@ public class BaseFrame extends JFrame {
 	protected BaseFrame(String title) {
 		super(title);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setMinimumSize(new Dimension(1050, 650));
-		setSize(1220, 760);
+		setMinimumSize(new Dimension(1000, 750));
+		setSize(1220, 900);
 		setLocationRelativeTo(null);
 		getContentPane().setBackground(Color.WHITE);
 		setJMenuBar(MainMenu.create(this));
-		add(createTitleBar(), BorderLayout.NORTH);
+		// add(createTitleBar(), BorderLayout.NORTH);
 		setContent(new FrmDangNhap(this));
 		add(createStatusBar(), BorderLayout.SOUTH);
 	}
@@ -43,6 +41,21 @@ public class BaseFrame extends JFrame {
 	protected void onMenuAction(String featureName) {
 		if ("Đăng xuất".equals(featureName)) {
 			hienThiDangNhap();
+			return;
+		}
+		if ("Nhân viên".equals(featureName) || "Cập nhật nhân viên".equals(featureName)) {
+			setContent(new FrmNhanVien());
+			lblStatus.setText("Quản lý nhân viên");
+			return;
+		}
+		if ("Ca làm việc".equals(featureName)) {
+			setContent(new FrmCaLamViec());
+			lblStatus.setText("Quản lý ca làm việc");
+			return;
+		}
+		if ("Báo cáo tổng hợp".equals(featureName)) {
+			setContent(new FrmBaoCaoTongHop());
+			lblStatus.setText("Báo cáo tổng hợp");
 			return;
 		}
 		if ("Xe".equals(featureName) || "Cập nhật xe".equals(featureName)) {
@@ -101,24 +114,24 @@ public class BaseFrame extends JFrame {
 		repaint();
 	}
 
-	private JPanel createTitleBar() {
-		JPanel pnlTitleBar = new JPanel(new GridBagLayout());
-		pnlTitleBar.setBackground(Color.WHITE);
-		pnlTitleBar.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 230, 244)),
-				new EmptyBorder(8, 20, 8, 20)));
-		pnlTitleBar.setPreferredSize(new Dimension(0, 64));
+	// private JPanel createTitleBar() {
+	// 	JPanel pnlTitleBar = new JPanel(new GridBagLayout());
+	// 	pnlTitleBar.setBackground(Color.WHITE);
+	// 	pnlTitleBar.setBorder(BorderFactory.createCompoundBorder(
+	// 			BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 230, 244)),
+	// 			new EmptyBorder(8, 20, 8, 20)));
+	// 	pnlTitleBar.setPreferredSize(new Dimension(0, 64));
 
-		JLabel lblTitle = new JLabel("Quản Lý Gara Oto", SwingConstants.CENTER);
-		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-		lblTitle.setForeground(new Color(32, 55, 92));
-		GridBagConstraints gbcTitle = new GridBagConstraints();
-		gbcTitle.gridx = 0;
-		gbcTitle.gridy = 0;
-		gbcTitle.anchor = GridBagConstraints.CENTER;
-		pnlTitleBar.add(lblTitle, gbcTitle);
-		return pnlTitleBar;
-	}
+	// 	JLabel lblTitle = new JLabel("Quản Lý Gara Oto", SwingConstants.CENTER);
+	// 	lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+	// 	lblTitle.setForeground(new Color(32, 55, 92));
+	// 	GridBagConstraints gbcTitle = new GridBagConstraints();
+	// 	gbcTitle.gridx = 0;
+	// 	gbcTitle.gridy = 0;
+	// 	gbcTitle.anchor = GridBagConstraints.CENTER;
+	// 	pnlTitleBar.add(lblTitle, gbcTitle);
+	// 	return pnlTitleBar;
+	// }
 
 	private JPanel createWorkspace() {
 		JPanel pnlWorkspace = new JPanel(new BorderLayout(0, 20));

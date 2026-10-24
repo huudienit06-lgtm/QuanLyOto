@@ -10,6 +10,7 @@ public class PhieuSuaChua {
     private String maNV;
     private Timestamp ngayBatDau;
     private Timestamp ngayHoanThanhDuKien;
+    private String trangThai;
 
     public PhieuSuaChua() {
     }
@@ -28,4 +29,6 @@ public class PhieuSuaChua {
     public void setNgayBatDau(Timestamp ngayBatDau) { this.ngayBatDau = ngayBatDau; }
     public Timestamp getNgayHoanThanhDuKien() { return ngayHoanThanhDuKien; }
     public void setNgayHoanThanhDuKien(Timestamp ngayHoanThanhDuKien) { this.ngayHoanThanhDuKien = ngayHoanThanhDuKien; }
+    public String getTrangThai() { return trangThai; }
+    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
 }

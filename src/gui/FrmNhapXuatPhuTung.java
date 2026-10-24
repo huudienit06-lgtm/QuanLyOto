@@ -85,7 +85,7 @@ public class FrmNhapXuatPhuTung extends JPanel {
         // NẾU BÊN NGOÀI TRUYỀN NULL VÀO, TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN GIẢ ĐỂ CHỐNG LỖI
         if (taiKhoan == null) {
             this.taiKhoanHienTai = new TaiKhoan();
-            this.taiKhoanHienTai.setMaNV("NV001");          // Mã nhân viên mặc định trong SQL
+            this.taiKhoanHienTai.setMaNV("DMNV10");          // Mã nhân viên mặc định trong SQL
             this.taiKhoanHienTai.setHoTenNhanVien("Nhân viên Kho"); // Tên hiển thị lên ô Người lập
         } else {
             this.taiKhoanHienTai = taiKhoan;
@@ -360,13 +360,10 @@ public class FrmNhapXuatPhuTung extends JPanel {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn phụ tùng!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
             String ptInfo = cboPhuTung.getSelectedItem().toString();
             String maPT = ptInfo.contains(" - ") ? ptInfo.split(" - ")[0] : ptInfo;
             String tenPT = ptInfo.contains(" - ") ? ptInfo.split(" - ")[1] : ptInfo;
-            
             int soLuong = 0; int tonKho = 0; double donGia = 0;
-
             try {
                 if (!txtTonKho.getText().trim().isEmpty()) tonKho = Integer.parseInt(txtTonKho.getText().trim());
             } catch (Exception ex) { tonKho = 0; }
@@ -412,7 +409,6 @@ public class FrmNhapXuatPhuTung extends JPanel {
             if (!isMerged) {
                 modelChiTiet.addRow(new Object[]{ maPT, tenPT, soLuong, df.format(donGia), df.format(soLuong * donGia) });
             }
-
             capNhatTongTien();
             txtSoLuong.setText(""); cboPhuTung.requestFocus();
         });
@@ -420,18 +416,15 @@ public class FrmNhapXuatPhuTung extends JPanel {
         btnLuuPhieuNhap.addActionListener(e -> thucHienLuuGiaoDich(true));
         btnLuuPhieuXuat.addActionListener(e -> thucHienLuuGiaoDich(false));
     }
-
     private void thucHienLuuGiaoDich(boolean isNhap) {
         if (modelChiTiet.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Phiếu giao dịch chưa có hàng hóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
         if (taiKhoanHienTai == null || taiKhoanHienTai.getMaNV() == null) {
             JOptionPane.showMessageDialog(this, "Lỗi phiên đăng nhập. Vui lòng đăng nhập lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
         // 1. Ánh xạ Entity Master
         PhieuNhapXuatKho phieu = new PhieuNhapXuatKho();
         String maMoi = (isNhap ? "PN" : "PX") + System.currentTimeMillis();
@@ -439,11 +432,9 @@ public class FrmNhapXuatPhuTung extends JPanel {
         phieu.setMaNV(taiKhoanHienTai.getMaNV());
         phieu.setNgayLapPhieu(new java.sql.Timestamp(System.currentTimeMillis()));
         phieu.setKieuPhieu(isNhap ? "Nhập kho" : "Xuất kho");
-
         // 2. Ánh xạ Entity Detail nguyên bản 
         List<ChiTietPhieuNhap> dsChiTiet = new ArrayList<>();
         String ghiChuChung = txtGhiChu.getText().trim(); 
-
         for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
             ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
             ct.setMaPhieuNhapXuat(maMoi);

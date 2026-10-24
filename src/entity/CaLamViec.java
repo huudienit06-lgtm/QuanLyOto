@@ -9,7 +9,7 @@ public class CaLamViec {
 
     public CaLamViec() {
     }
-
+    
     public String getMaCa() { return maCa; }
     public void setMaCa(String maCa) { this.maCa = maCa; }
     public Time getGioBatDau() { return gioBatDau; }
