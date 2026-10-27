@@ -27,6 +27,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import util.MaTuDong;
 
 public class FrmBanGiaoXe extends JPanel {
     private final PhieuBanGiaoDAO phieuBanGiaoDAO = new PhieuBanGiaoDAO();
@@ -81,6 +82,7 @@ public class FrmBanGiaoXe extends JPanel {
         configureComponents();
         napDuLieuDanhMuc();
         napDanhSachPhieu();
+        lamMoiForm();
     }
 
     private JPanel createFormCard() {
@@ -88,7 +90,7 @@ public class FrmBanGiaoXe extends JPanel {
         pnlCard.setLayout(new BorderLayout(0, 10));
 
         JPanel pnlFields = FormUI.createFieldsPanel();
-        FormUI.addField(pnlFields, "Mã phiếu *", txtMaPhieuBanGiao, 0, 0);
+        FormUI.addField(pnlFields, "Mã phiếu (tự động)", txtMaPhieuBanGiao, 0, 0);
         FormUI.addField(pnlFields, "Xe bàn giao *", cboXe, 2, 0);
         FormUI.addField(pnlFields, "Mã khách hàng", txtMaKH, 0, 1);
         FormUI.addField(pnlFields, "Tên khách hàng", txtTenKhachHang, 2, 1);
@@ -163,6 +165,7 @@ public class FrmBanGiaoXe extends JPanel {
     }
 
     private void configureComponents() {
+        txtMaPhieuBanGiao.setEditable(false);
         txtMaPhieuBanGiao.setToolTipText("Mã phiếu duy nhất, ví dụ: PBG001");
         txtMaKH.setEditable(false);
         txtTenKhachHang.setEditable(false);
@@ -369,7 +372,16 @@ public class FrmBanGiaoXe extends JPanel {
     }
 
     private void lamMoiForm() {
-        txtMaPhieuBanGiao.setText("");
+        try {
+            txtMaPhieuBanGiao.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_PHIEU_BAN_GIAO,
+                    phieuBanGiaoDAO.findAll(),
+                    PhieuBanGiao::getMaPhieuBanGiao));
+        } catch (SQLException exception) {
+            txtMaPhieuBanGiao.setText("");
+            lblThongBao.setText("Không thể phát sinh mã phiếu bàn giao");
+            FormUI.showError("Không thể phát sinh mã phiếu bàn giao: " + exception.getMessage());
+        }
         if (cboXe.getItemCount() > 0) {
             cboXe.setSelectedIndex(0);
         }

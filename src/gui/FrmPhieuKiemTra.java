@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.border.EmptyBorder;
+import util.MaTuDong;
 
 public class FrmPhieuKiemTra extends JPanel {
     private final PhieuKiemTraDAO phieuKiemTraDAO = new PhieuKiemTraDAO();
@@ -71,6 +72,7 @@ public class FrmPhieuKiemTra extends JPanel {
         cauHinhThanhPhan();
         napDanhSachPhieuTiepNhan();
         napDanhSachPhieuKiemTra();
+        lamMoiForm();
     }
 
     private JPanel createHeading() {
@@ -116,7 +118,7 @@ public class FrmPhieuKiemTra extends JPanel {
         JLabel lblFormTitle = createSectionTitle("Thông tin phiếu kiểm tra");
         JPanel pnlFields = new JPanel(new GridBagLayout());
         pnlFields.setOpaque(false);
-        addField(pnlFields, "Mã phiếu kiểm tra *", txtMaPKT, 0, 0);
+        addField(pnlFields, "Mã phiếu kiểm tra (tự động)", txtMaPKT, 0, 0);
         addField(pnlFields, "Phiếu tiếp nhận *", cboMaPTN, 2, 0);
         addField(pnlFields, "Mã khách hàng", txtMaKH, 0, 1);
         addField(pnlFields, "Mã xe", txtMaXe, 2, 1);
@@ -270,6 +272,7 @@ public class FrmPhieuKiemTra extends JPanel {
     }
 
     private void cauHinhThanhPhan() {
+        txtMaPKT.setEditable(false);
         for (AppTextField txtField : new AppTextField[] {txtMaKH, txtMaXe, txtMaNV}) {
             txtField.setEditable(false);
             txtField.setBackground(UIConfig.COLOR_BACKGROUND);
@@ -450,13 +453,19 @@ public class FrmPhieuKiemTra extends JPanel {
         }
         txaTrangThai.setText(text(modelPhieuKiemTra.getValueAt(modelRow, 5)));
         txaVanDe.setText(text(modelPhieuKiemTra.getValueAt(modelRow, 6)));
-        txtMaPKT.setEditable(false);
         thongBao("Đang chọn phiếu kiểm tra " + txtMaPKT.getText());
     }
 
     private void lamMoiForm() {
-        txtMaPKT.setText("");
-        txtMaPKT.setEditable(true);
+        try {
+            txtMaPKT.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_PHIEU_KIEM_TRA,
+                    phieuKiemTraDAO.findAll(),
+                    PhieuKiemTra::getMaPhieuKiemTra));
+        } catch (SQLException exception) {
+            hienThiLoi("Không thể phát sinh mã phiếu kiểm tra: " + exception.getMessage());
+            txtMaPKT.setText("");
+        }
         if (cboMaPTN.getItemCount() > 0) {
             cboMaPTN.setSelectedIndex(0);
         } else {
