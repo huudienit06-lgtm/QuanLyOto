@@ -1,4 +1,10 @@
 {
-  "java.project.sourcePaths": ["src"],
-  "java.project.referencedLibraries": ["lib/flatlaf-3.6.2.jar", "lib/mssql-jdbc-13.6.0.jre11.jar"]
+  "java.project.sourcePaths": [
+    "src"
+  ],
+  "java.project.referencedLibraries": [
+    "lib/flatlaf-3.6.2.jar",
+    "lib/mssql-jdbc-13.6.0.jre11.jar",
+    "lib/**/*.jar"
+  ]
 }
