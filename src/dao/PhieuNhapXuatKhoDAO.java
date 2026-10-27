@@ -7,78 +7,110 @@ import connectDB.ConnectDB;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PhieuNhapXuatKhoDAO extends BaseDAO<PhieuNhapXuatKho> {
     
+    private final ChiTietPhieuNhapDAO chiTietDAO = new ChiTietPhieuNhapDAO();
+
     public PhieuNhapXuatKhoDAO() {
         super(PhieuNhapXuatKho.class, "PhieuNhapXuatKho", "maPhieuNhapXuat");
     }
+
+    public List<PhieuNhapXuatKho> layTatCaPhieu() {
+        try {
+            return findAll();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public List<ChiTietPhieuNhap> layChiTietPhieu(String maPhieuNhapXuat) {
+        try {
+            return chiTietDAO.findByField("maPhieuNhapXuat", maPhieuNhapXuat);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public double tinhTongTienPhieu(String maPhieuNhapXuat) {
+        List<ChiTietPhieuNhap> ds = layChiTietPhieu(maPhieuNhapXuat);
+        double tongTien = 0;
+        if (ds != null) {
+            for (ChiTietPhieuNhap ct : ds) {
+                if (ct.getSoLuong() != null && ct.getDonGia() != null) {
+                    tongTien += ct.getSoLuong() * ct.getDonGia();
+                }
+            }
+        }
+        return tongTien;
+    }
+
+    public boolean xoaPhieu(String maPhieuNhapXuat) {
+        try {
+            List<ChiTietPhieuNhap> dsChiTiet = layChiTietPhieu(maPhieuNhapXuat);
+            for (ChiTietPhieuNhap ct : dsChiTiet) {
+                chiTietDAO.deleteById(ct.getMaPhieuNhapXuat(), ct.getMaPhuTung());
+            }
+            return deleteById(maPhieuNhapXuat);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean luuGiaoDichKho(PhieuNhapXuatKho phieu, List<ChiTietPhieuNhap> chiTietList, boolean isNhapKho) {
         Connection con = null;
-        PreparedStatement stmtPhieu = null;
-        PreparedStatement stmtChiTiet = null;
-        PreparedStatement stmtCapNhatTon = null;
-
         try {
+            ConnectDB.getInstance().connect();
             con = ConnectDB.getConnection();
-            con.setAutoCommit(false); // Bật chế độ Transaction (Tắt tự động lưu)
+            if (con == null || con.isClosed()) return false;
 
-            // 1. LƯU THÔNG TIN PHIẾU
-            String sqlPhieu = "INSERT INTO PhieuNhapXuatKho (maPhieuNhapXuat, maNV, ngayLapPhieu, kieuPhieu) VALUES (?, ?, ?, ?)";
-            stmtPhieu = con.prepareStatement(sqlPhieu);
-            stmtPhieu.setString(1, phieu.getMaPhieuNhapXuat());
-            stmtPhieu.setString(2, phieu.getMaNV());
-            stmtPhieu.setTimestamp(3, phieu.getNgayLapPhieu());
-            stmtPhieu.setString(4, phieu.getKieuPhieu());
-            stmtPhieu.executeUpdate();
+            con.setAutoCommit(false);
 
-            // 2. LƯU CHI TIẾT VÀ CẬP NHẬT TỒN KHO
-            String sqlChiTiet = "INSERT INTO ChiTietPhieuNhap (maPhieuNhapXuat, maPhuTung, soLuong, donGia, ghiChu) VALUES (?, ?, ?, ?, ?)";
-            stmtChiTiet = con.prepareStatement(sqlChiTiet);
-
-            // Xác định phép toán (Nhập là cộng kho, Xuất là trừ kho)
-            String toanTu = isNhapKho ? "+" : "-";
-            String sqlCapNhatTon = "UPDATE PhuTung SET soLuongTon = soLuongTon " + toanTu + " ? WHERE maPhuTung = ?";
-            stmtCapNhatTon = con.prepareStatement(sqlCapNhatTon);
-
-            for (ChiTietPhieuNhap ct : chiTietList) {
-                // Thêm vào hàng đợi (Batch) của Chi Tiết
-                stmtChiTiet.setString(1, ct.getMaPhieuNhapXuat());
-                stmtChiTiet.setString(2, ct.getMaPhuTung());
-                stmtChiTiet.setInt(3, ct.getSoLuong());
-                stmtChiTiet.setDouble(4, ct.getDonGia());
-                stmtChiTiet.setString(5, ct.getGhiChu());
-                stmtChiTiet.addBatch();
-
-                // Thêm vào hàng đợi (Batch) của Cập nhật tồn kho
-                stmtCapNhatTon.setInt(1, ct.getSoLuong());
-                stmtCapNhatTon.setString(2, ct.getMaPhuTung());
-                stmtCapNhatTon.addBatch();
+            if (!insert(con, phieu)) {
+                throw new SQLException("Không thể lưu thông tin phiếu.");
             }
 
-            // Thực thi lưu hàng loạt cho tốc độ nhanh nhất
-            stmtChiTiet.executeBatch();
-            stmtCapNhatTon.executeBatch();
+            String sqlChiTiet = "INSERT INTO ChiTietPhieuNhap (maPhieuNhapXuat, maPhuTung, soLuong, donGia, ghiChu) VALUES (?, ?, ?, ?, ?)";
+            String sqlUpdateTon = "UPDATE PhuTung SET soLuongTon = soLuongTon " + (isNhapKho ? "+" : "-") + " ? WHERE maPhuTung = ?";
 
-            // 3. XÁC NHẬN LƯU VĨNH VIỄN
+            try (PreparedStatement stmtChiTiet = con.prepareStatement(sqlChiTiet);
+                 PreparedStatement stmtTon = con.prepareStatement(sqlUpdateTon)) {
+                
+                for (ChiTietPhieuNhap ct : chiTietList) {
+                    stmtChiTiet.setString(1, ct.getMaPhieuNhapXuat());
+                    stmtChiTiet.setString(2, ct.getMaPhuTung());
+                    stmtChiTiet.setInt(3, ct.getSoLuong());
+                    stmtChiTiet.setDouble(4, ct.getDonGia());
+                    stmtChiTiet.setString(5, ct.getGhiChu() != null ? ct.getGhiChu() : "");
+                    stmtChiTiet.addBatch();
+
+                    stmtTon.setInt(1, ct.getSoLuong());
+                    stmtTon.setString(2, ct.getMaPhuTung());
+                    stmtTon.addBatch();
+                }
+
+                stmtChiTiet.executeBatch();
+                stmtTon.executeBatch();
+            }
+
             con.commit();
             return true;
-
         } catch (SQLException e) {
             e.printStackTrace();
             try {
-                if (con != null) con.rollback(); // Hoàn tác 100% nếu có bất kỳ lỗi gì
+                if (con != null) con.rollback();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
             return false;
         } finally {
             try {
-                if (con != null) con.setAutoCommit(true); // Trả lại AutoCommit cho các hàm BaseDAO khác
-                if (stmtPhieu != null) stmtPhieu.close();
-                if (stmtChiTiet != null) stmtChiTiet.close();
-                if (stmtCapNhatTon != null) stmtCapNhatTon.close();
+                if (con != null && !con.isClosed()) con.setAutoCommit(true);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

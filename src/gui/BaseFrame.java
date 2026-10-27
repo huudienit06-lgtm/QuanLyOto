@@ -68,7 +68,7 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Nhập/Xuất phụ tùng".equals(featureName)) {
-			setContent(new FrmNhapXuatPhuTung(this.taiKhoanDangNhap));
+			setContent(new FrmNhapXuatPhuTung(FrmDangNhap.taiKhoanDangNhap));
             lblStatus.setText("Lập phiếu nhập kho phụ tùng");
             return;
         }

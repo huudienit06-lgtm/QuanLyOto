@@ -1,5 +1,7 @@
 package gui;
 
+import dao.BaoCaoTongHopDAO;
+import dao.BaoCaoTongHopDAO.ChiTieuBaoCao;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -16,16 +18,13 @@ import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import javax.swing.JFileChooser;
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
-import dao.BaoCaoTongHopDAO;
-import dao.BaoCaoTongHopDAO.ChiTieuBaoCao;
 
 public class FrmBaoCaoTongHop extends JPanel {
     private final AppTextField txtTuNgay = new AppTextField(12);
