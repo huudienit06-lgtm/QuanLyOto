@@ -95,6 +95,16 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Lập phiếu sửa chữa");
 			return;
 		}
+		if ("Tiếp nhận xe".equals(featureName) || "Phiếu tiếp nhận".equals(featureName)) {
+			setContent(new FrmTiepNhan());
+			lblStatus.setText("Tiếp nhận xe");
+			return;
+		}
+		if ("Kiểm tra xe".equals(featureName) || "Phiếu kiểm tra".equals(featureName)) {
+			setContent(new FrmPhieuKiemTra());
+			lblStatus.setText("Quản lý phiếu kiểm tra");
+			return;
+		}
 		if ("Bàn giao xe".equals(featureName)) {
 			setContent(new FrmBanGiaoXe());
 			lblStatus.setText("Bàn giao xe");

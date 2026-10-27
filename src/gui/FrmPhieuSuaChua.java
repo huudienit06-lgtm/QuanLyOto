@@ -55,6 +55,7 @@ import entity.DichVu;
 import entity.PhieuKiemTra;
 import entity.PhieuSuaChua;
 import entity.PhuTung;
+import util.MaTuDong;
 
 public class FrmPhieuSuaChua extends JPanel {
     private static final Color PALE_BLUE = new Color(242, 247, 255);
@@ -122,6 +123,7 @@ public class FrmPhieuSuaChua extends JPanel {
         setLayout(new BorderLayout(0, 18));
         setBackground(PALE_BLUE);
         setBorder(new EmptyBorder(22, 32, 22, 32));
+        txtMaPhieuSuaChua.setEditable(false);
 
         JScrollPane mainScroll = new JScrollPane(createContent());
         mainScroll.setOpaque(false);
@@ -197,6 +199,7 @@ public class FrmPhieuSuaChua extends JPanel {
         napDanhSachPhuTung();
         napDanhSachPhieuKiemTra();
         tblPhieuSuaChua.setRowSorter(sortedPhieuKiemTra);
+        lamMoiForm();
     }
 
     private JPanel createHeading() {
@@ -229,7 +232,7 @@ public class FrmPhieuSuaChua extends JPanel {
         JLabel lblTitle = createSectionLabel("Thông tin phiếu sửa chữa");
         JPanel pnlField = new JPanel(new GridBagLayout());
         pnlField.setOpaque(false);
-        addField(pnlField, "Mã phiếu sửa chữa", txtMaPhieuSuaChua, 0, 0);
+        addField(pnlField, "Mã phiếu sửa chữa (tự động)", txtMaPhieuSuaChua, 0, 0);
         addField(pnlField, "Mã phiếu kiểm tra", cboPhieuKiemTra, 2, 0);
         addField(pnlField, "Mã xe", txtMaXe, 0, 1);
         addField(pnlField, "Mã khách hàng", txtMaKhachHang, 2, 1);
@@ -678,6 +681,7 @@ public class FrmPhieuSuaChua extends JPanel {
 
             if (phieuSuaChuaDAO.insert(phieu)) {
                 napDanhSachPhieuSuaChua();
+                lamMoiForm();
                 lblThongBao.setText("Đã tạo phiếu " + phieu.getMaPhieuSuaChua());
             }
         } catch (IllegalArgumentException e) {
@@ -734,8 +738,17 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private void lamMoiForm() {
-        txtMaPhieuSuaChua.setText("");
-        cboPhieuKiemTra.setSelectedIndex(0);
+        try {
+            txtMaPhieuSuaChua.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_PHIEU_SUA_CHUA,
+                    phieuSuaChuaDAO.findAll(),
+                    PhieuSuaChua::getMaPhieuSuaChua));
+        } catch (SQLException exception) {
+            hienThiLoi("Không thể phát sinh mã phiếu sửa chữa: " + exception.getMessage());
+        }
+        if (cboPhieuKiemTra.getItemCount() > 0) {
+            cboPhieuKiemTra.setSelectedIndex(0);
+        }
         txtMaXe.setText("");
         txtMaKhachHang.setText("");
         txtMaNhanVien.setText("");
