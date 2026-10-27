@@ -42,6 +42,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import util.MaTuDong;
 
 public class FrmXe extends JPanel {
     private static final Set<String> MA_KHACH_HANG_DA_BIET = new HashSet<>();
@@ -82,6 +83,7 @@ public class FrmXe extends JPanel {
         setLayout(new BorderLayout(0, 8));
         setBackground(UIConfig.COLOR_BACKGROUND);
         setBorder(new EmptyBorder(14, 22, 14, 22));
+        txtMaXe.setEditable(false);
 
         add(createHeading(), BorderLayout.NORTH);
         add(createContent(), BorderLayout.CENTER);
@@ -90,6 +92,7 @@ public class FrmXe extends JPanel {
         configureComponents();
         napKhachHang();
         napDanhSachXe();
+        lamMoiForm();
     }
 
     private JPanel createHeading() {
@@ -132,7 +135,7 @@ public class FrmXe extends JPanel {
         JLabel lblFormTitle = createSectionTitle("Thông tin xe");
         JPanel pnlFields = new JPanel(new GridBagLayout());
         pnlFields.setOpaque(false);
-        addField(pnlFields, "Mã xe *", txtMaXe, 0, 0);
+        addField(pnlFields, "Mã xe (tự động)", txtMaXe, 0, 0);
         addField(pnlFields, "Biển số *", txtBienSo, 2, 0);
         addField(pnlFields, "Hãng xe", txtHangXe, 0, 1);
         addField(pnlFields, "Dòng xe", txtDongXe, 2, 1);
@@ -647,7 +650,12 @@ public class FrmXe extends JPanel {
     }
 
     private void lamMoiForm() {
-        txtMaXe.setText("");
+        try {
+            txtMaXe.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_XE, xeDAO.findAll(), Xe::getMaXe));
+        } catch (SQLException exception) {
+            hienThiLoi("Không thể phát sinh mã xe: " + exception.getMessage());
+        }
         txtBienSo.setText("");
         txtHangXe.setText("");
         txtDongXe.setText("");
