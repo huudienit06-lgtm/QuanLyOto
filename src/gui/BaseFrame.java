@@ -71,6 +71,7 @@ public class BaseFrame extends JFrame {
 			// FrmDangNhap taiKhoan =  new FrmDangNhap(this);
 			// taiKhoanDangNhap = taiKhoan.phanQuyen();
 			setContent(new FrmNhapXuatPhuTung(taiKhoanDangNhap));
+			setContent(new FrmNhapXuatPhuTung(FrmDangNhap.taiKhoanDangNhap));
             lblStatus.setText("Lập phiếu nhập kho phụ tùng");
             return;
         }
