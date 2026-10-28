@@ -120,13 +120,17 @@ CREATE TABLE PhieuSuaChua (
 );
 
 CREATE TABLE ChiTietPhieuSuaChua (
+    maChiTiet BIGINT IDENTITY(1,1) PRIMARY KEY,
     maPhieuSuaChua VARCHAR(20) NOT NULL,
-    maPhuTung VARCHAR(20) NOT NULL,
-    maDV VARCHAR(20) NOT NULL,
-    soLuong INT DEFAULT 1,
-    donGia DECIMAL(18,2),
-    tienCong DECIMAL(18,2),
-    PRIMARY KEY (maPhieuSuaChua, maDV), -- Khóa chính phức hợp gồm mã phiếu sửa chữa và mã dịch vụ
+    maPhuTung VARCHAR(20),
+    maDV VARCHAR(20),
+    soLuong INT NOT NULL DEFAULT 1,
+    donGia DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienCong DECIMAL(18,2) NOT NULL DEFAULT 0,
+    CONSTRAINT CK_CTPSC_MotLoai CHECK (
+        (maPhuTung IS NOT NULL AND maDV IS NULL)
+        OR (maPhuTung IS NULL AND maDV IS NOT NULL)
+    ),
     CONSTRAINT FK_CTPSC_PhieuSuaChua FOREIGN KEY (maPhieuSuaChua) REFERENCES PhieuSuaChua(maPhieuSuaChua) ON DELETE CASCADE,
     CONSTRAINT FK_CTPSC_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung),
     CONSTRAINT FK_CTPSC_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV)
