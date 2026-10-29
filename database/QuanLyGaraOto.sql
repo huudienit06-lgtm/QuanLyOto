@@ -177,8 +177,9 @@ CREATE TABLE GiaoDichThanhToan (
     maGD VARCHAR(20) PRIMARY KEY,
     maHoaDon VARCHAR(20) NOT NULL,
     phuongThucThanhToan NVARCHAR(50),
-    thoiGianGD DATETIME,
+    thoiGianGD DATETIME DEFAULT GETDATE(),
     trangThaiGD NVARCHAR(20),
+    soTienThanhToan DECIMAL(18,2) NOT NULL DEFAULT 0,
     CONSTRAINT FK_GDTT_HoaDon FOREIGN KEY (maHoaDon) REFERENCES HoaDon(maHoaDon)
 );
 
