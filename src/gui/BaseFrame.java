@@ -20,6 +20,14 @@ public class BaseFrame extends JFrame {
 	private JPanel pnlCurrentContent;
 	private TaiKhoan taiKhoanDangNhap;
 
+	public void setTaiKhoanDangNhap(TaiKhoan taiKhoan) {
+		this.taiKhoanDangNhap = taiKhoan;
+	}
+
+	public TaiKhoan getTaiKhoanDangNhap() {
+		return taiKhoanDangNhap;
+	}
+
 	public BaseFrame() {
 		this("Quản Lý Gara Oto");
 	}
@@ -68,20 +76,26 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Nhập/Xuất phụ tùng".equals(featureName)) {
-			// FrmDangNhap taiKhoan =  new FrmDangNhap(this);
+			// FrmDangNhap taiKhoan = new FrmDangNhap(this);
 			// taiKhoanDangNhap = taiKhoan.phanQuyen();
 			setContent(new FrmNhapXuatPhuTung(taiKhoanDangNhap));
 			setContent(new FrmNhapXuatPhuTung(FrmDangNhap.taiKhoanDangNhap));
-            lblStatus.setText("Lập phiếu nhập kho phụ tùng");
-            return;
-        }
+			lblStatus.setText("Lập phiếu nhập kho phụ tùng");
+			return;
+		}
 		if ("Phụ tùng tồn kho".equals(featureName)) {
 			setContent(new FrmThongKeTonKho());
 			lblStatus.setText("Thống kê tồn kho phụ tùng");
-        	return;
-    }
+			return;
+		}
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
-			setContent(new FrmHoaDon());
+			FrmHoaDon frmHoaDon = new FrmHoaDon();
+			if (taiKhoanDangNhap != null) {
+				frmHoaDon.setNhanVienLapHoaDon(
+						taiKhoanDangNhap.getMaNV(),
+						taiKhoanDangNhap.getHoTenNhanVien());
+			}
+			setContent(frmHoaDon);
 			lblStatus.setText("Lập hóa đơn");
 			return;
 		}
@@ -134,7 +148,6 @@ public class BaseFrame extends JFrame {
 		revalidate();
 		repaint();
 	}
-
 
 	private JPanel createWorkspace() {
 		JPanel pnlWorkspace = new JPanel(new BorderLayout(0, 20));
