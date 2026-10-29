@@ -166,6 +166,40 @@ public class FrmPhieuSuaChua extends JPanel {
             }
         });
 
+        txtDonGia.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+        });
+
+        txtTienCong.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+        });
+
         cboPhieuKiemTra.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(
@@ -569,8 +603,8 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private void hienThiDanhSachPhieuSuaChua(List<PhieuSuaChua> danhSach) {
+        tblPhieuSuaChua.setRowSorter(null);
         modelSuaChua.setRowCount(0);
-
         for (PhieuSuaChua phieu : danhSach) {
             modelSuaChua.addRow(new Object[] {
                     phieu.getMaPhieuSuaChua(),
@@ -582,6 +616,10 @@ public class FrmPhieuSuaChua extends JPanel {
                     phieu.getNgayHoanThanhDuKien()
             });
         }
+        tblPhieuSuaChua.setRowSorter(sortedPhieuKiemTra);
+        locDanhSachPhieuKiemTra();
+        tblPhieuSuaChua.revalidate();
+        tblPhieuSuaChua.repaint();
     }
 
     private void napDanhSachDichVu() {
@@ -642,6 +680,10 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private PhieuSuaChua docThongTinPhieuSuaChua() {
+        if (cboPhieuKiemTra.getItemCount() == 0) {
+            throw new IllegalArgumentException("Chưa có phiếu kiểm tra để tạo phiếu sửa chữa.");
+        }
+
         PhieuKiemTra phieuKiemTra = (PhieuKiemTra) cboPhieuKiemTra.getSelectedItem();
         if (phieuKiemTra == null) {
             throw new IllegalArgumentException("Hãy chọn phiếu kiểm tra");
@@ -671,6 +713,9 @@ public class FrmPhieuSuaChua extends JPanel {
         phieu.setMaNV(maNV);
         phieu.setNgayBatDau(docTimestamp(txtNgayBatDau.getText()));
         phieu.setNgayHoanThanhDuKien(docTimestamp(txtNgayHoanThanhDuKien.getText()));
+        phieu.setTrangThai(cboTrangThai.getSelectedItem() == null
+                ? "Chờ xử lý"
+                : cboTrangThai.getSelectedItem().toString());
 
         return phieu;
     }
@@ -1017,6 +1062,7 @@ public class FrmPhieuSuaChua extends JPanel {
             } else {
                 textField.setText("");
             }
+            capNhatThanhTien();
         });
     }
 }
