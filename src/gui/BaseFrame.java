@@ -52,6 +52,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý ca làm việc");
 			return;
 		}
+		if ("Khách hàng".equals(featureName) || "Cập nhật khách hàng".equals(featureName)) {
+			setContent(new FrmKhachHang());
+			lblStatus.setText("Quản lý khách hàng");
+			return;
+		}
 		if ("Báo cáo tổng hợp".equals(featureName)) {
 			setContent(new FrmBaoCaoTongHop());
 			lblStatus.setText("Báo cáo tổng hợp");
@@ -68,9 +73,12 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Nhập/Xuất phụ tùng".equals(featureName)) {
-			// FrmDangNhap taiKhoan =  new FrmDangNhap(this);
+			// FrmDangNhap taiKhoan = new FrmDangNhap(this);
 			// taiKhoanDangNhap = taiKhoan.phanQuyen();
 			setContent(new FrmNhapXuatPhuTung(taiKhoanDangNhap));
+			lblStatus.setText("Lập phiếu nhập kho phụ tùng");
+			return;
+		}
 			setContent(new FrmNhapXuatPhuTung(FrmDangNhap.taiKhoanDangNhap));
             lblStatus.setText("Lập phiếu nhập kho phụ tùng");
             return;
@@ -78,8 +86,8 @@ public class BaseFrame extends JFrame {
 		if ("Phụ tùng tồn kho".equals(featureName)) {
 			setContent(new FrmThongKeTonKho());
 			lblStatus.setText("Thống kê tồn kho phụ tùng");
-        	return;
-    }
+			return;
+		}
 		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
 			setContent(new FrmHoaDon());
 			lblStatus.setText("Lập hóa đơn");
@@ -110,6 +118,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Bàn giao xe");
 			return;
 		}
+		if ("Sửa chữa".equals(featureName)) {
+			setContent(new FrmThongKeSuaChua());
+			lblStatus.setText("Sửa chữa");
+			return;
+		}
 		lblStatus.setText("Đã chọn: " + featureName);
 	}
 
@@ -134,7 +147,6 @@ public class BaseFrame extends JFrame {
 		revalidate();
 		repaint();
 	}
-
 
 	private JPanel createWorkspace() {
 		JPanel pnlWorkspace = new JPanel(new BorderLayout(0, 20));

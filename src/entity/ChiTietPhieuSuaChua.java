@@ -3,6 +3,7 @@ package entity;
 import java.math.BigDecimal;
 
 public class ChiTietPhieuSuaChua {
+    private Long maChiTiet;
     private String maPhieuSuaChua;
     private String maPhuTung;
     private String maDV;
@@ -13,6 +14,8 @@ public class ChiTietPhieuSuaChua {
     public ChiTietPhieuSuaChua() {
     }
 
+    public Long getMaChiTiet() { return maChiTiet; }
+    public void setMaChiTiet(Long maChiTiet) { this.maChiTiet = maChiTiet; }
     public String getMaPhieuSuaChua() { return maPhieuSuaChua; }
     public void setMaPhieuSuaChua(String maPhieuSuaChua) { this.maPhieuSuaChua = maPhieuSuaChua; }
     public String getMaPhuTung() { return maPhuTung; }

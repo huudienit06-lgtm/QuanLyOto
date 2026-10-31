@@ -100,8 +100,11 @@ public class FrmPhieuSuaChua extends JPanel {
 
     private final DefaultTableModel modelChiTiet = new DefaultTableModel(
             new Object[] {
+                    "MÃ CT",
                     "MÃ PT",
+                    "TÊN PT",
                     "MÃ DV",
+                    "TÊN DV",
                     "SL",
                     "ĐƠN GIÁ",
                     "TIỀN CÔNG",
@@ -140,15 +143,49 @@ public class FrmPhieuSuaChua extends JPanel {
         setupComboBox(
                 cboMaDichVu,
                 txtTienCong,
-                DichVu.class, dv -> dv.getMaDV() + " - " + dv.getTenDV(),
+                DichVu.class, dv -> dv.getMaDV() == null ? "Không" : dv.getMaDV() + " - " + dv.getTenDV(),
                 DichVu::getGiaDV);
         setupComboBox(
                 cboPhuTung,
                 txtDonGia,
                 PhuTung.class,
-                pt -> pt.getMaPhuTung() + " - " + pt.getTenPhuTung(),
+                pt -> pt.getMaPhuTung() == null ? "Không" : pt.getMaPhuTung() + " - " + pt.getTenPhuTung(),
                 PhuTung::getGiaBan);
         txtSoluong.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+        });
+
+        txtDonGia.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                capNhatThanhTien();
+            }
+        });
+
+        txtTienCong.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
                 capNhatThanhTien();
@@ -198,6 +235,7 @@ public class FrmPhieuSuaChua extends JPanel {
         napDanhSachDichVu();
         napDanhSachPhuTung();
         napDanhSachPhieuKiemTra();
+        txtSoluong.setText("1");
         tblPhieuSuaChua.setRowSorter(sortedPhieuKiemTra);
         lamMoiForm();
     }
@@ -216,10 +254,25 @@ public class FrmPhieuSuaChua extends JPanel {
         JPanel pnlContent = new JPanel(new BorderLayout(0, 18));
         pnlContent.setOpaque(false);
 
-        JPanel pnlTop = new JPanel(new GridLayout(1, 2, 18, 0));
+        JPanel pnlTop = new JPanel(new GridBagLayout());
         pnlTop.setOpaque(false);
-        pnlTop.add(createFormPanelInfo());
-        pnlTop.add(createFormPanelDetail());
+        GridBagConstraints gbcInfo = new GridBagConstraints();
+        gbcInfo.gridx = 0;
+        gbcInfo.gridy = 0;
+        gbcInfo.weightx = 0.42;
+        gbcInfo.weighty = 1;
+        gbcInfo.fill = GridBagConstraints.BOTH;
+        gbcInfo.insets = new Insets(0, 0, 0, 9);
+        pnlTop.add(createFormPanelInfo(), gbcInfo);
+
+        GridBagConstraints gbcDetail = new GridBagConstraints();
+        gbcDetail.gridx = 1;
+        gbcDetail.gridy = 0;
+        gbcDetail.weightx = 0.58;
+        gbcDetail.weighty = 1;
+        gbcDetail.fill = GridBagConstraints.BOTH;
+        gbcDetail.insets = new Insets(0, 9, 0, 0);
+        pnlTop.add(createFormPanelDetail(), gbcDetail);
 
         pnlContent.add(pnlTop, BorderLayout.NORTH);
         pnlContent.add(createTablePanel(), BorderLayout.CENTER);
@@ -232,6 +285,14 @@ public class FrmPhieuSuaChua extends JPanel {
         JLabel lblTitle = createSectionLabel("Thông tin phiếu sửa chữa");
         JPanel pnlField = new JPanel(new GridBagLayout());
         pnlField.setOpaque(false);
+        addField(pnlField, "Mã phiếu sửa chữa", txtMaPhieuSuaChua, 0, 0);
+        addField(pnlField, "Mã phiếu kiểm tra", cboPhieuKiemTra, 0, 1);
+        addField(pnlField, "Mã xe", txtMaXe, 0, 2);
+        addField(pnlField, "Mã khách hàng", txtMaKhachHang, 0, 3);
+        addField(pnlField, "Mã nhân viên", txtMaNhanVien, 0, 4);
+        addField(pnlField, "Ngày bắt đầu", txtNgayBatDau, 0, 5);
+        addField(pnlField, "Ngày hoàn thành dự kiến", txtNgayHoanThanhDuKien, 0, 6);
+        addField(pnlField, "Trạng thái", cboTrangThai, 0, 7);
         addField(pnlField, "Mã phiếu sửa chữa (tự động)", txtMaPhieuSuaChua, 0, 0);
         addField(pnlField, "Mã phiếu kiểm tra", cboPhieuKiemTra, 2, 0);
         addField(pnlField, "Mã xe", txtMaXe, 0, 1);
@@ -326,14 +387,14 @@ public class FrmPhieuSuaChua extends JPanel {
         JPanel pnlButton = new JPanel(new GridBagLayout());
         pnlButton.setOpaque(false);
         JButton btnAdd = createButton(
-                "Thêm DV",
+                "Thêm chi tiết",
                 new ImageIcon(getClass().getResource("/resources/icons/plus.png")),
                 new Color(0x33cc33),
                 new Color(0xffffff));
         btnAdd.addActionListener(e -> themChiTiet());
 
         JButton btnDel = createButton(
-                "Xóa DV",
+                "Xóa chi tiết",
                 new ImageIcon(getClass().getResource("/resources/icons/trash.png")),
                 new Color(0xff0033),
                 new Color(0xffffff));
@@ -553,8 +614,8 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private void hienThiDanhSachPhieuSuaChua(List<PhieuSuaChua> danhSach) {
+        tblPhieuSuaChua.setRowSorter(null);
         modelSuaChua.setRowCount(0);
-
         for (PhieuSuaChua phieu : danhSach) {
             modelSuaChua.addRow(new Object[] {
                     phieu.getMaPhieuSuaChua(),
@@ -566,12 +627,19 @@ public class FrmPhieuSuaChua extends JPanel {
                     phieu.getNgayHoanThanhDuKien()
             });
         }
+        tblPhieuSuaChua.setRowSorter(sortedPhieuKiemTra);
+        locDanhSachPhieuKiemTra();
+        tblPhieuSuaChua.revalidate();
+        tblPhieuSuaChua.repaint();
     }
 
     private void napDanhSachDichVu() {
         try {
             List<DichVu> danhSach = dichVuDAO.findAll();
             cboMaDichVu.removeAllItems();
+            DichVu khong = new DichVu();
+            khong.setTenDV("Không");
+            cboMaDichVu.addItem(khong);
             for (DichVu dichVu : danhSach) {
                 cboMaDichVu.addItem(dichVu);
             }
@@ -587,6 +655,9 @@ public class FrmPhieuSuaChua extends JPanel {
         try {
             List<PhuTung> danhSach = phuTungDAO.findAll();
             cboPhuTung.removeAllItems();
+            PhuTung khong = new PhuTung();
+            khong.setTenPhuTung("Không");
+            cboPhuTung.addItem(khong);
             for (PhuTung phuTung : danhSach) {
                 cboPhuTung.addItem(phuTung);
             }
@@ -620,6 +691,10 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private PhieuSuaChua docThongTinPhieuSuaChua() {
+        if (cboPhieuKiemTra.getItemCount() == 0) {
+            throw new IllegalArgumentException("Chưa có phiếu kiểm tra để tạo phiếu sửa chữa.");
+        }
+
         PhieuKiemTra phieuKiemTra = (PhieuKiemTra) cboPhieuKiemTra.getSelectedItem();
         if (phieuKiemTra == null) {
             throw new IllegalArgumentException("Hãy chọn phiếu kiểm tra");
@@ -649,6 +724,9 @@ public class FrmPhieuSuaChua extends JPanel {
         phieu.setMaNV(maNV);
         phieu.setNgayBatDau(docTimestamp(txtNgayBatDau.getText()));
         phieu.setNgayHoanThanhDuKien(docTimestamp(txtNgayHoanThanhDuKien.getText()));
+        phieu.setTrangThai(cboTrangThai.getSelectedItem() == null
+                ? "Chờ xử lý"
+                : cboTrangThai.getSelectedItem().toString());
 
         return phieu;
     }
@@ -787,23 +865,22 @@ public class FrmPhieuSuaChua extends JPanel {
 
     private ChiTietPhieuSuaChua docChiTietPhieuSuaChua() {
         PhuTung phuTung = (PhuTung) cboPhuTung.getSelectedItem();
-        if (phuTung == null) {
-            throw new IllegalArgumentException("Hãy chọn mã phụ tùng");
-        }
         DichVu dichVu = (DichVu) cboMaDichVu.getSelectedItem();
-        if (dichVu == null) {
-            throw new IllegalArgumentException("Hãy chọn mã dịch vụ");
-        }
         String maPSC = txtMaPhieuSuaChua.getText().trim();
-        String maPhuTung = phuTung.getMaPhuTung();
-        String maDichVu = dichVu.getMaDV();
+        String maPhuTung = phuTung == null ? null : phuTung.getMaPhuTung();
+        String maDichVu = dichVu == null ? null : dichVu.getMaDV();
 
         if (maPSC == null || maPSC.isEmpty())
             throw new IllegalArgumentException("Mã phiếu sửa chữa không được để trống");
-        if (maPhuTung == null || maPhuTung.isEmpty())
-            throw new IllegalArgumentException("Mã phụ tùng không được để trống");
-        if (maDichVu == null || maDichVu.isEmpty())
-            throw new IllegalArgumentException("Mã dịch vụ không được để trống");
+        if (maPhuTung != null && maPhuTung.isEmpty()) {
+            maPhuTung = null;
+        }
+        if (maDichVu != null && maDichVu.isEmpty()) {
+            maDichVu = null;
+        }
+        if ((maPhuTung == null) == (maDichVu == null)) {
+            throw new IllegalArgumentException("Phải chọn đúng một trong hai: dịch vụ hoặc phụ tùng");
+        }
 
         int soLuong;
         try {
@@ -817,7 +894,8 @@ public class FrmPhieuSuaChua extends JPanel {
         }
         BigDecimal donGia;
         try {
-            donGia = new BigDecimal(txtDonGia.getText().replace(",", "").replace(" VNĐ", "").trim());
+            String donGiaText = txtDonGia.getText().replace(",", "").replace(" VNĐ", "").trim();
+            donGia = donGiaText.isEmpty() ? BigDecimal.ZERO : new BigDecimal(donGiaText);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Đơn giá không hợp lệ");
         }
@@ -827,7 +905,8 @@ public class FrmPhieuSuaChua extends JPanel {
 
         BigDecimal tienCong;
         try {
-            tienCong = new BigDecimal(txtTienCong.getText().replace(",", "").replace(" VNĐ", "").trim());
+            String tienCongText = txtTienCong.getText().replace(",", "").replace(" VNĐ", "").trim();
+            tienCong = tienCongText.isEmpty() ? BigDecimal.ZERO : new BigDecimal(tienCongText);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Tiền công không hợp lệ");
         }
@@ -842,8 +921,7 @@ public class FrmPhieuSuaChua extends JPanel {
         chiTiet.setSoLuong(soLuong);
         chiTiet.setDonGia(donGia);
         chiTiet.setTienCong(tienCong);
-        BigDecimal thanhTien = donGia.multiply(BigDecimal.valueOf(soLuong)).add(tienCong);
-        // Thành tiền = Đơn giá x Số lượng + Tiền công
+        BigDecimal thanhTien = donGia.add(tienCong).multiply(BigDecimal.valueOf(soLuong));
         txtThanhTien.setText(thanhTien.toPlainString());
 
         return chiTiet;
@@ -859,14 +937,25 @@ public class FrmPhieuSuaChua extends JPanel {
             List<ChiTietPhieuSuaChua> danhSach = chiTietDAO.findByField("maPhieuSuaChua", maPSC);
             modelChiTiet.setRowCount(0);
             for (ChiTietPhieuSuaChua chiTiet : danhSach) {
-                BigDecimal thanhTien = chiTiet.getDonGia().multiply(BigDecimal.valueOf(chiTiet.getSoLuong()))
-                        .add(chiTiet.getTienCong());
+                BigDecimal donGia = chiTiet.getDonGia() == null ? BigDecimal.ZERO : chiTiet.getDonGia();
+                BigDecimal tienCong = chiTiet.getTienCong() == null ? BigDecimal.ZERO : chiTiet.getTienCong();
+                int soLuong = chiTiet.getSoLuong() == null ? 1 : chiTiet.getSoLuong();
+                BigDecimal thanhTien = donGia.add(tienCong).multiply(BigDecimal.valueOf(soLuong));
+                PhuTung phuTung = chiTiet.getMaPhuTung() == null
+                        ? null
+                        : phuTungDAO.findById(chiTiet.getMaPhuTung());
+                DichVu dichVu = chiTiet.getMaDV() == null
+                        ? null
+                        : dichVuDAO.findById(chiTiet.getMaDV());
                 modelChiTiet.addRow(new Object[] {
+                        chiTiet.getMaChiTiet(),
                         chiTiet.getMaPhuTung(),
+                        phuTung == null ? "" : phuTung.getTenPhuTung(),
                         chiTiet.getMaDV(),
-                        chiTiet.getSoLuong(),
-                        chiTiet.getDonGia(),
-                        chiTiet.getTienCong(),
+                        dichVu == null ? "" : dichVu.getTenDV(),
+                        soLuong,
+                        donGia,
+                        tienCong,
                         thanhTien
                 });
             }
@@ -881,7 +970,7 @@ public class FrmPhieuSuaChua extends JPanel {
             ChiTietPhieuSuaChua chiTiet = docChiTietPhieuSuaChua();
             if (chiTietDAO.insert(chiTiet)) {
                 hienThiChiTiet();
-                lblThongBao.setText("Đã thêm dịch vụ vào phiếu");
+                lblThongBao.setText("Đã thêm chi tiết vào phiếu");
             }
         } catch (IllegalArgumentException e) {
             hienThiLoi(e.getMessage());
@@ -891,24 +980,21 @@ public class FrmPhieuSuaChua extends JPanel {
     }
 
     private void xoaChiTiet() {
-        DichVu dichVu = (DichVu) cboMaDichVu.getSelectedItem();
-        if (dichVu == null) {
-            throw new IllegalArgumentException("Hãy chọn mã dịch vụ");
-        }
         String maPSC = txtMaPhieuSuaChua.getText().trim();
-        String maDV = dichVu.getMaDV();
         if (maPSC.isEmpty()) {
             hienThiLoi("Mã phiếu sửa chữa không được để trống");
             return;
         }
-
-        if (maDV.isEmpty()) {
-            hienThiLoi("Mã dịch vụ không được để trống");
+        int selectedRow = tblChiTietCongViec.getSelectedRow();
+        if (selectedRow < 0) {
+            hienThiLoi("Hãy chọn chi tiết cần xóa trong bảng");
             return;
         }
+        int modelRow = tblChiTietCongViec.convertRowIndexToModel(selectedRow);
+        Long maChiTiet = Long.valueOf(modelChiTiet.getValueAt(modelRow, 0).toString());
         int luaChon = JOptionPane.showConfirmDialog(
                 this,
-                "Bạn có chắc muốn xóa dịch vụ" + maDV + "khỏi phiếu " + maPSC + "?",
+                "Bạn có chắc muốn xóa chi tiết khỏi phiếu " + maPSC + "?",
                 "Xác nhận xóa",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
@@ -917,12 +1003,12 @@ public class FrmPhieuSuaChua extends JPanel {
             return;
         }
         try {
-            if (chiTietDAO.deleteById(maPSC, maDV)) {
+            if (chiTietDAO.deleteById(maChiTiet)) {
                 hienThiChiTiet();
                 lamMoiFormChiTiet();
-                lblThongBao.setText("Đã xóa chi tiết dịch vụ" + maDV);
+                lblThongBao.setText("Đã xóa chi tiết");
             } else {
-                hienThiLoi("Không tìm thấy dịch vụ cần xóa");
+                hienThiLoi("Không tìm thấy chi tiết cần xóa");
             }
         } catch (SQLException e) {
             hienThiLoi("Không thể xóa chi tiết dịch vụ: " + e.getMessage());
@@ -937,7 +1023,7 @@ public class FrmPhieuSuaChua extends JPanel {
             cboPhuTung.setSelectedIndex(0);
         }
         txtDonGia.setText("");
-        txtSoluong.setText("");
+        txtSoluong.setText("1");
         txtTienCong.setText("");
         txtThanhTien.setText("");
         tblChiTietCongViec.clearSelection();
@@ -955,9 +1041,7 @@ public class FrmPhieuSuaChua extends JPanel {
             BigDecimal donGia = new BigDecimal(donGiaText);
             BigDecimal tienCong = tienCongText.isEmpty() ? BigDecimal.ZERO : new BigDecimal(tienCongText);
             int soLuong = Integer.parseInt(soLuongText);
-            BigDecimal thanhTien = donGia
-                    .multiply(BigDecimal.valueOf(soLuong))
-                    .add(tienCong);
+            BigDecimal thanhTien = donGia.add(tienCong).multiply(BigDecimal.valueOf(soLuong));
 
             txtThanhTien.setText(df.format(thanhTien));
         } catch (NumberFormatException e) {
@@ -999,6 +1083,7 @@ public class FrmPhieuSuaChua extends JPanel {
             } else {
                 textField.setText("");
             }
+            capNhatThanhTien();
         });
     }
 }
