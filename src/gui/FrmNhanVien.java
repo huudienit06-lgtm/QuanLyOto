@@ -22,6 +22,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.SwingUtilities;
+import util.MaTuDong;
 
 public class FrmNhanVien extends JPanel implements ActionListener {
     private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
@@ -50,6 +51,7 @@ public class FrmNhanVien extends JPanel implements ActionListener {
     public FrmNhanVien() {
         setLayout(new BorderLayout(0, 10));
         setOpaque(false);
+        txtMaNV.setEditable(false);
 
         JPanel pnlContent = new JPanel(new BorderLayout(0, 8));
         pnlContent.setOpaque(false);
@@ -82,6 +84,7 @@ public class FrmNhanVien extends JPanel implements ActionListener {
             }
         });
         taiDanhSachNhanVien();
+        lamMoiThongTinNhanVien();
     }
 
     private JPanel createSearchToolbar() {
@@ -143,7 +146,7 @@ public class FrmNhanVien extends JPanel implements ActionListener {
         AppPanel pnlCard = FormUI.createCard();
         pnlCard.setLayout(new BorderLayout(0, 6));
         JPanel pnlFields = FormUI.createFieldsPanel();
-        FormUI.addField(pnlFields, "Mã nhân viên *", txtMaNV, 0, 0);
+        FormUI.addField(pnlFields, "Mã nhân viên (tự động)", txtMaNV, 0, 0);
         FormUI.addField(pnlFields, "Họ và tên *", txtHoTen, 2, 0);
         FormUI.addField(pnlFields, "Chức vụ", cboChucVu, 4, 0);
         FormUI.addField(pnlFields, "Số điện thoại", txtSoDienThoai, 0, 1);
@@ -307,7 +310,15 @@ public class FrmNhanVien extends JPanel implements ActionListener {
     }
 
     private void lamMoiThongTinNhanVien() {
-        txtMaNV.setText("");
+        try {
+            txtMaNV.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_NHAN_VIEN,
+                    nhanVienDAO.findAll(),
+                    NhanVien::getMaNV));
+        } catch (SQLException exception) {
+            txtMaNV.setText("");
+            FormUI.showError("Không thể phát sinh mã nhân viên: " + exception.getMessage());
+        }
         txtMaNV.setEnabled(true);
         txtHoTen.setText("");
         txtSoDienThoai.setText("");
