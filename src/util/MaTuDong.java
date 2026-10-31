@@ -9,16 +9,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class MaTuDong {
-    public static final String TIEN_TO_KHACH_HANG = "HK";
+    public static final String TIEN_TO_KHACH_HANG = "KH";
     public static final String TIEN_TO_XE = "X";
     public static final String TIEN_TO_NHAN_VIEN = "NV";
     public static final String TIEN_TO_PHU_TUNG = "PT";
-    public static final String TIEN_TO_DICH_VU = "DV";
+    public static final String TIEN_TO_DICH_VU = "DMDV";
+    public static final String TIEN_TO_CA_LAM_VIEC = "CA";
+    public static final String TIEN_TO_LICH_LAM_VIEC = "LLV";
     public static final String TIEN_TO_PHIEU_TIEP_NHAN = "PTN";
     public static final String TIEN_TO_PHIEU_KIEM_TRA = "PKT";
     public static final String TIEN_TO_PHIEU_SUA_CHUA = "PSC";
     public static final String TIEN_TO_HOA_DON = "HD";
+    public static final String TIEN_TO_GIAO_DICH = "GD";
+    public static final String TIEN_TO_PHIEU_NHAP_KHO = "PN";
+    public static final String TIEN_TO_PHIEU_XUAT_KHO = "PX";
+    public static final String TIEN_TO_KHUYEN_MAI = "KM";
+    public static final String TIEN_TO_PHIEU_BAO_HANH = "PBH";
     public static final String TIEN_TO_PHIEU_BAN_GIAO = "PBG";
+    public static final String TIEN_TO_PHIEU_DOI_TRA = "PDT";
 
     private MaTuDong() {
     }

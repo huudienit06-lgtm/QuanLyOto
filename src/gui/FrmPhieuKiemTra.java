@@ -4,6 +4,7 @@ import dao.PhieuKiemTraDAO;
 import dao.PhieuTiepNhanDAO;
 import entity.PhieuKiemTra;
 import entity.PhieuTiepNhan;
+import entity.TaiKhoan;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -33,6 +34,7 @@ import util.MaTuDong;
 public class FrmPhieuKiemTra extends JPanel {
     private final PhieuKiemTraDAO phieuKiemTraDAO = new PhieuKiemTraDAO();
     private final PhieuTiepNhanDAO phieuTiepNhanDAO = new PhieuTiepNhanDAO();
+    private final TaiKhoan taiKhoanHienTai;
 
     private final AppTextField txtMaPKT = new AppTextField(16);
     private final javax.swing.JComboBox<PhieuTiepNhan> cboMaPTN = new javax.swing.JComboBox<>();
@@ -61,6 +63,11 @@ public class FrmPhieuKiemTra extends JPanel {
             new TableRowSorter<>(modelPhieuKiemTra);
 
     public FrmPhieuKiemTra() {
+        this(null);
+    }
+
+    public FrmPhieuKiemTra(TaiKhoan taiKhoanHienTai) {
+        this.taiKhoanHienTai = taiKhoanHienTai;
         setLayout(new BorderLayout(0, 8));
         setBackground(UIConfig.COLOR_BACKGROUND);
         setBorder(new EmptyBorder(14, 22, 14, 22));
@@ -314,12 +321,13 @@ public class FrmPhieuKiemTra extends JPanel {
         if (phieuTiepNhan == null) {
             txtMaKH.setText("");
             txtMaXe.setText("");
-            txtMaNV.setText("");
+            txtMaNV.setText(maNhanVienDangNhap());
             return;
         }
         txtMaKH.setText(phieuTiepNhan.getMaKH());
         txtMaXe.setText(phieuTiepNhan.getMaXe());
-        txtMaNV.setText(phieuTiepNhan.getMaNV());
+        String maNV = maNhanVienDangNhap();
+        txtMaNV.setText(maNV.isEmpty() ? phieuTiepNhan.getMaNV() : maNV);
     }
 
     private void napDanhSachPhieuKiemTra() {
@@ -430,7 +438,7 @@ public class FrmPhieuKiemTra extends JPanel {
         phieu.setMaPhieuTiepNhan(phieuTiepNhan.getMaPhieuTiepNhan());
         phieu.setMaKH(phieuTiepNhan.getMaKH());
         phieu.setMaXe(phieuTiepNhan.getMaXe());
-        phieu.setMaNV(phieuTiepNhan.getMaNV());
+        phieu.setMaNV(txtMaNV.getText().trim());
         phieu.setTrangThaiBanDau(trangThai);
         phieu.setVanDeHuHong(vanDe);
         return phieu;
@@ -451,6 +459,7 @@ public class FrmPhieuKiemTra extends JPanel {
                 break;
             }
         }
+        txtMaNV.setText(text(modelPhieuKiemTra.getValueAt(modelRow, 4)));
         txaTrangThai.setText(text(modelPhieuKiemTra.getValueAt(modelRow, 5)));
         txaVanDe.setText(text(modelPhieuKiemTra.getValueAt(modelRow, 6)));
         thongBao("Đang chọn phiếu kiểm tra " + txtMaPKT.getText());
@@ -475,6 +484,12 @@ public class FrmPhieuKiemTra extends JPanel {
         txaVanDe.setText("");
         tblPhieuKiemTra.clearSelection();
         thongBao("Sẵn sàng");
+    }
+
+    private String maNhanVienDangNhap() {
+        return taiKhoanHienTai == null || taiKhoanHienTai.getMaNV() == null
+                ? ""
+                : taiKhoanHienTai.getMaNV().trim();
     }
 
     private JPanel createSearchField(String label, AppTextField txtField) {

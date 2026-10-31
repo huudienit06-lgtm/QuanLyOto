@@ -1,3 +1,5 @@
+-- Chỉ chạy sau khi đã chạy QuanLyGaraOto.sql.
+-- Dữ liệu mẫu dùng mã DM* và chỉ được nạp một lần.
 USE a1;
 
 SET XACT_ABORT ON;
@@ -104,33 +106,35 @@ BEGIN TRY
     ('DMSC04', 'DMKT04', 'DMXE04', 'DMKH04', 'DMNV07', '2026-10-16T14:00:00', '2026-10-17T12:00:00', N'Hoàn thành'),
     ('DMSC05', 'DMKT05', 'DMXE05', 'DMKH05', 'DMNV08', '2026-10-17T09:00:00', '2026-10-17T14:00:00', N'Hoàn thành');
 
-    INSERT INTO ChiTietPhieuSuaChua (maPhieuSuaChua, maPhuTung, maDV, soLuong, donGia, tienCong) VALUES
-    ('DMSC01', 'DMPT01', 'DMDV01', 1, 180000, 100000),
-    ('DMSC02', 'DMPT04', 'DMDV02', 1, 650000, 250000),
-    ('DMSC03', 'DMPT02', 'DMDV03', 1, 220000, 80000),
-    ('DMSC04', 'DMPT05', 'DMDV04', 1, 1550000, 120000),
-    ('DMSC05', 'DMPT03', 'DMDV05', 1, 130000, 200000);
+    INSERT INTO ChiTietPhieuSuaChua (maPhieuSuaChua, maPhuTung, maDV, soLuong, donGia) VALUES
+    ('DMSC01', NULL, 'DMDV01', 1, 250000),
+    ('DMSC01', 'DMPT01', NULL, 1, 180000),
+    ('DMSC02', 'DMPT04', NULL, 1, 650000),
+    ('DMSC03', NULL, 'DMDV03', 1, 150000),
+    ('DMSC04', 'DMPT05', NULL, 1, 1550000),
+    ('DMSC05', NULL, 'DMDV05', 1, 500000);
 
     INSERT INTO HoaDon (maHoaDon, maPhieuSuaChua, maNV, maKM, ngayLap, tienGiamGia, thueVAT, soTien, trangThai) VALUES
-    ('DMHD01', 'DMSC01', 'DMNV01', 'DMKM03', '2026-10-15T12:00:00', 37100, 8, 532332, N'Đã thanh toán'),
-    ('DMHD02', 'DMSC02', 'DMNV02', 'DMKM02', '2026-10-15T15:00:00', 130000, 8, 1263600, N'Đã thanh toán'),
-    ('DMHD03', 'DMSC03', 'DMNV03', 'DMKM01', '2026-10-16T16:00:00', 22500, 8, 461700, N'Đã thanh toán'),
-    ('DMHD04', 'DMSC04', 'DMNV01', 'DMKM04', '2026-10-17T12:00:00', 149600, 8, 1858032, N'Chưa thanh toán'),
-    ('DMHD05', 'DMSC05', 'DMNV02', 'DMKM05', '2026-10-17T14:00:00', 99600, 8, 788832, N'Đã thanh toán');
+    ('DMHD01', 'DMSC01', 'DMNV01', 'DMKM03', '2026-10-15T12:00:00', 32508, 34400, 431892, N'Đã thanh toán'),
+    ('DMHD02', 'DMSC02', 'DMNV02', 'DMKM02', '2026-10-15T15:00:00', 70200, 52000, 631800, N'Đã thanh toán'),
+    ('DMHD03', 'DMSC03', 'DMNV03', 'DMKM01', '2026-10-16T16:00:00', 8100, 12000, 153900, N'Đã thanh toán'),
+    ('DMHD04', 'DMSC04', 'DMNV01', 'DMKM04', '2026-10-17T12:00:00', 133920, 124000, 1540080, N'Chưa thanh toán'),
+    ('DMHD05', 'DMSC05', 'DMNV02', 'DMKM05', '2026-10-17T14:00:00', 64800, 40000, 475200, N'Đã thanh toán');
 
     INSERT INTO ChiTietHoaDon (maHoaDon, maPhieuSuaChua, maPhuTung, maDV, soLuong, donGia) VALUES
-    ('DMHD01', 'DMSC01', 'DMPT01', 'DMDV01', 1, 180000),
-    ('DMHD02', 'DMSC02', 'DMPT04', 'DMDV02', 1, 650000),
-    ('DMHD03', 'DMSC03', 'DMPT02', 'DMDV03', 1, 220000),
-    ('DMHD04', 'DMSC04', 'DMPT05', 'DMDV04', 1, 1550000),
-    ('DMHD05', 'DMSC05', 'DMPT03', 'DMDV05', 1, 130000);
+    ('DMHD01', 'DMSC01', NULL, 'DMDV01', 1, 250000),
+    ('DMHD01', 'DMSC01', 'DMPT01', NULL, 1, 180000),
+    ('DMHD02', 'DMSC02', 'DMPT04', NULL, 1, 650000),
+    ('DMHD03', 'DMSC03', NULL, 'DMDV03', 1, 150000),
+    ('DMHD04', 'DMSC04', 'DMPT05', NULL, 1, 1550000),
+    ('DMHD05', 'DMSC05', NULL, 'DMDV05', 1, 500000);
 
-    INSERT INTO GiaoDichThanhToan (maGD, maHoaDon, phuongThucThanhToan, thoiGianGD, trangThaiGD) VALUES
-    ('DMGD01', 'DMHD01', N'Tiền mặt', '2026-10-15T12:10:00', N'Thành công'),
-    ('DMGD02', 'DMHD02', N'Chuyển khoản', '2026-10-15T15:10:00', N'Thành công'),
-    ('DMGD03', 'DMHD03', N'Tiền mặt', '2026-10-16T16:10:00', N'Thành công'),
-    ('DMGD04', 'DMHD04', N'Tiền mặt', '2026-10-17T12:10:00', N'Chờ thanh toán'),
-    ('DMGD05', 'DMHD05', N'Chuyển khoản', '2026-10-17T14:10:00', N'Thành công');
+    INSERT INTO GiaoDichThanhToan (maGD, maHoaDon, phuongThucThanhToan, thoiGianGD, trangThaiGD, soTienThanhToan) VALUES
+    ('DMGD01', 'DMHD01', N'Tiền mặt', '2026-10-15T12:10:00', N'Thành công', 431892),
+    ('DMGD02', 'DMHD02', N'Chuyển khoản', '2026-10-15T15:10:00', N'Thành công', 631800),
+    ('DMGD03', 'DMHD03', N'Tiền mặt', '2026-10-16T16:10:00', N'Thành công', 153900),
+    ('DMGD04', 'DMHD04', N'Tiền mặt', '2026-10-17T12:10:00', N'Chờ thanh toán', 0),
+    ('DMGD05', 'DMHD05', N'Chuyển khoản', '2026-10-17T14:10:00', N'Thành công', 475200);
 
     INSERT INTO PhieuBaoHanh (maPhieuBaoHanh, maNV, maKH, maXe, ngayHetHanBaoHanh, noiDungBaoHanh, dieuKienBaoHanh) VALUES
     ('DMBH01', 'DMNV04', 'DMKH01', 'DMXE01', '2027-10-15', N'Bảo hành công việc thay dầu.', N'Áp dụng khi bảo dưỡng đúng lịch.'),

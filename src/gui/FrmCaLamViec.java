@@ -13,7 +13,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 import javax.swing.DefaultCellEditor;
 import javax.swing.BorderFactory;
@@ -38,6 +37,8 @@ import dao.LichLamViecDAO.PhanCong;
 import dao.NhanVienDAO;
 import entity.CaLamViec;
 import entity.NhanVien;
+import entity.LichLamViec;
+import util.MaTuDong;
 
 public class FrmCaLamViec extends JPanel {
     private static final String CHUA_PHAN_CONG = "Chưa phân công";
@@ -303,7 +304,10 @@ public class FrmCaLamViec extends JPanel {
                         "Phân công bị trùng", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String maLich = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+            String maLich = MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_LICH_LAM_VIEC,
+                    lichLamViecDAO.findAll(),
+                    LichLamViec::getMaLich);
             if (lichLamViecDAO.themPhanCong(maLich, maCa, maNV, pnlChonNgayLamViec.getSelectedDate())) {
                 napPhanCongTuan();
                 lblTrangThaiDiemDanh.setText("Đã thêm phân công.");

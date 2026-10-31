@@ -7,6 +7,7 @@ import dao.XeDAO;
 import entity.KhachHang;
 import entity.NhanVien;
 import entity.PhieuBanGiao;
+import entity.TaiKhoan;
 import entity.Xe;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -34,6 +35,7 @@ public class FrmBanGiaoXe extends JPanel {
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
     private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
+    private final TaiKhoan taiKhoanHienTai;
 
     private final AppTextField txtMaPhieuBanGiao = new AppTextField(14);
     private final AppComboBox<Xe> cboXe = new AppComboBox<>();
@@ -60,6 +62,11 @@ public class FrmBanGiaoXe extends JPanel {
     private final TableRowSorter<DefaultTableModel> sorterBanGiao = new TableRowSorter<>(modelBanGiao);
 
     public FrmBanGiaoXe() {
+        this(null);
+    }
+
+    public FrmBanGiaoXe(TaiKhoan taiKhoanHienTai) {
+        this.taiKhoanHienTai = taiKhoanHienTai;
         setLayout(new BorderLayout(0, 10));
         setOpaque(false);
 
@@ -385,14 +392,21 @@ public class FrmBanGiaoXe extends JPanel {
         if (cboXe.getItemCount() > 0) {
             cboXe.setSelectedIndex(0);
         }
-        if (cboNhanVien.getItemCount() > 0) {
-            cboNhanVien.setSelectedIndex(0);
-        }
+        chonNhanVienDangNhap();
         txtTenNguoiNhan.setText("");
         txtSoDienThoaiNguoiNhan.setText("");
         txaTinhTrangXe.setText("");
         tblBanGiao.clearSelection();
         lblThongBao.setText("Sẵn sàng lập phiếu bàn giao");
+    }
+
+    private void chonNhanVienDangNhap() {
+        String maNV = taiKhoanHienTai == null ? null : taiKhoanHienTai.getMaNV();
+        if (maNV != null) {
+            chonNhanVien(maNV.trim());
+        } else if (cboNhanVien.getItemCount() > 0) {
+            cboNhanVien.setSelectedIndex(0);
+        }
     }
 
     private abstract static class ComboBoxRenderer<T> extends DefaultListCellRenderer {

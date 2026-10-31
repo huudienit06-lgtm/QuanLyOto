@@ -7,6 +7,7 @@ import dao.XeDAO;
 import entity.KhachHang;
 import entity.NhanVien;
 import entity.PhieuTiepNhan;
+import entity.TaiKhoan;
 import entity.Xe;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -43,6 +44,7 @@ public class FrmTiepNhan extends JPanel {
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
     private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
+    private final TaiKhoan taiKhoanHienTai;
 
     private final AppTextField txtMaPhieuTiepNhan = new AppTextField(16);
     private final AppComboBox<Xe> cboXe = new AppComboBox<>();
@@ -74,6 +76,11 @@ public class FrmTiepNhan extends JPanel {
     private boolean dangCapNhatPhieu;
 
     public FrmTiepNhan() {
+        this(null);
+    }
+
+    public FrmTiepNhan(TaiKhoan taiKhoanHienTai) {
+        this.taiKhoanHienTai = taiKhoanHienTai;
         setLayout(new BorderLayout(0, 10));
         setOpaque(false);
 
@@ -421,9 +428,7 @@ public class FrmTiepNhan extends JPanel {
         } else {
             capNhatThongTinKhachHang();
         }
-        if (cboNhanVien.getItemCount() > 0) {
-            cboNhanVien.setSelectedIndex(0);
-        }
+        chonNhanVienDangNhap();
         ngayLapDangChon = Timestamp.valueOf(LocalDateTime.now());
         txtNgayLap.setText(dinhDangNgay(ngayLapDangChon));
         chonTrangThai(TRANG_THAI_MAC_DINH[0]);
@@ -447,6 +452,22 @@ public class FrmTiepNhan extends JPanel {
                 cboNhanVien.setSelectedIndex(index);
                 return;
             }
+        }
+    }
+
+    private NhanVien nhanVienDangNhap() {
+        if (taiKhoanHienTai == null || taiKhoanHienTai.getMaNV() == null) {
+            return null;
+        }
+        return timNhanVien(taiKhoanHienTai.getMaNV().trim());
+    }
+
+    private void chonNhanVienDangNhap() {
+        NhanVien nhanVien = nhanVienDangNhap();
+        if (nhanVien != null) {
+            chonNhanVien(nhanVien.getMaNV());
+        } else if (cboNhanVien.getItemCount() > 0) {
+            cboNhanVien.setSelectedIndex(0);
         }
     }
 

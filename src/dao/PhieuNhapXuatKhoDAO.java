@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import util.MaTuDong;
 
 public class PhieuNhapXuatKhoDAO extends BaseDAO<PhieuNhapXuatKho> {
     
@@ -25,6 +26,13 @@ public class PhieuNhapXuatKhoDAO extends BaseDAO<PhieuNhapXuatKho> {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    public String taoMaPhieuMoi(boolean isNhapKho) throws SQLException {
+        return MaTuDong.sinhMa(
+                isNhapKho ? MaTuDong.TIEN_TO_PHIEU_NHAP_KHO : MaTuDong.TIEN_TO_PHIEU_XUAT_KHO,
+                findAll(),
+                PhieuNhapXuatKho::getMaPhieuNhapXuat);
     }
 
     public List<ChiTietPhieuNhap> layChiTietPhieu(String maPhieuNhapXuat) {

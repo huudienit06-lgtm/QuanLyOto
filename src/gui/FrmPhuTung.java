@@ -27,6 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import util.MaTuDong;
  class FrmPhuTung extends JPanel {
     // Hệ màu chuẩn giao diện Gara
     private static final Color COLOR_BG_MAIN = new Color(244, 247, 252);
@@ -73,6 +74,7 @@ import javax.swing.table.JTableHeader;
         // Nạp dữ liệu ban đầu khi mở form
         napDanhSachNhaCungCap();
         napDanhSachPhuTung();
+        lamMoiForm();
     }
 
     private void initComponents() {
@@ -132,6 +134,8 @@ import javax.swing.table.JTableHeader;
         
         txtSoLuongTon.setEditable(false); // Khóa số lượng tồn không cho sửa tay
         txtSoLuongTon.setBackground(new Color(248, 250, 252));
+        txtMaPT.setEditable(false);
+        txtMaPT.setBackground(new Color(248, 250, 252));
 
         // Hàng 1
         addFieldToGrid(pnlFields, "Mã phụ tùng *", txtMaPT, 0, 0, gbc);
@@ -445,8 +449,17 @@ import javax.swing.table.JTableHeader;
     }
 
     private void lamMoiForm() {
-        txtMaPT.setText("");
-        txtMaPT.setEditable(true);
+        try {
+            txtMaPT.setText(MaTuDong.sinhMa(
+                    MaTuDong.TIEN_TO_PHU_TUNG,
+                    phuTungDAO.findAll(),
+                    PhuTung::getMaPhuTung));
+        } catch (java.sql.SQLException exception) {
+            txtMaPT.setText("");
+            JOptionPane.showMessageDialog(this,
+                    "Không thể phát sinh mã phụ tùng: " + exception.getMessage(),
+                    "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+        }
         txtTenPT.setText("");
         cboDonViTinh.setSelectedIndex(0);
         if(cboNhaCungCap.getItemCount() > 0) cboNhaCungCap.setSelectedIndex(0);

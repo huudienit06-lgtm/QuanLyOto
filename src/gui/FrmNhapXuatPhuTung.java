@@ -653,11 +653,18 @@ public class FrmNhapXuatPhuTung extends JPanel {
         }
 
         PhieuNhapXuatKho phieu = new PhieuNhapXuatKho();
-        // Sinh mã phiếu vừa vặn trong giới hạn VARCHAR(20) của CSDL
-        long suffix = System.currentTimeMillis() % 10000000;
-        String maMoi = (isNhap ? "PN" : "PX") + suffix;
+        final String maMoi;
+        try {
+            maMoi = giaoDichDAO.taoMaPhieuMoi(isNhap);
+        } catch (java.sql.SQLException exception) {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể phát sinh mã phiếu kho: " + exception.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         phieu.setMaPhieuNhapXuat(maMoi);
+        txtMaPhieu.setText(maMoi);
         phieu.setMaNV(taiKhoanHienTai.getMaNV().trim());
         phieu.setNgayLapPhieu(new java.sql.Timestamp(System.currentTimeMillis()));
         // Giá trị kieuPhieu khớp đúng độ dài và từ khóa trong DB ("Nhập" hoặc "Xuất")

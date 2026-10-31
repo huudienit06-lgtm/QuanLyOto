@@ -38,6 +38,7 @@ import javax.swing.table.TableRowSorter;
 
 import dao.DichVuDAO;
 import entity.DichVu;
+import util.MaTuDong;
 
 public class FrmDichVu extends JPanel {
     private static final Color PALE_BLUE = new Color(242, 247, 255);
@@ -494,16 +495,13 @@ public class FrmDichVu extends JPanel {
     }
 
     private String phatSinhMaDV() {
-        int max = 0;
+        List<String> danhSachMa = new ArrayList<>();
         for (int i = 0; i < modelDichVu.getRowCount(); i++) {
-            String ma = modelDichVu.getValueAt(i, 0).toString().trim();
-            if (ma.toUpperCase().startsWith("DMDV")) {
-                int so = Integer.parseInt(ma.substring(4));
-                if (so > max) {
-                    max = so;
-                }
-            }
+            danhSachMa.add(cellText(modelDichVu.getValueAt(i, 0)));
         }
-        return String.format("DMDV%02d", max + 1);
+        return MaTuDong.sinhMa(
+                MaTuDong.TIEN_TO_DICH_VU,
+                danhSachMa,
+                ma -> ma);
     }
 }

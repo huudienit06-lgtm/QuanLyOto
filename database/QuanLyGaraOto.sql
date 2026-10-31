@@ -1,9 +1,16 @@
-CREATE DATABASE a1
+-- Chạy file này trước DuLieuMau.sql trên SQL Server.
+-- Script không xóa dữ liệu: chỉ tạo schema cho database chưa có bảng.
+IF DB_ID(N'a1') IS NULL
+    CREATE DATABASE a1;
 GO
 
-USE a1
+USE a1;
 GO
---
+
+IF EXISTS (SELECT 1 FROM sys.tables WHERE schema_id = SCHEMA_ID(N'dbo'))
+    THROW 50000, N'Database a1 đã có bảng. Không chạy lại script tạo mới để tránh ghi đè schema hiện có.', 1;
+GO
+
 CREATE TABLE KhachHang (
     maKH VARCHAR(20) PRIMARY KEY,
     hoTen NVARCHAR(100) NOT NULL,
@@ -120,13 +127,16 @@ CREATE TABLE PhieuSuaChua (
 );
 
 CREATE TABLE ChiTietPhieuSuaChua (
+    maChiTiet BIGINT IDENTITY(1,1) PRIMARY KEY,
     maPhieuSuaChua VARCHAR(20) NOT NULL,
-    maPhuTung VARCHAR(20) NOT NULL,
-    maDV VARCHAR(20) NOT NULL,
-    soLuong INT DEFAULT 1,
-    donGia DECIMAL(18,2),
-    tienCong DECIMAL(18,2),
-    PRIMARY KEY (maPhieuSuaChua, maDV), -- Khóa chính phức hợp gồm mã phiếu sửa chữa và mã dịch vụ
+    maPhuTung VARCHAR(20),
+    maDV VARCHAR(20),
+    soLuong INT NOT NULL DEFAULT 1,
+    donGia DECIMAL(18,2) NOT NULL DEFAULT 0,
+    CONSTRAINT CK_CTPSC_MotLoai CHECK (
+        (maPhuTung IS NOT NULL AND maDV IS NULL)
+        OR (maPhuTung IS NULL AND maDV IS NOT NULL)
+    ),
     CONSTRAINT FK_CTPSC_PhieuSuaChua FOREIGN KEY (maPhieuSuaChua) REFERENCES PhieuSuaChua(maPhieuSuaChua) ON DELETE CASCADE,
     CONSTRAINT FK_CTPSC_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung),
     CONSTRAINT FK_CTPSC_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV)
@@ -144,13 +154,13 @@ CREATE TABLE ChuongTrinhKhuyenMai (
 
 CREATE TABLE HoaDon (
     maHoaDon VARCHAR(20) PRIMARY KEY,
-    maPhieuSuaChua VARCHAR(20) NOT NULL,
+    maPhieuSuaChua VARCHAR(20) NULL,
     maNV VARCHAR(20) NOT NULL,
-    maKM VARCHAR(20),
+    maKM VARCHAR(20) NULL,
     ngayLap DATETIME NOT NULL,
-    tienGiamGia FLOAT DEFAULT 0,
-    thueVAT FLOAT DEFAULT 0,
-    soTien FLOAT,
+    tienGiamGia DECIMAL(18,2) NOT NULL DEFAULT 0,
+    thueVAT DECIMAL(18,2) NOT NULL DEFAULT 0,
+    soTien DECIMAL(18,2) NOT NULL DEFAULT 0,
     trangThai NVARCHAR(20),
     CONSTRAINT FK_HD_PhieuSuaChua FOREIGN KEY (maPhieuSuaChua) REFERENCES PhieuSuaChua(maPhieuSuaChua),
     CONSTRAINT FK_HD_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
@@ -158,13 +168,14 @@ CREATE TABLE HoaDon (
 );
 
 CREATE TABLE ChiTietHoaDon (
+    maChiTietHD BIGINT IDENTITY(1,1) PRIMARY KEY,
     maHoaDon VARCHAR(20) NOT NULL,
-    maPhieuSuaChua VARCHAR(20) NOT NULL, -- Thêm liên kết tới phiếu sửa chữa
-    maPhuTung VARCHAR(20) NOT NULL,
-    maDV VARCHAR(20) NOT NULL,
-    soLuong INT,
-    donGia DECIMAL(18,2),
-    PRIMARY KEY (maHoaDon, maPhieuSuaChua), -- Khóa chính phức hợp gồm mã hóa đơn và mã phiếu sửa chữa
+    maPhieuSuaChua VARCHAR(20) NULL, 
+    maPhuTung VARCHAR(20) NULL,
+    maDV VARCHAR(20) NULL,
+    soLuong INT NOT NULL DEFAULT 1,
+    donGia DECIMAL(18,2) NOT NULL DEFAULT 0,
+    CONSTRAINT CK_CTHD_ItNhatMotLoai CHECK (maPhuTung IS NOT NULL OR maDV IS NOT NULL),
     CONSTRAINT FK_CTHD_HoaDon FOREIGN KEY (maHoaDon) REFERENCES HoaDon(maHoaDon) ON DELETE CASCADE,
     CONSTRAINT FK_CTHD_PhieuSuaChua FOREIGN KEY (maPhieuSuaChua) REFERENCES PhieuSuaChua(maPhieuSuaChua),
     CONSTRAINT FK_CTHD_PhuTung FOREIGN KEY (maPhuTung) REFERENCES PhuTung(maPhuTung),
@@ -175,8 +186,9 @@ CREATE TABLE GiaoDichThanhToan (
     maGD VARCHAR(20) PRIMARY KEY,
     maHoaDon VARCHAR(20) NOT NULL,
     phuongThucThanhToan NVARCHAR(50),
-    thoiGianGD DATETIME,
+    thoiGianGD DATETIME DEFAULT GETDATE(),
     trangThaiGD NVARCHAR(20),
+    soTienThanhToan DECIMAL(18,2) NOT NULL DEFAULT 0,
     CONSTRAINT FK_GDTT_HoaDon FOREIGN KEY (maHoaDon) REFERENCES HoaDon(maHoaDon)
 );
 
