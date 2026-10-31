@@ -35,6 +35,7 @@ public class FrmDangNhap extends JPanel {
 	private final JPasswordField pwdMatKhau = new JPasswordField(22);
 	private final JCheckBox chkHienMatKhau = new JCheckBox("Hiển thị mật khẩu");
 	public static TaiKhoan taiKhoanDangNhap;
+
 	public FrmDangNhap(BaseFrame frame) {
 		this.frame = frame;
 		setLayout(new GridBagLayout());
@@ -92,8 +93,8 @@ public class FrmDangNhap extends JPanel {
 		chkHienMatKhau.setOpaque(false);
 		chkHienMatKhau.setForeground(MUTED);
 		chkHienMatKhau.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-		chkHienMatKhau.addActionListener(event ->
-				pwdMatKhau.setEchoChar(chkHienMatKhau.isSelected() ? (char) 0 : '\u2022'));
+		chkHienMatKhau
+				.addActionListener(event -> pwdMatKhau.setEchoChar(chkHienMatKhau.isSelected() ? (char) 0 : '\u2022'));
 		pnlForm.add(chkHienMatKhau, gbc);
 
 		gbc.gridy++;
@@ -157,7 +158,7 @@ public class FrmDangNhap extends JPanel {
 					"Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
 			return null;
 		}
-		
+
 		try {
 			taiKhoanDangNhap = new TaiKhoanDAO().dangNhap(tenDangNhap, new String(matKhauChars));
 			if (taiKhoanDangNhap == null) {
@@ -172,7 +173,7 @@ public class FrmDangNhap extends JPanel {
 						"Không thể đăng nhập", JOptionPane.WARNING_MESSAGE);
 				return null;
 			}
-
+			frame.setTaiKhoanDangNhap(taiKhoanDangNhap);
 			String vaiTro = chuanHoa(taiKhoanDangNhap.getVaiTro()).replaceAll("\\s+", "");
 			if (vaiTro.contains("quanly") || vaiTro.contains("admin")) {
 				frame.hienThiMenu(new MenuQL(frame, taiKhoanDangNhap), "Đăng nhập với quyền quản lý");
@@ -189,7 +190,7 @@ public class FrmDangNhap extends JPanel {
 			JOptionPane.showMessageDialog(this,
 					"Không thể xác thực tài khoản do lỗi cơ sở dữ liệu: " + exception.getMessage(),
 					"Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
-					return null;
+			return null;
 		} finally {
 			java.util.Arrays.fill(matKhauChars, '\0');
 		}
@@ -212,9 +213,11 @@ public class FrmDangNhap extends JPanel {
 			return true;
 		}
 
-		// // Nếu chuỗi chứa cả 'hoat' và 'dong' ở bất kỳ vị trí nào thì vẫn coi là hoạt động
-		// if (trangThaiChuanHoa.contains("hoat") && trangThaiChuanHoa.contains("dong")) {
-		// 	return true;
+		// // Nếu chuỗi chứa cả 'hoat' và 'dong' ở bất kỳ vị trí nào thì vẫn coi là hoạt
+		// động
+		// if (trangThaiChuanHoa.contains("hoat") && trangThaiChuanHoa.contains("dong"))
+		// {
+		// return true;
 		// }
 
 		return false;
@@ -232,6 +235,6 @@ public class FrmDangNhap extends JPanel {
 	}
 
 	// public TaiKhoan taiKhoanDangNhapHienTai(){
-	// 	;
+	// ;
 	// }
 }
