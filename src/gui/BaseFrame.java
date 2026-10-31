@@ -60,6 +60,11 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý ca làm việc");
 			return;
 		}
+		if ("Khách hàng".equals(featureName) || "Cập nhật khách hàng".equals(featureName)) {
+			setContent(new FrmKhachHang());
+			lblStatus.setText("Quản lý khách hàng");
+			return;
+		}
 		if ("Báo cáo tổng hợp".equals(featureName)) {
 			setContent(new FrmBaoCaoTongHop());
 			lblStatus.setText("Báo cáo tổng hợp");
@@ -79,6 +84,9 @@ public class BaseFrame extends JFrame {
 			// FrmDangNhap taiKhoan = new FrmDangNhap(this);
 			// taiKhoanDangNhap = taiKhoan.phanQuyen();
 			setContent(new FrmNhapXuatPhuTung(taiKhoanDangNhap));
+			lblStatus.setText("Lập phiếu nhập kho phụ tùng");
+			return;
+		}
 			setContent(new FrmNhapXuatPhuTung(FrmDangNhap.taiKhoanDangNhap));
 			lblStatus.setText("Lập phiếu nhập kho phụ tùng");
 			return;
@@ -102,6 +110,8 @@ public class BaseFrame extends JFrame {
 						taiKhoanDangNhap.getHoTenNhanVien());
 			}
 			setContent(frmHoaDon);
+		if ("Hóa đơn".equals(featureName) || "Lập hóa đơn".equals(featureName)) {
+			setContent(new FrmHoaDon());
 			lblStatus.setText("Lập hóa đơn");
 			return;
 		}
@@ -133,6 +143,11 @@ public class BaseFrame extends JFrame {
 		if ("Bàn giao xe".equals(featureName)) {
 			setContent(new FrmBanGiaoXe());
 			lblStatus.setText("Bàn giao xe");
+			return;
+		}
+		if ("Sửa chữa".equals(featureName)) {
+			setContent(new FrmThongKeSuaChua());
+			lblStatus.setText("Sửa chữa");
 			return;
 		}
 		lblStatus.setText("Đã chọn: " + featureName);
