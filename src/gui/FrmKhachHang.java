@@ -175,19 +175,44 @@ public class FrmKhachHang extends JPanel implements ActionListener {
             txtMaKH.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(txtMaKH.getText().trim(), 20)) {
+            FormUI.showError("Mã khách hàng không được vượt quá 20 ký tự.");
+            txtMaKH.requestFocus();
+            return false;
+        }
         if (!FormValidator.isValidFullName(txtHoTen.getText().trim())) {
             FormUI.showError("Họ và tên không hợp lệ.");
             txtHoTen.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(txtHoTen.getText().trim(), 100)) {
+            FormUI.showError("Họ và tên không được vượt quá 100 ký tự.");
+            txtHoTen.requestFocus();
+            return false;
+        }
         if (!FormValidator.isValidOptionalPhoneNumber(txtSoDienThoai.getText().trim())) {
-            FormUI.showError("Số điện thoại không hợp lệ.");
+            FormUI.showError("Số điện thoại phải có định dạng Việt Nam, ví dụ 0912345678 hoặc +84912345678.");
+            txtSoDienThoai.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(txtSoDienThoai.getText().trim(), 15)) {
+            FormUI.showError("Số điện thoại không được vượt quá 15 ký tự.");
             txtSoDienThoai.requestFocus();
             return false;
         }
         if (!FormValidator.isValidOptionalEmail(txtEmail.getText().trim())) {
             FormUI.showError("Email không hợp lệ.");
             txtEmail.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(txtEmail.getText().trim(), 100)) {
+            FormUI.showError("Email không được vượt quá 100 ký tự.");
+            txtEmail.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(txtDiaChi.getText().trim(), 255)) {
+            FormUI.showError("Địa chỉ không được vượt quá 255 ký tự.");
+            txtDiaChi.requestFocus();
             return false;
         }
         return true;

@@ -1,5 +1,6 @@
 package entity;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 public class HoaDon {
@@ -8,9 +9,9 @@ public class HoaDon {
     private String maNV;
     private String maKM;
     private Timestamp ngayLap;
-    private Double tienGiamGia;
-    private Double thueVAT;
-    private Double soTien;
+    private BigDecimal tienGiamGia;
+    private BigDecimal thueVAT;
+    private BigDecimal soTien;
     private String trangThai;
 
     public HoaDon() {
@@ -26,12 +27,12 @@ public class HoaDon {
     public void setMaKM(String maKM) { this.maKM = maKM; }
     public Timestamp getNgayLap() { return ngayLap; }
     public void setNgayLap(Timestamp ngayLap) { this.ngayLap = ngayLap; }
-    public Double getTienGiamGia() { return tienGiamGia; }
-    public void setTienGiamGia(Double tienGiamGia) { this.tienGiamGia = tienGiamGia; }
-    public Double getThueVAT() { return thueVAT; }
-    public void setThueVAT(Double thueVAT) { this.thueVAT = thueVAT; }
-    public Double getSoTien() { return soTien; }
-    public void setSoTien(Double soTien) { this.soTien = soTien; }
+    public BigDecimal getTienGiamGia() { return tienGiamGia; }
+    public void setTienGiamGia(BigDecimal tienGiamGia) { this.tienGiamGia = tienGiamGia; }
+    public BigDecimal getThueVAT() { return thueVAT; }
+    public void setThueVAT(BigDecimal thueVAT) { this.thueVAT = thueVAT; }
+    public BigDecimal getSoTien() { return soTien; }
+    public void setSoTien(BigDecimal soTien) { this.soTien = soTien; }
     public String getTrangThai() { return trangThai; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
 }

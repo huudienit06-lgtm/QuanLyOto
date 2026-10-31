@@ -185,13 +185,28 @@ public class FrmNhanVien extends JPanel implements ActionListener {
             txtMaNV.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(maNV, 20)) {
+            FormUI.showError("Mã nhân viên không được vượt quá 20 ký tự.");
+            txtMaNV.requestFocus();
+            return false;
+        }
         if (!FormValidator.isValidFullName(hoTen)) {
             FormUI.showError("Họ và tên không hợp lệ.");
             txtHoTen.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(hoTen, 100)) {
+            FormUI.showError("Họ và tên không được vượt quá 100 ký tự.");
+            txtHoTen.requestFocus();
+            return false;
+        }
         if (!FormValidator.isValidOptionalPhoneNumber(soDienThoai)) {
-            FormUI.showError("Số điện thoại không hợp lệ.");
+            FormUI.showError("Số điện thoại phải có định dạng Việt Nam, ví dụ 0912345678 hoặc +84912345678.");
+            txtSoDienThoai.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(soDienThoai, 15)) {
+            FormUI.showError("Số điện thoại không được vượt quá 15 ký tự.");
             txtSoDienThoai.requestFocus();
             return false;
         }
@@ -200,13 +215,28 @@ public class FrmNhanVien extends JPanel implements ActionListener {
             txtEmail.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(email, 100)) {
+            FormUI.showError("Email không được vượt quá 100 ký tự.");
+            txtEmail.requestFocus();
+            return false;
+        }
         if (chucVu == null || chucVu.equals("Chọn chức vụ")) {
             FormUI.showError("Vui lòng chọn chức vụ.");
             cboChucVu.requestFocus();
             return false;
         }
+        if (!FormValidator.isWithinMaxLength(chucVu, 50)) {
+            FormUI.showError("Chức vụ không được vượt quá 50 ký tự.");
+            cboChucVu.requestFocus();
+            return false;
+        }
         if (trangThai == null || trangThai.isEmpty()) {
             FormUI.showError("Vui lòng chọn trạng thái.");
+            cboTrangThai.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(trangThai, 20)) {
+            FormUI.showError("Trạng thái không được vượt quá 20 ký tự.");
             cboTrangThai.requestFocus();
             return false;
         }

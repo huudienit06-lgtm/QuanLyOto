@@ -3,6 +3,7 @@ package gui;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.swing.JComboBox;
 
@@ -13,7 +14,8 @@ public final class FormValidator {
     public static final String REGEX_EMAIL =
             "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
                     + "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$";
-    public static final String REGEX_BIEN_SO_XE = "^[0-9]{2}[A-Z]{1,2}-?[0-9]{4,5}(?:\\.[0-9]{2})?$";
+    public static final String REGEX_BIEN_SO_XE =
+            "^[0-9]{2}[A-Z]{1,2}-?(?:[0-9]{4,5}|[0-9]{3}\\.[0-9]{2})$";
     public static final String REGEX_SO_NGUYEN = "^-?[0-9]+$";
     public static final String REGEX_SO_THUC = "^-?[0-9]+(?:[.,][0-9]+)?$";
     public static final String REGEX_NGAY_ISO = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";
@@ -34,6 +36,10 @@ public final class FormValidator {
 
     public static boolean isRequired(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    public static boolean isWithinMaxLength(String value, int maxLength) {
+        return value != null && maxLength >= 0 && value.length() <= maxLength;
     }
 
     public static boolean matches(String value, String regex) {
@@ -65,7 +71,22 @@ public final class FormValidator {
     }
 
     public static boolean isValidLicensePlate(String value) {
-        return value != null && BIEN_SO_XE_PATTERN.matcher(value.trim().toUpperCase()).matches();
+        return value != null && BIEN_SO_XE_PATTERN.matcher(value.trim().toUpperCase(Locale.ROOT)).matches();
+    }
+
+    public static boolean isValidOptionalProductionYear(String value) {
+        if (!isRequired(value)) {
+            return true;
+        }
+        if (!isValidInteger(value)) {
+            return false;
+        }
+        try {
+            int year = Integer.parseInt(value.trim());
+            return year >= 1886 && year <= LocalDate.now().getYear();
+        } catch (NumberFormatException exception) {
+            return false;
+        }
     }
 
     public static boolean isValidInteger(String value) {

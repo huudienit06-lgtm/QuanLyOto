@@ -24,6 +24,7 @@ public class NhanVienFrame extends JFrame {
 	private static final Color TEXT = new Color(47, 62, 84);
 	private static final Color MUTED = new Color(112, 128, 150);
 	private final JLabel lblStatus = new JLabel("Sẵn sàng");
+	private JPanel pnlCurrentContent;
 
 	public NhanVienFrame() {
 		this("Quản Lý Gara Oto");
@@ -44,13 +45,30 @@ public class NhanVienFrame extends JFrame {
 			setJMenuBar(createMenuBar());
 		}
 		if (showDefaultWorkspace) {
-			add(createWorkspace(), BorderLayout.CENTER);
+			setContent(createWorkspace());
 		}
 		add(createStatusBar(), BorderLayout.SOUTH);
 	}
 
 	protected void onMenuAction(String featureName) {
+		if ("Lập hóa đơn".equals(featureName)) {
+			FrmHoaDon frmHoaDon = new FrmHoaDon();
+			setContent(frmHoaDon);
+			frmHoaDon.taiDuLieuBanDauAsync();
+			lblStatus.setText("Lập hóa đơn");
+			return;
+		}
 		lblStatus.setText("Đã chọn: " + featureName);
+	}
+
+	protected final void setContent(JPanel pnlContent) {
+		if (pnlCurrentContent != null) {
+			remove(pnlCurrentContent);
+		}
+		pnlCurrentContent = pnlContent;
+		add(pnlCurrentContent, BorderLayout.CENTER);
+		revalidate();
+		repaint();
 	}
 
 	protected JPanel createRoleMenuWorkspace(String title, String[][] categories) {

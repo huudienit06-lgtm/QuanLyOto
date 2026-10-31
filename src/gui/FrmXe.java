@@ -489,9 +489,21 @@ public class FrmXe extends JPanel {
 
     private Xe docThongTinXe() {
         String maXe = txtMaXe.getText().trim();
-        String bienSo = txtBienSo.getText().trim();
+        String bienSo = txtBienSo.getText().trim().toUpperCase(Locale.ROOT);
         if (maXe.isEmpty() || bienSo.isEmpty()) {
             throw new IllegalArgumentException("Mã xe và biển số không được để trống.");
+        }
+        if (!FormValidator.isValidLicensePlate(bienSo)) {
+            throw new IllegalArgumentException(
+                    "Biển số xe không đúng định dạng (ví dụ: 30A-123.45 hoặc 30A-12345).");
+        }
+        if (!FormValidator.isWithinMaxLength(txtHangXe.getText().trim(), 50)
+                || !FormValidator.isWithinMaxLength(txtDongXe.getText().trim(), 50)) {
+            throw new IllegalArgumentException("Hãng xe và dòng xe không được vượt quá 50 ký tự.");
+        }
+        if (!FormValidator.isWithinMaxLength(txtSoKhung.getText().trim(), 50)
+                || !FormValidator.isWithinMaxLength(txtSoMay.getText().trim(), 50)) {
+            throw new IllegalArgumentException("Số khung và số máy không được vượt quá 50 ký tự.");
         }
         if (khachHangDuocChon == null) {
             throw new IllegalArgumentException("Hãy tìm và chọn khách hàng từ danh sách gợi ý.");
@@ -500,11 +512,11 @@ public class FrmXe extends JPanel {
         Integer namSanXuat = null;
         String namSanXuatText = txtNamSanXuat.getText().trim();
         if (!namSanXuatText.isEmpty()) {
-            try {
-                namSanXuat = Integer.valueOf(namSanXuatText);
-            } catch (NumberFormatException exception) {
-                throw new IllegalArgumentException("Năm sản xuất phải là số nguyên.");
+            if (!FormValidator.isValidOptionalProductionYear(namSanXuatText)) {
+                throw new IllegalArgumentException(
+                        "Năm sản xuất phải là số từ 1886 đến " + java.time.Year.now().getValue() + ".");
             }
+            namSanXuat = Integer.valueOf(namSanXuatText);
         }
         return new Xe(
                 maXe,

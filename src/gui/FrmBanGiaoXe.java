@@ -269,8 +269,15 @@ public class FrmBanGiaoXe extends JPanel {
             FormUI.showError("Vui lòng nhập đầy đủ các trường bắt buộc.");
             return false;
         }
-        if (!txtSoDienThoaiNguoiNhan.getText().trim().matches("\\d{9,15}")) {
-            FormUI.showError("Số điện thoại người nhận phải gồm 9 đến 15 chữ số.");
+        if (!FormValidator.isValidPhoneNumber(txtSoDienThoaiNguoiNhan.getText().trim())) {
+            FormUI.showError(
+                    "Số điện thoại người nhận không hợp lệ. Ví dụ: 0912345678 hoặc +84912345678.");
+            txtSoDienThoaiNguoiNhan.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(txtTenNguoiNhan.getText().trim(), 100)) {
+            FormUI.showError("Tên người nhận không được vượt quá 100 ký tự.");
+            txtTenNguoiNhan.requestFocus();
             return false;
         }
         return true;

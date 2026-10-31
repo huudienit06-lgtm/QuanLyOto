@@ -103,6 +103,7 @@ public class BaseFrame extends JFrame {
 						taiKhoanDangNhap.getHoTenNhanVien());
 			}
 			setContent(frmHoaDon);
+			frmHoaDon.taiDuLieuBanDauAsync();
 			lblStatus.setText("Lập hóa đơn");
 			return;
 		}

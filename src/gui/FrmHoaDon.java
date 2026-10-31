@@ -1,6 +1,5 @@
 package gui;
 
-import connectDB.ConnectDB;
 import dao.HoaDonDAO;
 import dao.HoaDonDAO.DongChiTiet;
 import dao.HoaDonDAO.KhuyenMai;
@@ -23,6 +22,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import javax.swing.SwingWorker;
 
 public class FrmHoaDon extends JPanel {
     private static final String SUA_CHUA = "Hóa đơn sửa chữa";
@@ -84,6 +85,10 @@ public class FrmHoaDon extends JPanel {
     private BigDecimal tongThanhToan = BigDecimal.ZERO;
     /** Mã hóa đơn vừa lưu thành công, dùng cho nút Thanh toán. */
     private String maHoaDonVuaLuu;
+    private record DuLieuKhoiTao(String maHoaDon, List<PhuTung> dsPhuTung,
+            List<KhuyenMai> dsKhuyenMai) {
+    }
+
     // Khu vực "Nguồn hóa đơn"
     private final CardLayout cardNguon = new CardTheoThe();
     private final JPanel pnlNguon = new JPanel(cardNguon);
@@ -117,7 +122,6 @@ public class FrmHoaDon extends JPanel {
     }
 
     public FrmHoaDon() {
-        ConnectDB.getInstance().connect();
         setLayout(new BorderLayout(0, 12));
         setBackground(MAU_NEN_TRANG);
         setBorder(new EmptyBorder(14, 18, 14, 18));
@@ -126,12 +130,43 @@ public class FrmHoaDon extends JPanel {
         add(taoTieuDe(), BorderLayout.NORTH);
         add(taoVungCuon(), BorderLayout.CENTER);
 
-        // Nạp dữ liệu trước, gắn sự kiện sau để tránh kích hoạt sự kiện sớm
-        taiDanhSachPhuTung();
-        taiDanhSachKhuyenMai();
         caiDatSuKien();
         capNhatLoaiHoaDon();
-        capNhatMaHoaDon();
+    }
+
+    public void taiDuLieuBanDauAsync() {
+        new SwingWorker<DuLieuKhoiTao, Void>() {
+            @Override
+            protected DuLieuKhoiTao doInBackground() throws SQLException {
+                return new DuLieuKhoiTao(
+                        hoaDonDAO.taoMaHoaDonMoi(),
+                        hoaDonDAO.layDanhSachPhuTung(),
+                        hoaDonDAO.layKhuyenMaiDangApDung());
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    DuLieuKhoiTao duLieu = get();
+                    txtMaHoaDon.setText(duLieu.maHoaDon().isEmpty() ? "Tự động" : duLieu.maHoaDon());
+
+                    cboPhuTung.removeAllItems();
+                    cboPhuTung.addItem(new PhuTung("", "-- Chọn phụ tùng --", BigDecimal.ZERO));
+                    duLieu.dsPhuTung().forEach(cboPhuTung::addItem);
+
+                    cboKhuyenMai.removeAllItems();
+                    cboKhuyenMai.addItem(new KhuyenMai("", "-- Không áp dụng khuyến mãi --",
+                            BigDecimal.ZERO));
+                    duLieu.dsKhuyenMai().forEach(cboKhuyenMai::addItem);
+                    cboKhuyenMai.setSelectedIndex(0);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    baoLoi("Đã dừng tải dữ liệu hóa đơn", exception);
+                } catch (ExecutionException exception) {
+                    baoLoi("Không thể tải dữ liệu ban đầu của hóa đơn", exception);
+                }
+            }
+        }.execute();
     }
 
     // 4. DỰNG GIAO DIỆN
@@ -690,27 +725,6 @@ public class FrmHoaDon extends JPanel {
         }
     }
 
-    private void taiDanhSachPhuTung() {
-        cboPhuTung.removeAllItems();
-        cboPhuTung.addItem(new PhuTung("", "-- Chọn phụ tùng --", BigDecimal.ZERO));
-        try {
-            hoaDonDAO.layDanhSachPhuTung().forEach(cboPhuTung::addItem);
-        } catch (SQLException ex) {
-            baoLoi("Không thể tải danh sách phụ tùng", ex);
-        }
-    }
-
-    private void taiDanhSachKhuyenMai() {
-        cboKhuyenMai.removeAllItems();
-        cboKhuyenMai.addItem(new KhuyenMai("", "-- Không áp dụng khuyến mãi --", BigDecimal.ZERO));
-        try {
-            hoaDonDAO.layKhuyenMaiDangApDung().forEach(cboKhuyenMai::addItem);
-        } catch (SQLException ex) {
-            baoLoi("Không thể tải danh sách khuyến mãi", ex);
-        }
-        cboKhuyenMai.setSelectedIndex(0);
-    }
-
     /** Điền thông tin khách, xe, nhân viên và chi tiết từ phiếu sửa chữa. */
     private boolean napThongTinPhieu(String maPhieu) {
         try {
@@ -927,14 +941,19 @@ public class FrmHoaDon extends JPanel {
     /** Xóa phần nhập phiếu/phụ tùng, giữ nguyên bảng chi tiết. */
     private void lamMoiNhapLieu() {
         txtMaPhieuSuaChua.setText("");
-        cboPhuTung.setSelectedIndex(0);
+        if (cboPhuTung.getItemCount() > 0) {
+            cboPhuTung.setSelectedIndex(0);
+        } else {
+            txtDonGia.setText("0");
+        }
         spnSoLuong.setValue(1);
-        txtDonGia.setText("0");
     }
 
     /** Đưa form về trạng thái lập hóa đơn mới. */
     private void lamMoiToanBo() {
-        cboKhuyenMai.setSelectedIndex(0);
+        if (cboKhuyenMai.getItemCount() > 0) {
+            cboKhuyenMai.setSelectedIndex(0);
+        }
         txtNgayLap.setText(LocalDate.now().format(DINH_DANG_NGAY));
         cboLoaiHoaDon.setSelectedIndex(0);
         capNhatLoaiHoaDon(); // xóa phiếu, bảng chi tiết, ô phụ tùng
@@ -1122,7 +1141,9 @@ public class FrmHoaDon extends JPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             BaseFrame frame = new BaseFrame();
-            frame.setContent(new FrmHoaDon());
+            FrmHoaDon frmHoaDon = new FrmHoaDon();
+            frame.setContent(frmHoaDon);
+            frmHoaDon.taiDuLieuBanDauAsync();
             frame.setVisible(true);
         });
     }
