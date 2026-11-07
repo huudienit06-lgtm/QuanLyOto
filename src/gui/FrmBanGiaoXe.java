@@ -162,14 +162,9 @@ public class FrmBanGiaoXe extends JPanel {
         });
     }
 
-    public void hienThiThongTinKhachHang(KhachHang khachHang, boolean tuDongDienNguoiNhan) {
+    public void hienThiThongTinKhachHang(KhachHang khachHang) {
         txtMaKH.setText(khachHang == null ? "" : khachHang.getMaKH());
         txtTenKhachHang.setText(khachHang == null ? "" : khachHang.getHoTen());
-        if (tuDongDienNguoiNhan && khachHang != null
-                && txtTenNguoiNhan.getText().trim().isEmpty()) {
-            txtTenNguoiNhan.setText(khachHang.getHoTen());
-            txtSoDienThoaiNguoiNhan.setText(khachHang.getSoDT());
-        }
     }
 
     public void hienThiDanhSachPhieu(List<PhieuBanGiao> danhSach) {
@@ -179,7 +174,7 @@ public class FrmBanGiaoXe extends JPanel {
                     phieu.getMaPhieuBanGiao(),
                     phieu.getXe() == null ? "" : phieu.getXe().getMaXe(),
                     phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getMaKH(),
-                    phieu.getTenKhachHang(),
+                    phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getHoTen(),
                     phieu.getNhanVien() == null ? "" : phieu.getNhanVien().getMaNV(),
                     phieu.getTenNguoiNhan(),
                     phieu.getSoDienThoaiNguoiNhan()
@@ -202,7 +197,7 @@ public class FrmBanGiaoXe extends JPanel {
         if (cboXe.getItemCount() > 0) {
             cboXe.setSelectedIndex(0);
         } else {
-            hienThiThongTinKhachHang(null, false);
+            hienThiThongTinKhachHang(null);
         }
         if (maNhanVienMacDinh != null) {
             chonNhanVien(maNhanVienMacDinh.trim());
@@ -251,10 +246,6 @@ public class FrmBanGiaoXe extends JPanel {
         return txtMaPhieuBanGiao.getText().trim();
     }
 
-    public String getTenKhachHangNhap() {
-        return txtTenKhachHang.getText().trim();
-    }
-
     public Xe getXeDuocChon() {
         return (Xe) cboXe.getSelectedItem();
     }
@@ -296,14 +287,37 @@ public class FrmBanGiaoXe extends JPanel {
         FormUI.showError(message);
     }
 
-    public AppButton getBtnThem() { return btnThem; }
-    public AppButton getBtnCapNhat() { return btnCapNhat; }
-    public AppButton getBtnXoa() { return btnXoa; }
-    public AppButton getBtnLamMoi() { return btnLamMoi; }
-    public AppButton getBtnTaiLai() { return btnTaiLai; }
-    public AppComboBox<Xe> getCboXe() { return cboXe; }
-    public AppTextField getTxtTimKiem() { return txtTimKiem; }
-    public JTable getTblBanGiao() { return tblBanGiao; }
+    public AppButton getBtnThem() {
+        return btnThem;
+    }
+
+    public AppButton getBtnCapNhat() {
+        return btnCapNhat;
+    }
+
+    public AppButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public AppButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public AppButton getBtnTaiLai() {
+        return btnTaiLai;
+    }
+
+    public AppComboBox<Xe> getCboXe() {
+        return cboXe;
+    }
+
+    public AppTextField getTxtTimKiem() {
+        return txtTimKiem;
+    }
+
+    public JTable getTblBanGiao() {
+        return tblBanGiao;
+    }
 
     private void chonXe(String maXe) {
         if (maXe == null) {

@@ -2,6 +2,10 @@ package dao;
 
 import connectDB.ConnectDB;
 import entity.PhieuSuaChua;
+import entity.Xe;
+import entity.PhieuKiemTra;
+import entity.KhachHang;
+import entity.NhanVien;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,10 +67,10 @@ public class PhieuSuaChuaDAO {
                 + "WHERE maPhieuSuaChua = ?";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, phieu.getMaPhieuKiemTra());
-            statement.setString(2, phieu.getMaXe());
-            statement.setString(3, phieu.getMaKH());
-            statement.setString(4, phieu.getMaNV());
+            statement.setString(1, phieu.getMaPhieuKiemTra().getMaPhieuKiemTra());
+            statement.setString(2, phieu.getMaXe().getMaXe());
+            statement.setString(3, phieu.getMaKH().getMaKH());
+            statement.setString(4, phieu.getMaNV().getMaNV());
             statement.setTimestamp(5, phieu.getNgayBatDau());
             statement.setTimestamp(6, phieu.getNgayHoanThanhDuKien());
             statement.setString(7, phieu.getTrangThai());
@@ -97,10 +101,23 @@ public class PhieuSuaChuaDAO {
     private PhieuSuaChua anhXa(ResultSet resultSet) throws SQLException {
         PhieuSuaChua phieu = new PhieuSuaChua();
         phieu.setMaPhieuSuaChua(resultSet.getString("maPhieuSuaChua"));
-        phieu.setMaPhieuKiemTra(resultSet.getString("maPhieuKiemTra"));
-        phieu.setMaXe(resultSet.getString("maXe"));
-        phieu.setMaKH(resultSet.getString("maKH"));
-        phieu.setMaNV(resultSet.getString("maNV"));
+
+        PhieuKiemTra phieuKiemTra = new PhieuKiemTra();
+        phieuKiemTra.setMaPhieuKiemTra(resultSet.getString("maPhieuKiemTra"));
+        phieu.setMaPhieuKiemTra(phieuKiemTra);
+
+        Xe xe = new Xe();
+        xe.setMaXe(resultSet.getString("maXe"));
+        phieu.setMaXe(xe);
+
+        KhachHang khachHang = new KhachHang();
+        khachHang.setMaKH(resultSet.getString("maKH"));
+        phieu.setMaKH(khachHang);
+
+        NhanVien nhanVien = new NhanVien();
+        nhanVien.setMaNV(resultSet.getString("maNV"));
+        phieu.setMaNV(nhanVien);
+
         phieu.setNgayBatDau(resultSet.getTimestamp("ngayBatDau"));
         phieu.setNgayHoanThanhDuKien(resultSet.getTimestamp("ngayHoanThanhDuKien"));
         phieu.setTrangThai(resultSet.getString("trangThai"));
@@ -113,10 +130,10 @@ public class PhieuSuaChuaDAO {
         if (includeKey) {
             statement.setString(index++, phieu.getMaPhieuSuaChua().trim());
         }
-        statement.setString(index++, phieu.getMaPhieuKiemTra());
-        statement.setString(index++, phieu.getMaXe());
-        statement.setString(index++, phieu.getMaKH());
-        statement.setString(index++, phieu.getMaNV());
+        statement.setString(index++, phieu.getMaPhieuKiemTra().getMaPhieuKiemTra());
+        statement.setString(index++, phieu.getMaXe().getMaXe());
+        statement.setString(index++, phieu.getMaKH().getMaKH());
+        statement.setString(index++, phieu.getMaNV().getMaNV());
         statement.setTimestamp(index++, phieu.getNgayBatDau());
         statement.setTimestamp(index++, phieu.getNgayHoanThanhDuKien());
         statement.setString(index, phieu.getTrangThai());
@@ -127,10 +144,10 @@ public class PhieuSuaChuaDAO {
             throw new SQLException("Thông tin phiếu sửa chữa không được để trống.");
         }
         kiemTraMa(phieu.getMaPhieuSuaChua());
-        kiemTraBatBuoc(phieu.getMaPhieuKiemTra(), "Mã phiếu kiểm tra");
-        kiemTraBatBuoc(phieu.getMaXe(), "Mã xe");
-        kiemTraBatBuoc(phieu.getMaKH(), "Mã khách hàng");
-        kiemTraBatBuoc(phieu.getMaNV(), "Mã nhân viên");
+        kiemTraBatBuoc(phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(), "Mã phiếu kiểm tra");
+        kiemTraBatBuoc(phieu.getMaXe().getMaXe(), "Mã xe");
+        kiemTraBatBuoc(phieu.getMaKH().getMaKH(), "Mã khách hàng");
+        kiemTraBatBuoc(phieu.getMaNV().getMaNV(), "Mã nhân viên");
         if (phieu.getNgayBatDau() == null || phieu.getNgayHoanThanhDuKien() == null) {
             throw new SQLException("Ngày bắt đầu và ngày hoàn thành dự kiến không được để trống.");
         }
