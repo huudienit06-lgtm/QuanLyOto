@@ -805,8 +805,8 @@ public class FrmPhieuSuaChua extends JPanel {
         }
         ChiTietPhieuSuaChua chiTiet = new ChiTietPhieuSuaChua();
         chiTiet.setMaPhieuSuaChua(maPSC);
-        chiTiet.setMaPhuTung(maPhuTung);
-        chiTiet.setMaDV(maDichVu);
+        chiTiet.setMaPhuTung(phuTung);
+        chiTiet.setMaDV(dichVu);
         chiTiet.setSoLuong(soLuong);
         chiTiet.setDonGia(donGia);
         txtThanhTien.setText(donGia.multiply(BigDecimal.valueOf(soLuong)).toPlainString());
