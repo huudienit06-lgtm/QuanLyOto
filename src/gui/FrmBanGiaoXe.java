@@ -18,7 +18,6 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -206,10 +205,7 @@ public class FrmBanGiaoXe extends JPanel {
         pnlHeader.add(pnlToolbar, BorderLayout.EAST);
         pnlCard.add(pnlHeader, BorderLayout.NORTH);
 
-        JScrollPane scrTable = new JScrollPane(tblBanGiao);
-        scrTable.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        scrTable.getViewport().setBackground(UIConfig.COLOR_SURFACE);
-        pnlCard.add(scrTable, BorderLayout.CENTER);
+        pnlCard.add(new AppScrollPane(tblBanGiao), BorderLayout.CENTER);
 
         return pnlCard;
     }
@@ -231,6 +227,20 @@ public class FrmBanGiaoXe extends JPanel {
 
         cboXe.setFont(UIConfig.FONT_REGULAR);
         cboNhanVien.setFont(UIConfig.FONT_REGULAR);
+
+        tblBanGiao.setRowSorter(sorterBanGiao);
+        tblBanGiao.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblBanGiao.setRowHeight(30);
+        tblBanGiao.setFont(UIConfig.FONT_REGULAR);
+        tblBanGiao.setForeground(UIConfig.COLOR_TEXT);
+        tblBanGiao.setGridColor(UIConfig.COLOR_TABLE_GRID);
+        tblBanGiao.setSelectionBackground(UIConfig.COLOR_SELECTION);
+        tblBanGiao.setSelectionForeground(UIConfig.COLOR_TEXT);
+        tblBanGiao.setFillsViewportHeight(true);
+        tblBanGiao.getTableHeader().setFont(UIConfig.FONT_BOLD);
+        tblBanGiao.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
+        tblBanGiao.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
+        tblBanGiao.getTableHeader().setPreferredSize(new Dimension(0, 34));
 
         cboXe.setRenderer(new ComboBoxRenderer<Xe>() {
             @Override
@@ -259,14 +269,12 @@ public class FrmBanGiaoXe extends JPanel {
     public void hienThiDanhSachPhieu(List<PhieuBanGiao> danhSachPhieu) {
         modelBanGiao.setRowCount(0);
         for (PhieuBanGiao phieu : danhSachPhieu) {
-            Xe xe = phieu.getXe();
             KhachHang khachHang = phieu.getKhachHang();
-            NhanVien nhanVien = phieu.getNhanVien();
             modelBanGiao.addRow(new Object[] {
                     phieu.getMaPhieuBanGiao(),
                     phieu.getXe() == null ? "" : phieu.getXe().getMaXe(),
                     phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getMaKH(),
-                    phieu.getTenKhachHang(),
+                    khachHang == null ? "" : khachHang.getHoTen(),
                     phieu.getNhanVien() == null ? "" : phieu.getNhanVien().getMaNV(),
                     phieu.getTenNguoiNhan(),
                     phieu.getSoDienThoaiNguoiNhan()
@@ -368,36 +376,66 @@ public class FrmBanGiaoXe extends JPanel {
         JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
 
-    public AppButton getBtnThem() {
+    public JButton getBtnThem() {
         return btnThem;
     }
 
-    public AppButton getBtnCapNhat() {
+    public JButton getBtnCapNhat() {
         return btnCapNhat;
     }
 
-    public AppButton getBtnXoa() {
+    public JButton getBtnXoa() {
         return btnXoa;
     }
 
-    public AppButton getBtnLamMoi() {
+    public JButton getBtnLamMoi() {
         return btnLamMoi;
     }
 
-    public AppButton getBtnTaiLai() {
+    public JButton getBtnTaiLai() {
         return btnTaiLai;
     }
 
-    public AppComboBox<Xe> getCboXe() {
+    public JComboBox<Xe> getCboXe() {
         return cboXe;
     }
 
-    public AppTextField getTxtTimKiem() {
+    public JTextField getTxtTimKiem() {
         return txtTimKiem;
     }
 
     public JTable getTblBanGiao() {
         return tblBanGiao;
+    }
+
+    public void hienThiDanhMuc(List<Xe> danhSachXe, List<NhanVien> danhSachNhanVien) {
+        cboXe.removeAllItems();
+        for (Xe xe : danhSachXe) {
+            cboXe.addItem(xe);
+        }
+
+        cboNhanVien.removeAllItems();
+        for (NhanVien nhanVien : danhSachNhanVien) {
+            cboNhanVien.addItem(nhanVien);
+        }
+    }
+
+    public boolean xacThucForm() {
+        if (getXeDuocChon() == null) {
+            hienThiLoi("Vui lòng chọn xe bàn giao.");
+            return false;
+        }
+        if (getNhanVienDuocChon() == null) {
+            hienThiLoi("Vui lòng chọn nhân viên lập phiếu.");
+            return false;
+        }
+        if (getTenNguoiNhanNhap().isEmpty()
+                || getSoDienThoaiNguoiNhanNhap().isEmpty()
+                || getTinhTrangXeNhap().isEmpty()) {
+            hienThiLoi("Vui lòng nhập đầy đủ thông tin người nhận và tình trạng xe.");
+            return false;
+        }
+        return true;
     }
 
     private void chonXe(String maXe) {
@@ -422,6 +460,72 @@ public class FrmBanGiaoXe extends JPanel {
                 return;
             }
         }
+    }
+
+    private JPanel createCardPanel() {
+        JPanel pnlCard = new JPanel();
+        pnlCard.setBackground(UIConfig.COLOR_SURFACE);
+        pnlCard.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(UIConfig.COLOR_BORDER, 1),
+                new EmptyBorder(14, 16, 14, 16)));
+        return pnlCard;
+    }
+
+    private JTextField createTextField(int columns) {
+        JTextField textField = new JTextField(columns);
+        textField.setFont(UIConfig.FONT_REGULAR);
+        textField.setForeground(UIConfig.COLOR_TEXT);
+        textField.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(UIConfig.COLOR_BORDER, 1),
+                new EmptyBorder(6, 8, 6, 8)));
+        return textField;
+    }
+
+    private JButton createButton(String text, String iconPath, Color background, Color foreground) {
+        JButton button = new JButton(text);
+        button.setFont(UIConfig.FONT_BOLD);
+        button.setBackground(background);
+        button.setForeground(foreground);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setBorder(new EmptyBorder(8, 14, 8, 14));
+
+        ImageIcon icon = getScaledIcon(iconPath, 16, 16);
+        if (icon != null) {
+            button.setIcon(icon);
+            button.setIconTextGap(6);
+        }
+        return button;
+    }
+
+    private ImageIcon getScaledIcon(String path, int width, int height) {
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) {
+            return null;
+        }
+        ImageIcon originalIcon = new ImageIcon(url);
+        Image image = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon(image);
+    }
+
+    private void addField(JPanel pnlFields, String labelText, Component component, int column, int row) {
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridx = column;
+        labelConstraints.gridy = row;
+        labelConstraints.anchor = GridBagConstraints.WEST;
+        labelConstraints.insets = new Insets(5, 0, 5, 8);
+        JLabel label = new JLabel(labelText);
+        label.setFont(UIConfig.FONT_REGULAR);
+        label.setForeground(UIConfig.COLOR_TEXT);
+        pnlFields.add(label, labelConstraints);
+
+        GridBagConstraints inputConstraints = new GridBagConstraints();
+        inputConstraints.gridx = column + 1;
+        inputConstraints.gridy = row;
+        inputConstraints.weightx = 1.0;
+        inputConstraints.fill = GridBagConstraints.HORIZONTAL;
+        inputConstraints.insets = new Insets(5, 0, 5, 18);
+        pnlFields.add(component, inputConstraints);
     }
 
     private abstract static class ComboBoxRenderer<T> extends DefaultListCellRenderer {
