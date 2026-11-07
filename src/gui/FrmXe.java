@@ -7,9 +7,12 @@ import entity.Xe;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.FocusAdapter;
@@ -27,17 +30,22 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -50,24 +58,24 @@ public class FrmXe extends JPanel {
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
 
-    private final AppTextField txtMaXe = new AppTextField(16);
-    private final AppTextField txtBienSo = new AppTextField(16);
-    private final AppTextField txtHangXe = new AppTextField(16);
-    private final AppTextField txtDongXe = new AppTextField(16);
-    private final AppTextField txtNamSanXuat = new AppTextField(16);
-    private final AppTextField txtSoKhung = new AppTextField(16);
-    private final AppTextField txtSoMay = new AppTextField(16);
-    private final AppTextField txtKhachHang = new AppTextField(16);
+    private final JTextField txtMaXe = createTextField(16);
+    private final JTextField txtBienSo = createTextField(16);
+    private final JTextField txtHangXe = createTextField(16);
+    private final JTextField txtDongXe = createTextField(16);
+    private final JTextField txtNamSanXuat = createTextField(16);
+    private final JTextField txtSoKhung = createTextField(16);
+    private final JTextField txtSoMay = createTextField(16);
+    private final JTextField txtKhachHang = createTextField(16);
     private final DefaultListModel<KhachHang> modelGoiYKhachHang = new DefaultListModel<>();
     private final JList<KhachHang> lstGoiYKhachHang = new JList<>(modelGoiYKhachHang);
     private JWindow wndGoiYKhachHang;
     private final List<KhachHang> danhSachKhachHang = new ArrayList<>();
     private KhachHang khachHangDuocChon;
     private boolean dangCapNhatOKhachHang;
-    private final AppTextField txtLocMaXe = new AppTextField(12);
-    private final AppTextField txtLocBienSo = new AppTextField(12);
-    private final AppTextField txtLocHangXe = new AppTextField(12);
-    private final AppTextField txtLocDongXe = new AppTextField(12);
+    private final JTextField txtLocMaXe = createTextField(12);
+    private final JTextField txtLocBienSo = createTextField(12);
+    private final JTextField txtLocHangXe = createTextField(12);
+    private final JTextField txtLocDongXe = createTextField(12);
     private final JLabel lblThongBao = new JLabel("Sẵn sàng");
     private final DefaultTableModel modelXe = new DefaultTableModel(
             new Object[] {"Mã xe", "Biển số", "Hãng xe", "Dòng xe", "Năm SX", "Số khung", "Số máy", "Mã KH"}, 0) {
@@ -76,7 +84,7 @@ public class FrmXe extends JPanel {
             return false;
         }
     };
-    private final AppTable tblXe = new AppTable(modelXe);
+    private final JTable tblXe = new JTable(modelXe);
     private final TableRowSorter<DefaultTableModel> sorterXe = new TableRowSorter<>(modelXe);
 
     public FrmXe() {
@@ -102,7 +110,9 @@ public class FrmXe extends JPanel {
         JLabel lblTitle = new JLabel("QUẢN LÝ XE");
         lblTitle.setFont(UIConfig.FONT_TITLE);
         lblTitle.setForeground(UIConfig.COLOR_TITLE);
-        JLabel lblSubtitle = new AppLabel("Thông tin xe và danh sách xe đã tiếp nhận", AppLabel.Style.MUTED);
+        JLabel lblSubtitle = new JLabel("Thông tin xe và danh sách xe đã tiếp nhận");
+        lblSubtitle.setFont(UIConfig.FONT_REGULAR);
+        lblSubtitle.setForeground(UIConfig.COLOR_MUTED);
 
         pnlHeading.add(lblTitle, BorderLayout.NORTH);
         pnlHeading.add(lblSubtitle, BorderLayout.CENTER);
@@ -146,10 +156,10 @@ public class FrmXe extends JPanel {
 
         JPanel pnlButtons = new JPanel(new GridBagLayout());
         pnlButtons.setOpaque(false);
-        AppButton btnThem = new AppButton("Thêm xe", AppButton.Style.PRIMARY);
-        AppButton btnSua = new AppButton("Cập nhật", AppButton.Style.SUCCESS);
-        AppButton btnXoa = new AppButton("Xóa xe", AppButton.Style.DANGER);
-        AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
+        JButton btnThem = createButton("Thêm xe", "/resources/icons/plus.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
+        JButton btnSua = createButton("Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
+        JButton btnXoa = createButton("Xóa xe", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
+        JButton btnLamMoi = createButton("Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
         btnThem.addActionListener(event -> themXe());
         btnSua.addActionListener(event -> capNhatXe());
         btnXoa.addActionListener(event -> xoaXe());
@@ -178,7 +188,7 @@ public class FrmXe extends JPanel {
         JPanel pnlTitleBar = new JPanel(new BorderLayout(8, 0));
         pnlTitleBar.setOpaque(false);
         JLabel lblTableTitle = createSectionTitle("Danh sách xe đã tiếp nhận");
-        AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
+        JButton btnTaiLai = createButton("Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
         btnTaiLai.addActionListener(event -> {
             xoaBoLocXe();
             napDanhSachXe();
@@ -199,7 +209,9 @@ public class FrmXe extends JPanel {
         themBoLangNghe(txtLocHangXe);
         themBoLangNghe(txtLocDongXe);
 
-        AppScrollPane scrXe = new AppScrollPane(tblXe);
+        JScrollPane scrXe = new JScrollPane(tblXe);
+        scrXe.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
+        scrXe.getViewport().setBackground(UIConfig.COLOR_SURFACE);
 
         tblXe.setRowSorter(sorterXe);
         tblXe.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -230,8 +242,52 @@ public class FrmXe extends JPanel {
     }
 
     private JPanel createCardPanel() {
-        JPanel pnlCard = AppPanel.card(new BorderLayout());
-        return pnlCard;
+        JPanel card = new JPanel();
+        card.setBackground(UIConfig.COLOR_SURFACE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(UIConfig.COLOR_BORDER, 1),
+                new EmptyBorder(12, 14, 12, 14)));
+        return card;
+    }
+
+    private JTextField createTextField(int columns) {
+        JTextField tf = new JTextField(columns);
+        tf.setFont(UIConfig.FONT_REGULAR);
+        tf.setForeground(UIConfig.COLOR_TEXT);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(UIConfig.COLOR_BORDER, 1),
+                new EmptyBorder(6, 8, 6, 8)));
+        return tf;
+    }
+
+    private JButton createButton(String text, String iconPath, Color background, Color foreground) {
+        JButton btn = new JButton(text);
+        btn.setFont(UIConfig.FONT_BOLD);
+        btn.setBackground(background);
+        btn.setForeground(foreground);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(new EmptyBorder(8, 14, 8, 14));
+
+        ImageIcon icon = getScaledIcon(iconPath, 16, 16);
+        if (icon != null) {
+            btn.setIcon(icon);
+            btn.setIconTextGap(6);
+        }
+        return btn;
+    }
+
+    private ImageIcon getScaledIcon(String path, int width, int height) {
+        try {
+            java.net.URL url = getClass().getResource(path);
+            if (url != null) {
+                ImageIcon originalIcon = new ImageIcon(url);
+                Image img = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                return new ImageIcon(img);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     private JLabel createSectionTitle(String text) {
@@ -262,6 +318,17 @@ public class FrmXe extends JPanel {
     }
 
     private void configureComponents() {
+        tblXe.setFont(UIConfig.FONT_REGULAR);
+        tblXe.setForeground(UIConfig.COLOR_TEXT);
+        tblXe.setRowHeight(30);
+        tblXe.setGridColor(UIConfig.COLOR_TABLE_GRID);
+        tblXe.setSelectionBackground(UIConfig.COLOR_SELECTION);
+        tblXe.setSelectionForeground(UIConfig.COLOR_TEXT);
+        tblXe.getTableHeader().setFont(UIConfig.FONT_BOLD);
+        tblXe.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
+        tblXe.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
+        tblXe.getTableHeader().setPreferredSize(new Dimension(0, 34));
+
         txtKhachHang.setToolTipText("Nhập mã, họ tên, số điện thoại, email hoặc địa chỉ để tìm khách hàng");
         lstGoiYKhachHang.setFocusable(false);
         lstGoiYKhachHang.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -433,7 +500,7 @@ public class FrmXe extends JPanel {
         }
     }
 
-    private JPanel createSearchField(String labelText, AppTextField txtField) {
+    private JPanel createSearchField(String labelText, JTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
         JLabel lblField = new JLabel(labelText);
@@ -444,7 +511,7 @@ public class FrmXe extends JPanel {
         return pnlField;
     }
 
-    private void themBoLangNghe(AppTextField txtField) {
+    private void themBoLangNghe(JTextField txtField) {
         txtField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {

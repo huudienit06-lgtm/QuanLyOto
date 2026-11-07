@@ -23,6 +23,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -66,7 +67,7 @@ public class FrmDichVu extends JPanel {
     private JButton btnUpdate = new JButton();
     private JButton btnDel = new JButton();
     private JButton btnReset = new JButton();
-    private AppButton btnTaiLai;
+    private JButton btnTaiLai;
 
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
 
@@ -121,7 +122,7 @@ public class FrmDichVu extends JPanel {
                 FormUI.createTableCard(
                         "Danh sách dịch vụ",
                         createSearchToolbar(),
-                        new AppScrollPane(tblDichVu)),
+                        new JScrollPane(tblDichVu)),
                 BorderLayout.CENTER);
         return pnlContent;
 
@@ -197,7 +198,15 @@ public class FrmDichVu extends JPanel {
         pnlLoc.setOpaque(false);
         pnlLoc.add(createSearchField("Mã dịch vụ", txtLocMaDichVu));
         pnlLoc.add(createSearchField("Tên dịch vụ", txtLocTenDichVu));
-        btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
+        btnTaiLai = new JButton("Tải lại");
+        btnTaiLai.setFont(UIConfig.FONT_BOLD);
+        btnTaiLai.setBackground(UIConfig.COLOR_SECONDARY);
+        btnTaiLai.setForeground(UIConfig.COLOR_TEXT);
+        btnTaiLai.setOpaque(true);
+        btnTaiLai.setBorderPainted(false);
+        btnTaiLai.setFocusPainted(false);
+        btnTaiLai.setMargin(new Insets(6, 14, 6, 14));
+        btnTaiLai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         pnlSearch.add(pnlLoc, BorderLayout.CENTER);
         pnlSearch.add(btnTaiLai, BorderLayout.EAST);
         themBoLangNghe(txtLocMaDichVu);
@@ -209,7 +218,9 @@ public class FrmDichVu extends JPanel {
     private JPanel createSearchField(String labelText, JTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
-        JLabel lblField = new AppLabel(labelText, AppLabel.Style.MUTED);
+        JLabel lblField = new JLabel(labelText);
+        lblField.setFont(UIConfig.FONT_REGULAR);
+        lblField.setForeground(UIConfig.COLOR_MUTED);
         pnlField.add(lblField, BorderLayout.NORTH);
         pnlField.add(txtField, BorderLayout.CENTER);
         return pnlField;

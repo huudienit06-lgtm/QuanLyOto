@@ -4,8 +4,10 @@ import controller.CaLamViecController;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -14,13 +16,17 @@ import java.util.Locale;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -28,10 +34,13 @@ import javax.swing.table.DefaultTableModel;
  * Giao diện quản lý lịch phân công ca theo tuần và điểm danh nhân viên.
  */
 public class FrmCaLamViec extends JPanel {
+
     private static final String CHUA_PHAN_CONG = "Chưa phân công";
     private static final DateTimeFormatter DINH_DANG_NGAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // ── Bảng dữ liệu ─────────────────────────────────────────────────────────
     private final DefaultTableModel modelLichTuan = new DefaultTableModel(
-            new Object[] {"Ca làm việc", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5",
+            new Object[]{"Ca làm việc", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5",
                     "Thứ 6", "Thứ 7", "Chủ nhật"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -39,7 +48,7 @@ public class FrmCaLamViec extends JPanel {
         }
     };
     private final DefaultTableModel modelDiemDanh = new DefaultTableModel(
-            new Object[] {"Mã nhân viên", "Họ và tên", "Có mặt"}, 0) {
+            new Object[]{"Mã nhân viên", "Họ và tên", "Có mặt"}, 0) {
         @Override
         public Class<?> getColumnClass(int column) {
             return column == 2 ? Boolean.class : String.class;
@@ -52,27 +61,57 @@ public class FrmCaLamViec extends JPanel {
     };
     private final JTable tblLichTuan = FormUI.createTable(modelLichTuan);
     private final JTable tblDiemDanh = FormUI.createTable(modelDiemDanh);
-    private final AppComboBox<String> cboNhanVien = new AppComboBox<>();
-    private final AppComboBox<String> cboCaLamViec = new AppComboBox<>();
-    private final AppButton btnThem = new AppButton("Thêm phân công");
-    private final AppButton btnSua = new AppButton("Sửa phân công", AppButton.Style.SUCCESS);
-    private final AppButton btnXoa = new AppButton("Xóa phân công", AppButton.Style.DANGER);
-    private final AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
-    private final AppButton btnTuanTruoc = new AppButton("‹ Tuần trước", AppButton.Style.SECONDARY);
-    private final AppButton btnTuanKeTiep = new AppButton("Tuần kế tiếp ›", AppButton.Style.SECONDARY);
+
+    // ── Các thành phần nhập liệu ──────────────────────────────────────────────
+    private final JComboBox<String> cboNhanVien  = new JComboBox<>();
+    private final JComboBox<String> cboCaLamViec = new JComboBox<>();
+
+    // ── Các nút bấm ──────────────────────────────────────────────────────────
+    private final JButton btnThem       = new JButton("Thêm phân công");
+    private final JButton btnSua        = new JButton("Sửa phân công");
+    private final JButton btnXoa        = new JButton("Xóa phân công");
+    private final JButton btnLamMoi     = new JButton("Làm mới");
+    private final JButton btnTuanTruoc  = new JButton("‹ Tuần trước");
+    private final JButton btnTuanKeTiep = new JButton("Tuần kế tiếp ›");
+
+    // ── Các nhãn thông tin ───────────────────────────────────────────────────
+    private final JLabel lblCaHienTai        = new JLabel("");
+    private final JLabel lblTrangThaiDiemDanh = new JLabel("");
+    private final JLabel lblTuanHienThi       = new JLabel("");
+
+    // ── Các thành phần khác ──────────────────────────────────────────────────
     private final DatePickerPanel pnlChonNgayLamViec = new DatePickerPanel(LocalDate.now());
-    private final JLabel lblCaHienTai = new AppLabel("", AppLabel.Style.BODY);
-    private final JLabel lblTrangThaiDiemDanh = new AppLabel("", AppLabel.Style.MUTED);
-    private final JLabel lblTuanHienThi = new AppLabel("", AppLabel.Style.MUTED);
-    private final LichCaCellRenderer rendererLichCa = new LichCaCellRenderer();
-    private final CaLamViecController controller = new CaLamViecController(this);
+    private final LichCaCellRenderer rendererLichCa  = new LichCaCellRenderer();
+    private final CaLamViecController controller     = new CaLamViecController(this);
     private final LocalDate ngayDauTuanBanDau = LocalDate.now().with(DayOfWeek.MONDAY);
     private LocalDate ngayDauTuan = ngayDauTuanBanDau;
-    private AppScrollPane scrNoiDung;
+    private JScrollPane scrNoiDung;
 
     public FrmCaLamViec() {
         setLayout(new BorderLayout(0, 12));
-        setOpaque(false);
+        setBackground(UIConfig.COLOR_BACKGROUND);
+        setOpaque(true);
+
+        // Áp dụng style cho combobox
+        cboNhanVien.setFont(UIConfig.FONT_REGULAR);
+        cboCaLamViec.setFont(UIConfig.FONT_REGULAR);
+
+        // Áp dụng style cho các nút
+        styleButtonPrimary(btnThem);
+        styleButtonSuccess(btnSua);
+        styleButtonDanger(btnXoa);
+        styleButtonSecondary(btnLamMoi);
+        styleButtonSecondary(btnTuanTruoc);
+        styleButtonSecondary(btnTuanKeTiep);
+
+        // Áp dụng style cho nhãn
+        lblCaHienTai.setFont(UIConfig.FONT_BOLD);
+        lblCaHienTai.setForeground(UIConfig.COLOR_MUTED);
+        lblTrangThaiDiemDanh.setFont(UIConfig.FONT_REGULAR);
+        lblTrangThaiDiemDanh.setForeground(UIConfig.COLOR_MUTED);
+        lblTuanHienThi.setFont(UIConfig.FONT_REGULAR);
+        lblTuanHienThi.setForeground(UIConfig.COLOR_MUTED);
+
         cauHinhBangLich();
         cauHinhBangDiemDanh();
         capNhatHienThiTuan(ngayDauTuanBanDau, LocalDate.now());
@@ -83,11 +122,91 @@ public class FrmCaLamViec extends JPanel {
         pnlNoiDung.add(createLichTuanCard(), BorderLayout.CENTER);
         pnlNoiDung.add(createDiemDanhCard(), BorderLayout.SOUTH);
 
-        scrNoiDung = new AppScrollPane(pnlNoiDung);
-        add(FormUI.createPage("LỊCH CA LÀM VIỆC",
-                "Theo dõi lịch tuần, ca đang diễn ra và điểm danh nhân viên", scrNoiDung),
-                BorderLayout.CENTER);
+        scrNoiDung = new JScrollPane(pnlNoiDung);
+        scrNoiDung.setBorder(null);
+        scrNoiDung.setOpaque(false);
+        scrNoiDung.getViewport().setOpaque(false);
+        scrNoiDung.getVerticalScrollBar().setUnitIncrement(16);
+
+        add(createPageHeader("LỊCH CA LÀM VIỆC",
+                "Theo dõi lịch tuần, ca đang diễn ra và điểm danh nhân viên",
+                scrNoiDung), BorderLayout.CENTER);
         controller.khoiTao();
+    }
+
+    // ── Helper: style nút ────────────────────────────────────────────────────
+    private void styleButtonPrimary(JButton btn) {
+        btn.setFont(UIConfig.FONT_BOLD);
+        btn.setBackground(UIConfig.COLOR_PRIMARY);
+        btn.setForeground(UIConfig.COLOR_SURFACE);
+        btn.setOpaque(true); btn.setBorderPainted(false); btn.setFocusPainted(false);
+        btn.setMargin(new Insets(6, 14, 6, 14));
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    private void styleButtonSuccess(JButton btn) {
+        btn.setFont(UIConfig.FONT_BOLD);
+        btn.setBackground(UIConfig.COLOR_SUCCESS);
+        btn.setForeground(UIConfig.COLOR_SURFACE);
+        btn.setOpaque(true); btn.setBorderPainted(false); btn.setFocusPainted(false);
+        btn.setMargin(new Insets(6, 14, 6, 14));
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    private void styleButtonDanger(JButton btn) {
+        btn.setFont(UIConfig.FONT_BOLD);
+        btn.setBackground(UIConfig.COLOR_DANGER);
+        btn.setForeground(UIConfig.COLOR_SURFACE);
+        btn.setOpaque(true); btn.setBorderPainted(false); btn.setFocusPainted(false);
+        btn.setMargin(new Insets(6, 14, 6, 14));
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    private void styleButtonSecondary(JButton btn) {
+        btn.setFont(UIConfig.FONT_BOLD);
+        btn.setBackground(UIConfig.COLOR_SECONDARY);
+        btn.setForeground(UIConfig.COLOR_TEXT);
+        btn.setOpaque(true); btn.setBorderPainted(false); btn.setFocusPainted(false);
+        btn.setMargin(new Insets(6, 14, 6, 14));
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    // ── Helper: tạo card panel ───────────────────────────────────────────────
+    private JPanel createCardPanel(java.awt.LayoutManager layout) {
+        JPanel pnl = new JPanel(layout);
+        pnl.setBackground(UIConfig.COLOR_SURFACE);
+        pnl.setOpaque(true);
+        pnl.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(UIConfig.COLOR_BORDER, 1, true),
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+        return pnl;
+    }
+
+    // ── Helper: tạo nhãn tiêu đề section ─────────────────────────────────────
+    private JLabel createSectionTitle(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(UIConfig.FONT_SECTION);
+        lbl.setForeground(UIConfig.COLOR_TITLE);
+        return lbl;
+    }
+
+    // ── Helper: tạo header trang ─────────────────────────────────────────────
+    private JPanel createPageHeader(String title, String subtitle, JScrollPane content) {
+        JPanel pnlPage = new JPanel(new BorderLayout(0, 14));
+        pnlPage.setOpaque(false);
+        JPanel pnlHeader = new JPanel(new BorderLayout(0, 4));
+        pnlHeader.setOpaque(false);
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(UIConfig.FONT_TITLE);
+        lblTitle.setForeground(UIConfig.COLOR_TITLE);
+        JLabel lblSubtitle = new JLabel(subtitle);
+        lblSubtitle.setFont(UIConfig.FONT_REGULAR);
+        lblSubtitle.setForeground(UIConfig.COLOR_MUTED);
+        pnlHeader.add(lblTitle, BorderLayout.NORTH);
+        pnlHeader.add(lblSubtitle, BorderLayout.CENTER);
+        pnlPage.add(pnlHeader, BorderLayout.NORTH);
+        pnlPage.add(content, BorderLayout.CENTER);
+        return pnlPage;
     }
 
     @Override
@@ -102,46 +221,103 @@ public class FrmCaLamViec extends JPanel {
         super.removeNotify();
     }
 
+    // ── Tạo form phân công ────────────────────────────────────────────────────
     private JPanel createFormPhanCong() {
-        AppPanel pnlPhanCong = FormUI.createCard();
-        JPanel pnlFields = FormUI.createFieldsPanel();
-        FormUI.addField(pnlFields, "Nhân viên", cboNhanVien, 0, 0);
-        FormUI.addField(pnlFields, "Ca làm việc", cboCaLamViec, 2, 0);
-        FormUI.addField(pnlFields, "Ngày làm việc", pnlChonNgayLamViec, 0, 1);
-        JPanel pnlButtons = FormUI.createButtonRow(btnThem, btnSua, btnXoa, btnLamMoi);
-        pnlPhanCong.add(FormUI.createSectionTitle("Thông tin phân công ca"), BorderLayout.NORTH);
+        JPanel pnlPhanCong = createCardPanel(new BorderLayout(0, 10));
+        pnlPhanCong.add(createSectionTitle("Thông tin phân công ca"), BorderLayout.NORTH);
+
+        JPanel pnlFields = new JPanel(new java.awt.GridBagLayout());
+        pnlFields.setOpaque(false);
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.insets = new Insets(4, 4, 4, 8);
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+
+        JLabel lblNhanVien = new JLabel("Nhân viên:");
+        lblNhanVien.setFont(UIConfig.FONT_REGULAR);
+        lblNhanVien.setForeground(UIConfig.COLOR_TEXT);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
+        pnlFields.add(lblNhanVien, gbc);
+        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 1;
+        pnlFields.add(cboNhanVien, gbc);
+
+        JLabel lblCa = new JLabel("Ca làm việc:");
+        lblCa.setFont(UIConfig.FONT_REGULAR);
+        lblCa.setForeground(UIConfig.COLOR_TEXT);
+        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0;
+        pnlFields.add(lblCa, gbc);
+        gbc.gridx = 3; gbc.gridy = 0; gbc.weightx = 1;
+        pnlFields.add(cboCaLamViec, gbc);
+
+        JLabel lblNgay = new JLabel("Ngày làm việc:");
+        lblNgay.setFont(UIConfig.FONT_REGULAR);
+        lblNgay.setForeground(UIConfig.COLOR_TEXT);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        pnlFields.add(lblNgay, gbc);
+        gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 1; gbc.gridwidth = 3;
+        pnlFields.add(pnlChonNgayLamViec, gbc);
+        gbc.gridwidth = 1;
+
         pnlPhanCong.add(pnlFields, BorderLayout.CENTER);
+
+        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        pnlButtons.setOpaque(false);
+        pnlButtons.add(btnThem);
+        pnlButtons.add(btnSua);
+        pnlButtons.add(btnXoa);
+        pnlButtons.add(btnLamMoi);
         pnlPhanCong.add(pnlButtons, BorderLayout.SOUTH);
+
         return pnlPhanCong;
     }
 
+    // ── Tạo card lịch tuần ────────────────────────────────────────────────────
     private JPanel createLichTuanCard() {
-        JPanel pnlDieuHuong = FormUI.createButtonRow(btnTuanTruoc, btnTuanKeTiep);
-        JPanel pnlLich = FormUI.createTableCard("Lịch nhân viên theo ca trong tuần",
-                pnlDieuHuong, new AppScrollPane(tblLichTuan));
+        JPanel pnlCard = createCardPanel(new BorderLayout(0, 10));
+
+        JPanel pnlHeader = new JPanel(new BorderLayout());
+        pnlHeader.setOpaque(false);
+        pnlHeader.add(createSectionTitle("Lịch nhân viên theo ca trong tuần"), BorderLayout.WEST);
+        JPanel pnlDieuHuong = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        pnlDieuHuong.setOpaque(false);
+        pnlDieuHuong.add(btnTuanTruoc);
+        pnlDieuHuong.add(btnTuanKeTiep);
+        pnlHeader.add(pnlDieuHuong, BorderLayout.EAST);
+        pnlCard.add(pnlHeader, BorderLayout.NORTH);
+
+        JScrollPane scrLich = new JScrollPane(tblLichTuan);
+        scrLich.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
+        scrLich.getViewport().setBackground(UIConfig.COLOR_SURFACE);
+        pnlCard.add(scrLich, BorderLayout.CENTER);
+
         JPanel pnlInfo = new JPanel(new BorderLayout(8, 0));
         pnlInfo.setOpaque(false);
         pnlInfo.add(lblTuanHienThi, BorderLayout.WEST);
-        lblCaHienTai.setFont(UIConfig.FONT_BOLD);
         pnlInfo.add(lblCaHienTai, BorderLayout.EAST);
-        pnlLich.add(pnlInfo, BorderLayout.SOUTH);
-        return pnlLich;
+        pnlCard.add(pnlInfo, BorderLayout.SOUTH);
+
+        return pnlCard;
     }
 
+    // ── Tạo card điểm danh ────────────────────────────────────────────────────
     private JPanel createDiemDanhCard() {
-        AppPanel pnlDiemDanh = FormUI.createCard();
+        JPanel pnlDiemDanh = createCardPanel(new BorderLayout(0, 10));
+
         JPanel pnlHeader = new JPanel(new BorderLayout(10, 0));
         pnlHeader.setOpaque(false);
-        pnlHeader.add(FormUI.createSectionTitle("Điểm danh nhân viên trong ca hiện tại"),
-                BorderLayout.WEST);
+        pnlHeader.add(createSectionTitle("Điểm danh nhân viên trong ca hiện tại"), BorderLayout.WEST);
         pnlHeader.add(lblTrangThaiDiemDanh, BorderLayout.EAST);
-        AppScrollPane scrDiemDanh = new AppScrollPane(tblDiemDanh);
-        scrDiemDanh.setPreferredSize(new java.awt.Dimension(700, 112));
         pnlDiemDanh.add(pnlHeader, BorderLayout.NORTH);
+
+        JScrollPane scrDiemDanh = new JScrollPane(tblDiemDanh);
+        scrDiemDanh.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
+        scrDiemDanh.getViewport().setBackground(UIConfig.COLOR_SURFACE);
+        scrDiemDanh.setPreferredSize(new java.awt.Dimension(700, 112));
         pnlDiemDanh.add(scrDiemDanh, BorderLayout.CENTER);
+
         return pnlDiemDanh;
     }
 
+    // ── Cấu hình bảng lịch tuần ───────────────────────────────────────────────
     private void cauHinhBangLich() {
         tblLichTuan.setAutoCreateRowSorter(false);
         tblLichTuan.setCellSelectionEnabled(true);
@@ -162,6 +338,7 @@ public class FrmCaLamViec extends JPanel {
         tblLichTuan.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 38));
     }
 
+    // ── Cấu hình bảng điểm danh ──────────────────────────────────────────────
     private void cauHinhBangDiemDanh() {
         tblDiemDanh.setRowHeight(28);
         tblDiemDanh.setFillsViewportHeight(true);
@@ -174,6 +351,7 @@ public class FrmCaLamViec extends JPanel {
                 .setCellEditor(new DefaultCellEditor(new javax.swing.JCheckBox()));
     }
 
+    // ── Các phương thức public cho controller ─────────────────────────────────
     public void hienThiLuaChon(List<String> nhanVien, List<String> caLamViec) {
         cboNhanVien.removeAllItems();
         cboNhanVien.addItem("Chọn nhân viên");
@@ -294,18 +472,20 @@ public class FrmCaLamViec extends JPanel {
         return separator > 0 ? selected.substring(0, separator) : null;
     }
 
-    public JTable getTblLichTuan() { return tblLichTuan; }
-    public JTable getTblDiemDanh() { return tblDiemDanh; }
+    // ── Getter cho controller ─────────────────────────────────────────────────
+    public JTable getTblLichTuan()              { return tblLichTuan; }
+    public JTable getTblDiemDanh()              { return tblDiemDanh; }
     public DefaultTableModel getModelDiemDanh() { return modelDiemDanh; }
-    public AppButton getBtnThem() { return btnThem; }
-    public AppButton getBtnSua() { return btnSua; }
-    public AppButton getBtnXoa() { return btnXoa; }
-    public AppButton getBtnLamMoi() { return btnLamMoi; }
-    public AppButton getBtnTuanTruoc() { return btnTuanTruoc; }
-    public AppButton getBtnTuanKeTiep() { return btnTuanKeTiep; }
+    public JButton getBtnThem()                 { return btnThem; }
+    public JButton getBtnSua()                  { return btnSua; }
+    public JButton getBtnXoa()                  { return btnXoa; }
+    public JButton getBtnLamMoi()               { return btnLamMoi; }
+    public JButton getBtnTuanTruoc()            { return btnTuanTruoc; }
+    public JButton getBtnTuanKeTiep()           { return btnTuanKeTiep; }
     public DatePickerPanel getPnlChonNgayLamViec() { return pnlChonNgayLamViec; }
-    public AppScrollPane getScrNoiDung() { return scrNoiDung; }
+    public JScrollPane getScrNoiDung()          { return scrNoiDung; }
 
+    // ── Lớp nội: DatePickerPanel ──────────────────────────────────────────────
     public static final class DatePickerPanel extends JPanel {
         private static final String[] TEN_NGAY_TRONG_TUAN = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
         private static final Locale LOCALE_VI = Locale.forLanguageTag("vi-VN");
@@ -313,25 +493,48 @@ public class FrmCaLamViec extends JPanel {
                 DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", LOCALE_VI);
         private static final DateTimeFormatter DINH_DANG_THANG =
                 DateTimeFormatter.ofPattern("MMMM yyyy", LOCALE_VI);
-        private final AppTextField txtNgay = new AppTextField(18);
-        private final AppButton btnMoLich = new AppButton("▣", AppButton.Style.SECONDARY);
-        private final JButton btnThangTruoc = new JButton("‹");
-        private final JButton btnThangSau = new JButton("›");
-        private final JButton[] btnNgay = new JButton[42];
-        private final JPopupMenu popLich = new JPopupMenu();
-        private final JPanel pnlLich = new JPanel(new BorderLayout(0, 8));
-        private final JLabel lblThang = new AppLabel("", AppLabel.Style.SECTION);
+
+        private final JTextField txtNgay      = new JTextField(18);
+        private final JButton    btnMoLich    = new JButton("▣");
+        private final JButton    btnThangTruoc = new JButton("‹");
+        private final JButton    btnThangSau   = new JButton("›");
+        private final JButton[]  btnNgay       = new JButton[42];
+        private final JPopupMenu popLich       = new JPopupMenu();
+        private final JPanel     pnlLich       = new JPanel(new BorderLayout(0, 8));
+        private final JLabel     lblThang      = new JLabel("");
         private LocalDate ngayDuocChon;
         private LocalDate thangDangHienThi;
 
         private DatePickerPanel(LocalDate ngayBanDau) {
             super(new BorderLayout(6, 0));
-            ngayDuocChon = ngayBanDau;
-            thangDangHienThi = ngayBanDau.withDayOfMonth(1);
+            ngayDuocChon      = ngayBanDau;
+            thangDangHienThi  = ngayBanDau.withDayOfMonth(1);
             setOpaque(false);
+
+            // Style txtNgay
+            txtNgay.setFont(UIConfig.FONT_REGULAR);
+            txtNgay.setForeground(UIConfig.COLOR_TEXT);
+            txtNgay.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(UIConfig.COLOR_BORDER, 1),
+                    BorderFactory.createEmptyBorder(4, 8, 4, 8)));
             txtNgay.setEditable(false);
             txtNgay.setFocusable(false);
+
+            // Style btnMoLich
+            btnMoLich.setFont(UIConfig.FONT_BOLD);
+            btnMoLich.setBackground(UIConfig.COLOR_SECONDARY);
+            btnMoLich.setForeground(UIConfig.COLOR_TEXT);
+            btnMoLich.setOpaque(true);
+            btnMoLich.setBorderPainted(false);
+            btnMoLich.setFocusPainted(false);
+            btnMoLich.setMargin(new Insets(4, 8, 4, 8));
+            btnMoLich.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             btnMoLich.setToolTipText("Mở lịch chọn ngày");
+
+            // Style lblThang
+            lblThang.setFont(UIConfig.FONT_SECTION);
+            lblThang.setForeground(UIConfig.COLOR_TITLE);
+
             add(txtNgay, BorderLayout.CENTER);
             add(btnMoLich, BorderLayout.EAST);
             popLich.setBorder(BorderFactory.createCompoundBorder(
@@ -354,10 +557,13 @@ public class FrmCaLamViec extends JPanel {
             pnlDieuHuongThang.add(lblThang, BorderLayout.CENTER);
             pnlDieuHuongThang.add(btnThangSau, BorderLayout.EAST);
             pnlLich.add(pnlDieuHuongThang, BorderLayout.NORTH);
+
             JPanel pnlNgay = new JPanel(new GridLayout(7, 7, 3, 3));
             pnlNgay.setOpaque(false);
             for (String tenNgay : TEN_NGAY_TRONG_TUAN) {
-                JLabel lblNgay = new AppLabel(tenNgay, AppLabel.Style.MUTED);
+                JLabel lblNgay = new JLabel(tenNgay);
+                lblNgay.setFont(UIConfig.FONT_REGULAR);
+                lblNgay.setForeground(UIConfig.COLOR_MUTED);
                 lblNgay.setHorizontalAlignment(SwingConstants.CENTER);
                 pnlNgay.add(lblNgay);
             }
@@ -375,12 +581,12 @@ public class FrmCaLamViec extends JPanel {
         private void capNhatLich() {
             lblThang.setText(thangDangHienThi.format(DINH_DANG_THANG));
             LocalDate ngayDauO = thangDangHienThi.withDayOfMonth(1).with(DayOfWeek.MONDAY);
-            LocalDate homNay = LocalDate.now();
+            LocalDate homNay   = LocalDate.now();
             for (int index = 0; index < btnNgay.length; index++) {
-                LocalDate ngay = ngayDauO.plusDays(index);
-                JButton btn = btnNgay[index];
+                LocalDate ngay   = ngayDauO.plusDays(index);
+                JButton btn      = btnNgay[index];
                 boolean cungThang = ngay.getMonth() == thangDangHienThi.getMonth();
-                boolean dangChon = ngay.equals(ngayDuocChon);
+                boolean dangChon  = ngay.equals(ngayDuocChon);
                 btn.setText(String.valueOf(ngay.getDayOfMonth()));
                 btn.putClientProperty("ngay", ngay);
                 btn.setForeground(dangChon ? Color.WHITE
@@ -396,7 +602,7 @@ public class FrmCaLamViec extends JPanel {
         }
 
         public void setSelectedDate(LocalDate ngay) {
-            ngayDuocChon = ngay;
+            ngayDuocChon     = ngay;
             thangDangHienThi = ngay.withDayOfMonth(1);
             txtNgay.setText(ngay.format(DINH_DANG_NGAY_DAY_DU));
             capNhatLich();
@@ -415,13 +621,13 @@ public class FrmCaLamViec extends JPanel {
             btnThang.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
         }
 
-        public JButton getBtnMoLich() { return btnMoLich; }
-        public JButton getBtnThangTruoc() { return btnThangTruoc; }
-        public JButton getBtnThangSau() { return btnThangSau; }
-        public JButton[] getBtnNgay() { return btnNgay.clone(); }
-        public JPopupMenu getPopLich() { return popLich; }
-        public LocalDate getNgayDuocChon() { return ngayDuocChon; }
-        public LocalDate getSelectedDate() { return ngayDuocChon; }
+        public JButton   getBtnMoLich()     { return btnMoLich; }
+        public JButton   getBtnThangTruoc() { return btnThangTruoc; }
+        public JButton   getBtnThangSau()   { return btnThangSau; }
+        public JButton[] getBtnNgay()       { return btnNgay.clone(); }
+        public JPopupMenu getPopLich()      { return popLich; }
+        public LocalDate getNgayDuocChon()  { return ngayDuocChon; }
+        public LocalDate getSelectedDate()  { return ngayDuocChon; }
         public LocalDate getNgay(JButton btn) { return (LocalDate) btn.getClientProperty("ngay"); }
         public void hienThiLich() {
             capNhatLich();
@@ -429,9 +635,10 @@ public class FrmCaLamViec extends JPanel {
         }
     }
 
+    // ── Lớp nội: renderer ô lịch ca ──────────────────────────────────────────
     private final class LichCaCellRenderer extends DefaultTableCellRenderer {
         private final JTextArea txaNhanVien = new JTextArea();
-        private int caHienTai = -1;
+        private int caHienTai     = -1;
         private int cotNgayHienTai = -1;
 
         private LichCaCellRenderer() {
@@ -444,15 +651,15 @@ public class FrmCaLamViec extends JPanel {
         }
 
         private void setCaHienTai(int caHienTai, int cotNgayHienTai) {
-            this.caHienTai = caHienTai;
+            this.caHienTai      = caHienTai;
             this.cotNgayHienTai = cotNgayHienTai;
         }
 
         @Override
         public Component getTableCellRendererComponent(
                 JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            String text = value == null ? "" : value.toString();
-            boolean laCaHienTai = row == caHienTai;
+            String text          = value == null ? "" : value.toString();
+            boolean laCaHienTai  = row == caHienTai;
             boolean laNgayHienTai = column == cotNgayHienTai;
             boolean laNgayQuaKhu = column > 0
                     && ngayDauTuan.plusDays(column - 1L).isBefore(LocalDate.now());

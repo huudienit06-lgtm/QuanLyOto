@@ -116,7 +116,7 @@ public class FrmPhieuSuaChua extends JPanel {
     private JButton btnLamMoiPhieu;
     private JButton btnThemChiTiet;
     private JButton btnXoaChiTiet;
-    private AppButton btnTaiLai;
+    private JButton btnTaiLai;
     private final PhieuSuaChuaController controller;
 
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
@@ -438,7 +438,11 @@ public class FrmPhieuSuaChua extends JPanel {
         pnlLoc.add(createSearchField("Mã phiếu sửa chữa", txtLocMaPhieuSuaChua));
         pnlLoc.add(createSearchField("Mã xe", txtLocMaXe));
         pnlLoc.add(createSearchField("Mã khách hàng", txtLocMaKH));
-        btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
+        btnTaiLai = createButton(
+                "Tải lại",
+                new ImageIcon(getClass().getResource("/resources/icons/reload.png")),
+                UIConfig.COLOR_SECONDARY,
+                UIConfig.COLOR_TEXT);
         pnlSearch.add(pnlLoc, BorderLayout.CENTER);
         pnlSearch.add(btnTaiLai, BorderLayout.EAST);
         themBoLangNghe(txtLocMaPhieuSuaChua);
@@ -451,7 +455,9 @@ public class FrmPhieuSuaChua extends JPanel {
     private JPanel createSearchField(String labelText, JTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
-        JLabel lblField = new AppLabel(labelText, AppLabel.Style.MUTED);
+        JLabel lblField = new JLabel(labelText);
+        lblField.setFont(UIConfig.FONT_REGULAR);
+        lblField.setForeground(UIConfig.COLOR_MUTED);
         pnlField.add(lblField, BorderLayout.NORTH);
         pnlField.add(txtField, BorderLayout.CENTER);
         return pnlField;
@@ -861,7 +867,7 @@ public class FrmPhieuSuaChua extends JPanel {
         return btnXoaChiTiet;
     }
 
-    public AppButton layNutTaiLai() {
+    public JButton layNutTaiLai() {
         return btnTaiLai;
     }
 
