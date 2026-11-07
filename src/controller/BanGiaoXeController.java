@@ -92,12 +92,12 @@ public final class BanGiaoXeController {
     private void capNhatThongTinKhachHang() {
         Xe xe = view.getXeDuocChon();
         if (xe == null) {
-            view.hienThiThongTinKhachHang(null, false);
+            view.hienThiThongTinKhachHang(null);
             return;
         }
         try {
             KhachHang khachHang = khachHangDAO.findById(xe.getMaKH());
-            view.hienThiThongTinKhachHang(khachHang, true);
+            view.hienThiThongTinKhachHang(khachHang);
         } catch (SQLException exception) {
             view.hienThiLoi("Không thể tải thông tin khách hàng: " + exception.getMessage());
         }
@@ -165,7 +165,6 @@ public final class BanGiaoXeController {
                 view.getMaPhieuNhap(),
                 xe,
                 khachHang,
-                view.getTenKhachHangNhap(),
                 nhanVien,
                 view.getTinhTrangXeNhap(),
                 view.getTenNguoiNhanNhap(),
@@ -199,7 +198,8 @@ public final class BanGiaoXeController {
             view.hienThiLoi("Không thể phát sinh mã phiếu bàn giao: " + exception.getMessage());
         }
         String maNhanVien = taiKhoanHienTai == null || taiKhoanHienTai.getNhanVien() == null
-                ? null : taiKhoanHienTai.getNhanVien().getMaNV();
+                ? null
+                : taiKhoanHienTai.getNhanVien().getMaNV();
         view.lamMoiBieuMau(maPhieuMoi, maNhanVien);
     }
 }

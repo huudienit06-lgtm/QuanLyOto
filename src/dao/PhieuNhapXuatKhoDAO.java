@@ -14,13 +14,54 @@ import java.util.List;
 import java.util.Map;
 import util.MaTuDong;
 
-public class PhieuNhapXuatKhoDAO extends BaseDAO<PhieuNhapXuatKho> {
-    
+public class PhieuNhapXuatKhoDAO { 
+
     private final ChiTietPhieuNhapDAO chiTietDAO = new ChiTietPhieuNhapDAO();
 
     public PhieuNhapXuatKhoDAO() {
-        super(PhieuNhapXuatKho.class, "PhieuNhapXuatKho", "maPhieuNhapXuat");
+        // Đã xóa hàm super(...) của BaseDAO
     }
+    public List<PhieuNhapXuatKho> findAll() throws SQLException {
+        List<PhieuNhapXuatKho> ds = new ArrayList<>();
+        String sql = "SELECT * FROM PhieuNhapXuatKho";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                PhieuNhapXuatKho p = new PhieuNhapXuatKho();
+                p.setMaPhieuNhapXuat(rs.getString("maPhieuNhapXuat"));
+                p.setMaNV(rs.getString("maNV"));
+                p.setNgayLapPhieu(rs.getTimestamp("ngayLapPhieu"));
+                p.setKieuPhieu(rs.getString("kieuPhieu"));
+                ds.add(p);
+            }
+        }
+        return ds;
+    }
+
+    public boolean insert(Connection con, PhieuNhapXuatKho phieu) throws SQLException {
+        String sql = "INSERT INTO PhieuNhapXuatKho (maPhieuNhapXuat, maNV, ngayLapPhieu, kieuPhieu) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, phieu.getMaPhieuNhapXuat());
+            stmt.setString(2, phieu.getMaNV());
+            stmt.setTimestamp(3, phieu.getNgayLapPhieu());
+            stmt.setString(4, phieu.getKieuPhieu());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean deleteById(String maPhieuNhapXuat) throws SQLException {
+        String sql = "DELETE FROM PhieuNhapXuatKho WHERE maPhieuNhapXuat = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maPhieuNhapXuat);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    // ====================================================================
+    // CÁC HÀM BÊN DƯỚI LÀ CỦA BẠN - ĐƯỢC GIỮ NGUYÊN 100% LOGIC CŨ
+    // ====================================================================
 
     public List<PhieuNhapXuatKho> layTatCaPhieu() {
         try {
@@ -235,7 +276,7 @@ public class PhieuNhapXuatKhoDAO extends BaseDAO<PhieuNhapXuatKho> {
         }
         String sql = thayDoi < 0
                 ? "UPDATE PhuTung SET soLuongTon = soLuongTon + ? "
-                        + "WHERE maPhuTung = ? AND soLuongTon >= ?"
+                + "WHERE maPhuTung = ? AND soLuongTon >= ?"
                 : "UPDATE PhuTung SET soLuongTon = soLuongTon + ? WHERE maPhuTung = ?";
         try (PreparedStatement statement = con.prepareStatement(sql)) {
             statement.setInt(1, thayDoi);

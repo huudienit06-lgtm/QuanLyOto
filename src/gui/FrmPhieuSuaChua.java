@@ -53,7 +53,6 @@ import entity.PhieuKiemTra;
 import entity.PhieuSuaChua;
 import entity.PhuTung;
 import entity.TaiKhoan;
-import entity.Xe;
 
 public class FrmPhieuSuaChua extends JPanel {
     private static final Color PALE_BLUE = new Color(242, 247, 255);
@@ -572,10 +571,10 @@ public class FrmPhieuSuaChua extends JPanel {
         for (PhieuSuaChua phieu : danhSach) {
             modelSuaChua.addRow(new Object[] {
                     phieu.getMaPhieuSuaChua(),
-                    phieu.getMaPhieuKiemTra(),
-                    phieu.getMaXe(),
-                    phieu.getMaKH(),
-                    phieu.getMaNV(),
+                    phieu.getMaPhieuKiemTra() == null ? "" : phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
+                    phieu.getMaXe() == null ? "" : phieu.getMaXe().getMaXe(),
+                    phieu.getMaKH() == null ? "" : phieu.getMaKH().getMaKH(),
+                    phieu.getMaNV() == null ? "" : phieu.getMaNV().getMaNV(),
                     phieu.getNgayBatDau(),
                     phieu.getNgayHoanThanhDuKien()
             });
@@ -682,10 +681,10 @@ public class FrmPhieuSuaChua extends JPanel {
 
         PhieuSuaChua phieu = new PhieuSuaChua();
         phieu.setMaPhieuSuaChua(maPSC);
-        phieu.setMaPhieuKiemTra(maPKT);
-        phieu.setMaXe(maXe);
-        phieu.setMaKH(maKH);
-        phieu.setMaNV(maNV);
+        phieu.setMaPhieuKiemTra(phieuKiemTra);
+        phieu.setMaXe(phieuKiemTra.getXe());
+        phieu.setMaKH(phieuKiemTra.getKhachHang());
+        phieu.setMaNV(phieuKiemTra.getNhanVien());
         phieu.setNgayBatDau(ngayBatDau);
         phieu.setNgayHoanThanhDuKien(ngayHoanThanhDuKien);
         phieu.setTrangThai(cboTrangThai.getSelectedItem() == null

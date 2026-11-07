@@ -261,6 +261,7 @@ public class FrmBanGiaoXe extends JPanel {
         tblBanGiao.getTableHeader().setPreferredSize(new Dimension(0, 34));
     }
 
+<<<<<<< HEAD
     // --- Tiện ích style nội bộ ---
     private JPanel createCardPanel() {
         JPanel card = new JPanel();
@@ -296,6 +297,11 @@ public class FrmBanGiaoXe extends JPanel {
             btn.setIconTextGap(6);
         }
         return btn;
+=======
+    public void hienThiThongTinKhachHang(KhachHang khachHang) {
+        txtMaKH.setText(khachHang == null ? "" : khachHang.getMaKH());
+        txtTenKhachHang.setText(khachHang == null ? "" : khachHang.getHoTen());
+>>>>>>> 1f778c45b95f0109b6041451510cae58f38af148
     }
 
     private ImageIcon getScaledIcon(String path, int width, int height) {
@@ -348,10 +354,17 @@ public class FrmBanGiaoXe extends JPanel {
             NhanVien nhanVien = phieu.getNhanVien();
             modelBanGiao.addRow(new Object[] {
                     phieu.getMaPhieuBanGiao(),
+<<<<<<< HEAD
                     xe == null ? "" : xe.getBienSo(),
                     khachHang == null ? "" : khachHang.getMaKH(),
                     khachHang == null ? "" : khachHang.getHoTen(),
                     nhanVien == null ? "" : nhanVien.getHoTen(),
+=======
+                    phieu.getXe() == null ? "" : phieu.getXe().getMaXe(),
+                    phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getMaKH(),
+                    phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getHoTen(),
+                    phieu.getNhanVien() == null ? "" : phieu.getNhanVien().getMaNV(),
+>>>>>>> 1f778c45b95f0109b6041451510cae58f38af148
                     phieu.getTenNguoiNhan(),
                     phieu.getSoDienThoaiNguoiNhan()
             });
@@ -380,6 +393,14 @@ public class FrmBanGiaoXe extends JPanel {
             cboXe.setSelectedIndex(0);
         } else {
             hienThiThongTinKhachHang(null);
+<<<<<<< HEAD
+=======
+        }
+        if (maNhanVienMacDinh != null) {
+            chonNhanVien(maNhanVienMacDinh.trim());
+        } else if (cboNhanVien.getItemCount() > 0) {
+            cboNhanVien.setSelectedIndex(0);
+>>>>>>> 1f778c45b95f0109b6041451510cae58f38af148
         }
         chonNhanVien(maNVDangNhap);
         txtTenNguoiNhan.setText("");
@@ -452,6 +473,7 @@ public class FrmBanGiaoXe extends JPanel {
         JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
 
+<<<<<<< HEAD
     public JButton getBtnThem() { return btnThem; }
     public JButton getBtnCapNhat() { return btnCapNhat; }
     public JButton getBtnXoa() { return btnXoa; }
@@ -460,6 +482,39 @@ public class FrmBanGiaoXe extends JPanel {
     public JComboBox<Xe> getCboXe() { return cboXe; }
     public JTextField getTxtTimKiem() { return txtTimKiem; }
     public JTable getTblBanGiao() { return tblBanGiao; }
+=======
+    public AppButton getBtnThem() {
+        return btnThem;
+    }
+
+    public AppButton getBtnCapNhat() {
+        return btnCapNhat;
+    }
+
+    public AppButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public AppButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public AppButton getBtnTaiLai() {
+        return btnTaiLai;
+    }
+
+    public AppComboBox<Xe> getCboXe() {
+        return cboXe;
+    }
+
+    public AppTextField getTxtTimKiem() {
+        return txtTimKiem;
+    }
+
+    public JTable getTblBanGiao() {
+        return tblBanGiao;
+    }
+>>>>>>> 1f778c45b95f0109b6041451510cae58f38af148
 
     private void chonXe(String maXe) {
         if (maXe == null) {

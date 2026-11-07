@@ -1,11 +1,7 @@
 package gui;
 
-import dao.PhuTungDAO;
-import dao.PhieuNhapXuatKhoDAO;
-import entity.PhuTung;
-import entity.PhieuNhapXuatKho;
-import entity.ChiTietPhieuNhap;
 import entity.TaiKhoan;
+import controller.NhapXuatKhoController;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -16,17 +12,11 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -35,13 +25,10 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public class FrmNhapXuatPhuTung extends JPanel {
-
     private static final Color COLOR_BG_MAIN = new Color(244, 247, 252);
     private static final Color COLOR_PANEL_BG = Color.WHITE;
     private static final Color COLOR_PRIMARY = new Color(37, 99, 235);
@@ -52,49 +39,39 @@ public class FrmNhapXuatPhuTung extends JPanel {
     private static final Color COLOR_BORDER = new Color(221, 231, 245);
     private static final Color COLOR_READONLY = new Color(248, 250, 252);
 
-    private final PhuTungDAO phuTungDAO = new PhuTungDAO();
-    private final PhieuNhapXuatKhoDAO giaoDichDAO = new PhieuNhapXuatKhoDAO();
-    private final DecimalFormat df = new DecimalFormat("#,### đ");
-    
     private final TaiKhoan taiKhoanHienTai;
-    private boolean isNhapKho = true;
-    private final Map<String, Integer> soLuongCuTheoPhuTung = new HashMap<>();
-
     private JRadioButton radNhapKho, radXuatKho;
     private JLabel lblDonGia; 
-    
     private final JTextField txtMaPhieu = new JTextField();
     private final JTextField txtNgayLap = new JTextField();
     private final JTextField txtNguoiLap = new JTextField();
     private final JTextField txtGhiChu = new JTextField();
-
     private JButton btnTaoPhieu, btnLuuPhieu, btnXoaPhieu, btnLamMoi;
-
     private final JComboBox<String> cboPhuTung = new JComboBox<>();
     private final JTextField txtTonKho = new JTextField();
     private final JTextField txtSoLuong = new JTextField();
     private final JTextField txtDonGia = new JTextField();
     private JButton btnThemChiTiet, btnXoaChiTiet;
-
     private DefaultTableModel modelChiTiet;
     private JTable tblChiTiet;
     private JLabel lblTongTien;
-
     private final JTextField txtTimMaPhieu = new JTextField();
     private final JTextField txtTimMaNV = new JTextField();
     private final JTextField txtTimPhuTung = new JTextField();
     private JButton btnTaiLai;
-
     private DefaultTableModel modelLichSu;
     private JTable tblLichSu;
     private JLabel lblSoLuongPhieu;
 
+    private final NhapXuatKhoController controller;
+
     public FrmNhapXuatPhuTung(TaiKhoan taiKhoan) {
         this.taiKhoanHienTai = taiKhoan;
         initComponents();
-        setupActionEvents();
+        this.controller = new NhapXuatKhoController(this);
         radNhapKho.setSelected(true);
-        switchMode(true); 
+        controller.switchMode(true); 
+        controller.khoiTao();
     }
 
     private void initComponents() {
@@ -153,72 +130,57 @@ public class FrmNhapXuatPhuTung extends JPanel {
         add(pnlMainCenter, BorderLayout.CENTER);
     }
 
- private JPanel createLeftPanel() {
+    private JPanel createLeftPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(COLOR_PANEL_BG);
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER), " Thông tin phiếu ",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
+                BorderFactory.createLineBorder(COLOR_BORDER), " Thông tin phiếu ",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
         ));
 
-        // Dùng GridBagLayout dạng 2 cột (Nhãn trái - Ô nhập phải) với khoảng cách giãn rộng
         JPanel pnlForm = new JPanel(new GridBagLayout());
         pnlForm.setBackground(COLOR_PANEL_BG);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(12, 12, 12, 12); // Tăng khoảng cách cách dòng rộng ra
+        gbc.insets = new Insets(12, 12, 12, 12);
 
         txtMaPhieu.setEditable(false); txtMaPhieu.setBackground(COLOR_READONLY);
         txtNgayLap.setEditable(false); txtNgayLap.setBackground(COLOR_READONLY);
         txtNguoiLap.setEditable(false); txtNguoiLap.setBackground(COLOR_READONLY);
 
-        // Hàng 1: Mã phiếu
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0;
-        pnlForm.add(new JLabel("Mã phiếu"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; // Ô nhập kéo to hết cỡ chiều ngang
-        pnlForm.add(txtMaPhieu, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0; pnlForm.add(new JLabel("Mã phiếu"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; pnlForm.add(txtMaPhieu, gbc);
 
-        // Hàng 2: Ngày lập
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0;
-        pnlForm.add(new JLabel("Ngày lập"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0;
-        pnlForm.add(txtNgayLap, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0; pnlForm.add(new JLabel("Ngày lập"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; pnlForm.add(txtNgayLap, gbc);
 
-        // Hàng 3: Người lập
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.0;
-        pnlForm.add(new JLabel("Người lập"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0;
-        pnlForm.add(txtNguoiLap, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.0; pnlForm.add(new JLabel("Người lập"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; pnlForm.add(txtNguoiLap, gbc);
 
-        // Hàng 4: Ghi chú
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.0;
-        pnlForm.add(new JLabel("Ghi chú"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0;
-        pnlForm.add(txtGhiChu, gbc);
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.0; pnlForm.add(new JLabel("Ghi chú"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; pnlForm.add(txtGhiChu, gbc);
 
         JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         pnlButtons.setBackground(COLOR_PANEL_BG);
-        
         btnTaoPhieu = createButton("➕ Tạo phiếu", COLOR_SUCCESS, Color.WHITE);
         btnLuuPhieu = createButton("✎ Cập nhật phiếu", COLOR_PRIMARY, Color.WHITE);
         btnXoaPhieu = createButton("✖ Xóa phiếu", COLOR_DANGER, Color.WHITE);
         btnLamMoi = createButton("⟳ Làm mới", COLOR_SECONDARY, new Color(47, 62, 84));
 
-        pnlButtons.add(btnTaoPhieu);
-        pnlButtons.add(btnLuuPhieu);
-        pnlButtons.add(btnXoaPhieu);
-        pnlButtons.add(btnLamMoi);
+        pnlButtons.add(btnTaoPhieu); pnlButtons.add(btnLuuPhieu);
+        pnlButtons.add(btnXoaPhieu); pnlButtons.add(btnLamMoi);
 
         panel.add(pnlForm, BorderLayout.CENTER);
         panel.add(pnlButtons, BorderLayout.SOUTH);
         return panel;
-    } 
+    }
+
     private JPanel createRightPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(COLOR_PANEL_BG);
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER), " Chi tiết hàng hóa ",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
+                BorderFactory.createLineBorder(COLOR_BORDER), " Chi tiết hàng hóa ",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
         ));
 
         JPanel pnlForm = new JPanel(new GridBagLayout());
@@ -229,7 +191,6 @@ public class FrmNhapXuatPhuTung extends JPanel {
 
         txtTonKho.setEditable(false); txtTonKho.setBackground(COLOR_READONLY);
         txtTonKho.setFont(new Font("Segoe UI", Font.BOLD, 12)); txtTonKho.setForeground(COLOR_DANGER);
-        
         txtDonGia.setEditable(false); txtDonGia.setBackground(COLOR_READONLY);
         txtDonGia.setFont(new Font("Segoe UI", Font.BOLD, 12)); txtDonGia.setForeground(new Color(21, 128, 61));
 
@@ -248,8 +209,7 @@ public class FrmNhapXuatPhuTung extends JPanel {
         btnThemChiTiet = createButton("➕ Thêm vào danh sách", COLOR_PRIMARY, Color.WHITE);
         btnXoaChiTiet = createButton("✖ Xóa dòng", COLOR_DANGER, Color.WHITE);
         btnXoaChiTiet.setEnabled(false);
-        pnlItemActions.add(btnThemChiTiet);
-        pnlItemActions.add(btnXoaChiTiet);
+        pnlItemActions.add(btnThemChiTiet); pnlItemActions.add(btnXoaChiTiet);
 
         String[] columns = {"Mã PT", "Tên phụ tùng", "S.Lượng", "Đơn giá", "Thành tiền"};
         modelChiTiet = new DefaultTableModel(columns, 0) {
@@ -258,7 +218,6 @@ public class FrmNhapXuatPhuTung extends JPanel {
         tblChiTiet = new JTable(modelChiTiet);
         tblChiTiet.setRowHeight(25);
         tblChiTiet.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(JLabel.RIGHT);
         tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(right);
@@ -289,22 +248,18 @@ public class FrmNhapXuatPhuTung extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
         panel.setBackground(COLOR_PANEL_BG);
         panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER), " Danh sách phiếu giao dịch đã lập ",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
+                BorderFactory.createLineBorder(COLOR_BORDER), " Danh sách phiếu giao dịch đã lập ",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), new Color(32, 55, 92)
         ));
 
         JPanel pnlSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         pnlSearch.setBackground(COLOR_PANEL_BG);
-
         pnlSearch.add(new JLabel("Mã phiếu:"));
         txtTimMaPhieu.setPreferredSize(new Dimension(140, 26)); pnlSearch.add(txtTimMaPhieu);
-
         pnlSearch.add(new JLabel("Mã nhân viên:"));
         txtTimMaNV.setPreferredSize(new Dimension(100, 26)); pnlSearch.add(txtTimMaNV);
-
         pnlSearch.add(new JLabel("Phụ tùng:"));
         txtTimPhuTung.setPreferredSize(new Dimension(130, 26)); pnlSearch.add(txtTimPhuTung);
-
         btnTaiLai = createButton("⟳ Tải lại", COLOR_SECONDARY, new Color(47, 62, 84));
         btnTaiLai.setPreferredSize(new Dimension(80, 26));
         pnlSearch.add(btnTaiLai);
@@ -316,11 +271,9 @@ public class FrmNhapXuatPhuTung extends JPanel {
         tblLichSu = new JTable(modelLichSu);
         tblLichSu.setRowHeight(28);
         tblLichSu.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(JLabel.RIGHT);
         tblLichSu.getColumnModel().getColumn(5).setCellRenderer(right);
-
         JScrollPane scroll = new JScrollPane(tblLichSu);
         scroll.setPreferredSize(new Dimension(0, 160));
 
@@ -335,417 +288,6 @@ public class FrmNhapXuatPhuTung extends JPanel {
         return panel;
     }
 
-    private void switchMode(boolean isNhap) {
-        this.isNhapKho = isNhap;
-        modelChiTiet.setRowCount(0);
-        soLuongCuTheoPhuTung.clear();
-        capNhatTongTien();
-        txtSoLuong.setText("");
-        txtDonGia.setText("");
-        txtTonKho.setText("");
-        txtGhiChu.setText("");
-
-        if (isNhap) {
-            lblDonGia.setText("Giá nhập (VNĐ)");
-        } else {
-            lblDonGia.setText("Giá bán niêm yết (VNĐ)");
-        }
-        napDuLieuChung();
-    }
-
-    private void napDuLieuChung() {
-        txtMaPhieu.setText("Tự động tạo khi lưu");
-        capNhatNhanNutLuu();
-        txtNgayLap.setText(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        
-        if (taiKhoanHienTai != null) {
-            String tenHienThi = (taiKhoanHienTai.getHoTenNhanVien() != null && !taiKhoanHienTai.getHoTenNhanVien().trim().isEmpty()) 
-                    ? taiKhoanHienTai.getHoTenNhanVien() 
-                    : taiKhoanHienTai.getNhanVien().getMaNV();
-            txtNguoiLap.setText(tenHienThi);
-        } else {
-            txtNguoiLap.setText("Chưa đăng nhập");
-        }
-        
-        cboPhuTung.removeAllItems();
-        cboPhuTung.addItem(""); 
-        List<PhuTung> dsPT = phuTungDAO.layTatCaPhuTung();
-        if (dsPT != null) {
-            for (PhuTung pt : dsPT) {
-                cboPhuTung.addItem(pt.getMaPhuTung() + " - " + pt.getTenPhuTung());
-            }
-        }
-        taiDanhSachPhieuLichSu();
-    }
-
-    private void taiDanhSachPhieuLichSu() {
-        modelLichSu.setRowCount(0);
-        List<PhieuNhapXuatKho> dsPhieu = giaoDichDAO.layTatCaPhieu(); 
-        if (dsPhieu != null && !dsPhieu.isEmpty()) {
-            for (PhieuNhapXuatKho p : dsPhieu) {
-                double tongTien = giaoDichDAO.tinhTongTienPhieu(p.getMaPhieuNhapXuat());
-                String ngayStr = p.getNgayLapPhieu() != null 
-                        ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(p.getNgayLapPhieu()) 
-                        : "";
-
-                modelLichSu.addRow(new Object[]{
-                    p.getMaPhieuNhapXuat(),
-                    p.getMaNV(),
-                    ngayStr,
-                    p.getKieuPhieu(),
-                    layGhiChuPhieu(p.getMaPhieuNhapXuat()),
-                    df.format(tongTien)
-                });
-            }
-            lblSoLuongPhieu.setText("Đã tải " + dsPhieu.size() + " phiếu giao dịch");
-        } else {
-            lblSoLuongPhieu.setText("Đã tải 0 phiếu giao dịch");
-        }
-    }
-
-    private void setupActionEvents() {
-        radNhapKho.addActionListener(e -> switchMode(true));
-        radXuatKho.addActionListener(e -> switchMode(false));
-
-        cboPhuTung.addActionListener(e -> {
-            if (cboPhuTung.getSelectedIndex() <= 0) {
-                txtTonKho.setText(""); txtDonGia.setText(""); return;
-            }
-            String ptInfo = cboPhuTung.getSelectedItem().toString();
-            String maPT = ptInfo.contains(" - ") ? ptInfo.split(" - ")[0] : ptInfo;
-            
-            PhuTung pt = phuTungDAO.layPhuTungTheoMa(maPT); 
-            if (pt != null) {
-                txtTonKho.setText(String.valueOf(pt.getSoLuongTon()));
-                double gia = isNhapKho ? pt.getGiaNhap() : pt.getGiaBan();
-                txtDonGia.setText(df.format(gia).replace(" đ", ""));
-            } else {
-                txtTonKho.setText(""); txtDonGia.setText("");
-            }
-        });
-
-        tblChiTiet.getSelectionModel().addListSelectionListener(e -> {
-            btnXoaChiTiet.setEnabled(tblChiTiet.getSelectedRow() != -1);
-        });
-
-        btnXoaChiTiet.addActionListener(e -> {
-            int row = tblChiTiet.getSelectedRow();
-            if (row != -1) {
-                modelChiTiet.removeRow(row);
-                capNhatTongTien();
-            }
-        });
-
-        btnLamMoi.addActionListener(e -> {
-            switchMode(this.isNhapKho);
-            taiDanhSachPhieuLichSu();
-        });
-
-        btnThemChiTiet.addActionListener(e -> {
-            if (cboPhuTung.getSelectedIndex() <= 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn phụ tùng!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            String ptInfo = cboPhuTung.getSelectedItem().toString();
-            String maPT = ptInfo.contains(" - ") ? ptInfo.split(" - ")[0] : ptInfo;
-            String tenPT = ptInfo.contains(" - ") ? ptInfo.split(" - ")[1] : ptInfo;
-            
-            int soLuong = 0; int tonKho = 0; double donGia = 0;
-            int tonKhoCoTheXuat;
-
-            try {
-                if (!txtTonKho.getText().trim().isEmpty()) {
-                    tonKho = Integer.parseInt(txtTonKho.getText().trim());
-                }
-            } catch (Exception ex) { tonKho = 0; }
-            tonKhoCoTheXuat = tonKho + soLuongCuTheoPhuTung.getOrDefault(maPT, 0);
-
-            try {
-                if (txtSoLuong.getText().trim().isEmpty()) {
-                    throw new Exception("Vui lòng nhập số lượng!");
-                }
-                soLuong = Integer.parseInt(txtSoLuong.getText().trim());
-                if (soLuong <= 0) {
-                    throw new Exception("Số lượng phải > 0");
-                }
-                if (!isNhapKho && soLuong > tonKhoCoTheXuat) {
-                    throw new Exception("Số lượng xuất (" + soLuong + ") vượt quá tồn kho khả dụng ("
-                            + tonKhoCoTheXuat + ")");
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-                txtSoLuong.requestFocus(); txtSoLuong.selectAll(); return;
-            }
-
-            try {
-                if (txtDonGia.getText().trim().isEmpty()) throw new Exception("Phụ tùng chưa có giá!");
-                donGia = Double.parseDouble(txtDonGia.getText().trim().replace(" đ", "").replace(",", ""));
-                if (donGia <= 0) throw new Exception("Giá không hợp lệ (<= 0).");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE); return;
-            }
-
-            boolean isMerged = false;
-            for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
-                if (modelChiTiet.getValueAt(i, 0).equals(maPT)) {
-                    int oldQty = Integer.parseInt(modelChiTiet.getValueAt(i, 2).toString());
-                    int newQty = oldQty + soLuong;
-                    
-                    if (!isNhapKho && newQty > tonKhoCoTheXuat) {
-                        JOptionPane.showMessageDialog(this,
-                                "Tổng số lượng xuất (" + newQty + ") vượt quá tồn kho khả dụng ("
-                                        + tonKhoCoTheXuat + ")!",
-                                "Lỗi", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-
-                    modelChiTiet.setValueAt(newQty, i, 2);
-                    modelChiTiet.setValueAt(df.format(donGia), i, 3);
-                    modelChiTiet.setValueAt(df.format(newQty * donGia), i, 4);
-                    isMerged = true; break;
-                }
-            }
-            if (!isMerged) {
-                modelChiTiet.addRow(new Object[]{ maPT, tenPT, soLuong, df.format(donGia), df.format(soLuong * donGia) });
-            }
-
-            capNhatTongTien();
-            txtSoLuong.setText(""); cboPhuTung.requestFocus();
-        });
-
-        btnLuuPhieu.addActionListener(e -> thucHienLuuGiaoDich(this.isNhapKho, false));
-        btnTaoPhieu.addActionListener(e -> thucHienLuuGiaoDich(this.isNhapKho, true));
-
-        btnXoaPhieu.addActionListener(e -> {
-            int row = tblLichSu.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu cần xóa từ bảng bên dưới!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            String maPhieu = tblLichSu.getValueAt(row, 0).toString();
-            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa phiếu " + maPhieu + "?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                if (giaoDichDAO.xoaPhieu(maPhieu)) {
-                    JOptionPane.showMessageDialog(this, "Xóa phiếu thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                    btnLamMoi.doClick();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Xóa phiếu thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        DocumentListener searchListener = new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { thucHienLocTimKiem(); }
-            @Override public void removeUpdate(DocumentEvent e) { thucHienLocTimKiem(); }
-            @Override public void changedUpdate(DocumentEvent e) { thucHienLocTimKiem(); }
-        };
-        txtTimMaPhieu.getDocument().addDocumentListener(searchListener);
-        txtTimMaNV.getDocument().addDocumentListener(searchListener);
-        txtTimPhuTung.getDocument().addDocumentListener(searchListener);
-
-        btnTaiLai.addActionListener(e -> {
-            txtTimMaPhieu.setText("");
-            txtTimMaNV.setText("");
-            txtTimPhuTung.setText("");
-            taiDanhSachPhieuLichSu();
-        });
-
-        tblLichSu.getSelectionModel().addListSelectionListener(e -> {
-            int row = tblLichSu.getSelectedRow();
-            if (row != -1 && !e.getValueIsAdjusting()) {
-                String maPhieu = tblLichSu.getValueAt(row, 0).toString();
-                String kieu = tblLichSu.getValueAt(row, 3).toString();
-                
-                if (kieu != null && kieu.equalsIgnoreCase("Nhập")) {
-                    radNhapKho.setSelected(true);
-                    this.isNhapKho = true;
-                } else {
-                    radXuatKho.setSelected(true);
-                    this.isNhapKho = false;
-                }
-
-                txtMaPhieu.setText(maPhieu);
-                capNhatNhanNutLuu();
-                String ngayVal = tblLichSu.getValueAt(row, 2).toString();
-                txtNgayLap.setText(ngayVal.contains(" ") ? ngayVal.split(" ")[0] : ngayVal);
-                txtNguoiLap.setText(tblLichSu.getValueAt(row, 1).toString());
-                txtGhiChu.setText(tblLichSu.getValueAt(row, 4) != null ? tblLichSu.getValueAt(row, 4).toString() : "");
-
-                napChiTietHangVaoBangPhai(maPhieu);
-            }
-        });
-    }
-
-    private void napChiTietHangVaoBangPhai(String maPhieu) {
-        modelChiTiet.setRowCount(0);
-        soLuongCuTheoPhuTung.clear();
-        List<ChiTietPhieuNhap> dsChiTiet = giaoDichDAO.layChiTietPhieu(maPhieu); 
-        if (dsChiTiet != null) {
-            for (ChiTietPhieuNhap ct : dsChiTiet) {
-                soLuongCuTheoPhuTung.put(ct.getMaPhuTung(), ct.getSoLuong());
-                PhuTung pt = phuTungDAO.layPhuTungTheoMa(ct.getMaPhuTung());
-                String tenPT = pt != null ? pt.getTenPhuTung() : "Phụ tùng chưa xác định";
-                double tongLine = (ct.getSoLuong() != null ? ct.getSoLuong() : 0) * (ct.getDonGia() != null ? ct.getDonGia() : 0);
-                modelChiTiet.addRow(new Object[]{
-                    ct.getMaPhuTung(),
-                    tenPT,
-                    ct.getSoLuong(),
-                    df.format(ct.getDonGia() != null ? ct.getDonGia() : 0),
-                    df.format(tongLine)
-                });
-            }
-        }
-        capNhatTongTien();
-    }
-
-    private void thucHienLocTimKiem() {
-        String maP = txtTimMaPhieu.getText().trim().toLowerCase();
-        String maNV = txtTimMaNV.getText().trim().toLowerCase();
-        String phuTungText = txtTimPhuTung.getText().trim().toLowerCase();
-
-        modelLichSu.setRowCount(0);
-        List<PhieuNhapXuatKho> dsPhieu = giaoDichDAO.layTatCaPhieu();
-        if (dsPhieu != null) {
-            int count = 0;
-            for (PhieuNhapXuatKho p : dsPhieu) {
-                boolean matchMaP = maP.isEmpty() || p.getMaPhieuNhapXuat().toLowerCase().contains(maP);
-                boolean matchMaNV = maNV.isEmpty() || (p.getMaNV() != null && p.getMaNV().toLowerCase().contains(maNV));
-                
-                boolean matchPT = phuTungText.isEmpty();
-                if (!phuTungText.isEmpty()) {
-                    List<ChiTietPhieuNhap> dsChiTiet = giaoDichDAO.layChiTietPhieu(p.getMaPhieuNhapXuat());
-                    if (dsChiTiet != null) {
-                        for (ChiTietPhieuNhap ct : dsChiTiet) {
-                            PhuTung pt = phuTungDAO.layPhuTungTheoMa(ct.getMaPhuTung());
-                            if (pt != null && pt.getTenPhuTung() != null && pt.getTenPhuTung().toLowerCase().contains(phuTungText)) {
-                                matchPT = true; 
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (matchMaP && matchMaNV && matchPT) {
-                    double tongTien = giaoDichDAO.tinhTongTienPhieu(p.getMaPhieuNhapXuat());
-                    String ngayStr = p.getNgayLapPhieu() != null 
-                            ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(p.getNgayLapPhieu()) 
-                            : "";
-                    
-                    modelLichSu.addRow(new Object[]{
-                        p.getMaPhieuNhapXuat(),
-                        p.getMaNV(),
-                        ngayStr,
-                        p.getKieuPhieu(),
-                        layGhiChuPhieu(p.getMaPhieuNhapXuat()),
-                        df.format(tongTien)
-                    });
-                    count++;
-                }
-            }
-            lblSoLuongPhieu.setText("Tìm thấy " + count + " phiếu giao dịch");
-        }
-    }
-
-    private void thucHienLuuGiaoDich(boolean isNhap, boolean batBuocTaoMoi) {
-        if (taiKhoanHienTai == null || taiKhoanHienTai.getNhanVien() == null
-                || taiKhoanHienTai.getNhanVien().getMaNV() == null
-                || taiKhoanHienTai.getNhanVien().getMaNV().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy phiên đăng nhập hiện tại! Vui lòng đăng nhập lại.", "Lỗi phân quyền", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (modelChiTiet.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Phiếu giao dịch chưa có hàng hóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (!batBuocTaoMoi && !dangCapNhatPhieu()) {
-            JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn phiếu trong bảng lịch sử cần cập nhật.",
-                    "Chưa chọn phiếu", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        boolean dangCapNhat = !batBuocTaoMoi;
-        String maPhieu = txtMaPhieu.getText().trim();
-        if (!dangCapNhat) {
-            try {
-                maPhieu = giaoDichDAO.taoMaPhieuMoi(isNhap);
-            } catch (java.sql.SQLException exception) {
-                JOptionPane.showMessageDialog(this,
-                        "Không thể phát sinh mã phiếu kho: " + exception.getMessage(),
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
-
-        PhieuNhapXuatKho phieu = new PhieuNhapXuatKho();
-        phieu.setMaPhieuNhapXuat(maPhieu);
-        phieu.setMaNV(taiKhoanHienTai.getNhanVien().getMaNV().trim());
-        phieu.setNgayLapPhieu(new java.sql.Timestamp(System.currentTimeMillis()));
-        phieu.setKieuPhieu(isNhap ? "Nhập" : "Xuất");
-
-        List<ChiTietPhieuNhap> dsChiTiet = new ArrayList<>();
-        String ghiChuChung = txtGhiChu.getText().trim(); 
-
-        for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
-            ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
-            ct.setMaPhieuNhapXuat(maPhieu);
-            ct.setMaPhuTung(modelChiTiet.getValueAt(i, 0).toString());
-            ct.setSoLuong(Integer.parseInt(modelChiTiet.getValueAt(i, 2).toString()));
-            ct.setDonGia(Double.parseDouble(modelChiTiet.getValueAt(i, 3).toString().replace(" đ", "").replace(",", "")));
-            ct.setGhiChu(ghiChuChung); 
-            dsChiTiet.add(ct);
-        }
-
-        try {
-            if (dangCapNhat) {
-                giaoDichDAO.capNhatGiaoDichKho(maPhieu, dsChiTiet, isNhap);
-            } else {
-                giaoDichDAO.luuGiaoDichKho(phieu, dsChiTiet, isNhap);
-            }
-            JOptionPane.showMessageDialog(this,
-                    (dangCapNhat ? "Cập nhật" : "Tạo") + " phiếu thành công!\nMã phiếu: " + maPhieu,
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            tblLichSu.clearSelection();
-            switchMode(isNhap);
-        } catch (java.sql.SQLException exception) {
-            JOptionPane.showMessageDialog(this,
-                    "Không thể " + (dangCapNhat ? "cập nhật" : "tạo")
-                            + " phiếu kho: " + exception.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private boolean dangCapNhatPhieu() {
-        String maPhieu = txtMaPhieu.getText().trim();
-        return !maPhieu.isEmpty() && !"Tự động tạo khi lưu".equals(maPhieu);
-    }
-
-    private void capNhatNhanNutLuu() {
-        if (btnLuuPhieu != null) {
-            btnLuuPhieu.setText("✎ Cập nhật phiếu");
-        }
-    }
-
-    private String layGhiChuPhieu(String maPhieu) {
-        for (ChiTietPhieuNhap chiTiet : giaoDichDAO.layChiTietPhieu(maPhieu)) {
-            if (chiTiet.getGhiChu() != null && !chiTiet.getGhiChu().isBlank()) {
-                return chiTiet.getGhiChu();
-            }
-        }
-        return "";
-    }
-
-    private void capNhatTongTien() {
-        double tongTien = 0;
-        for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
-            tongTien += Double.parseDouble(modelChiTiet.getValueAt(i, 4).toString().replace(" đ", "").replace(",", ""));
-        }
-        lblTongTien.setText("Tổng tiền: " + df.format(tongTien));
-    }
-
     private void addField(JPanel parent, String label, java.awt.Component field, int col, int row, GridBagConstraints gbc) {
         gbc.gridwidth = 1; gbc.gridx = col; gbc.gridy = row; gbc.weightx = 0.1;
         JLabel lbl = new JLabel(label); lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -756,4 +298,33 @@ public class FrmNhapXuatPhuTung extends JPanel {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 11)); btn.setBackground(bg); btn.setForeground(fg);
         btn.setFocusPainted(false); btn.setBorder(new EmptyBorder(0,0,0,0)); btn.setCursor(new Cursor(Cursor.HAND_CURSOR)); return btn;
     }
+
+    public TaiKhoan getTaiKhoanHienTai() { return taiKhoanHienTai; }
+    public JRadioButton getRadNhapKho() { return radNhapKho; }
+    public JRadioButton getRadXuatKho() { return radXuatKho; }
+    public JLabel getLblDonGia() { return lblDonGia; }
+    public JTextField getTxtMaPhieu() { return txtMaPhieu; }
+    public JTextField getTxtNgayLap() { return txtNgayLap; }
+    public JTextField getTxtNguoiLap() { return txtNguoiLap; }
+    public JTextField getTxtGhiChu() { return txtGhiChu; }
+    public JButton getBtnTaoPhieu() { return btnTaoPhieu; }
+    public JButton getBtnLuuPhieu() { return btnLuuPhieu; }
+    public JButton getBtnXoaPhieu() { return btnXoaPhieu; }
+    public JButton getBtnLamMoi() { return btnLamMoi; }
+    public JComboBox<String> getCboPhuTung() { return cboPhuTung; }
+    public JTextField getTxtTonKho() { return txtTonKho; }
+    public JTextField getTxtSoLuong() { return txtSoLuong; }
+    public JTextField getTxtDonGia() { return txtDonGia; }
+    public JButton getBtnThemChiTiet() { return btnThemChiTiet; }
+    public JButton getBtnXoaChiTiet() { return btnXoaChiTiet; }
+    public DefaultTableModel getModelChiTiet() { return modelChiTiet; }
+    public JTable getTblChiTiet() { return tblChiTiet; }
+    public JLabel getLblTongTien() { return lblTongTien; }
+    public JTextField getTxtTimMaPhieu() { return txtTimMaPhieu; }
+    public JTextField getTxtTimMaNV() { return txtTimMaNV; }
+    public JTextField getTxtTimPhuTung() { return txtTimPhuTung; }
+    public JButton getBtnTaiLai() { return btnTaiLai; }
+    public DefaultTableModel getModelLichSu() { return modelLichSu; }
+    public JTable getTblLichSu() { return tblLichSu; }
+    public JLabel getLblSoLuongPhieu() { return lblSoLuongPhieu; }
 }

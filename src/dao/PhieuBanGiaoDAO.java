@@ -14,9 +14,10 @@ import java.util.List;
 
 public class PhieuBanGiaoDAO {
     public List<PhieuBanGiao> findAll() throws SQLException {
-        String sql = "SELECT maPhieuBanGiao, maXe, maKH, tenKhachHang, maNV, "
-                + "tinhTrangXeHienTai, tenNguoiNhan, soDienThoaiNguoiNhan FROM PhieuBanGiao "
-                + "ORDER BY maPhieuBanGiao";
+        String sql = "SELECT p.maPhieuBanGiao, p.maXe, p.maKH, kh.hoTen AS hoTenKhachHang, p.maNV, "
+                + "p.tinhTrangXeHienTai, p.tenNguoiNhan, p.soDienThoaiNguoiNhan "
+                + "FROM PhieuBanGiao p JOIN KhachHang kh ON kh.maKH = p.maKH "
+                + "ORDER BY p.maPhieuBanGiao";
         List<PhieuBanGiao> danhSach = new ArrayList<>();
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql);
@@ -29,9 +30,10 @@ public class PhieuBanGiaoDAO {
     }
 
     public PhieuBanGiao findById(String maPhieuBanGiao) throws SQLException {
-        String sql = "SELECT maPhieuBanGiao, maXe, maKH, tenKhachHang, maNV, "
-                + "tinhTrangXeHienTai, tenNguoiNhan, soDienThoaiNguoiNhan "
-                + "FROM PhieuBanGiao WHERE maPhieuBanGiao = ?";
+        String sql = "SELECT p.maPhieuBanGiao, p.maXe, p.maKH, kh.hoTen AS hoTenKhachHang, p.maNV, "
+                + "p.tinhTrangXeHienTai, p.tenNguoiNhan, p.soDienThoaiNguoiNhan "
+                + "FROM PhieuBanGiao p JOIN KhachHang kh ON kh.maKH = p.maKH "
+                + "WHERE p.maPhieuBanGiao = ?";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, maPhieuBanGiao);
@@ -76,8 +78,7 @@ public class PhieuBanGiaoDAO {
         return new PhieuBanGiao(
                 resultSet.getString("maPhieuBanGiao"),
                 new Xe(resultSet.getString("maXe")),
-                new KhachHang(resultSet.getString("maKH")),
-                resultSet.getString("tenKhachHang"),
+                new KhachHang(resultSet.getString("maKH"), resultSet.getString("hoTenKhachHang"), null),
                 new NhanVien(resultSet.getString("maNV")),
                 resultSet.getString("tinhTrangXeHienTai"),
                 resultSet.getString("tenNguoiNhan"),
@@ -92,10 +93,14 @@ public class PhieuBanGiaoDAO {
         }
         statement.setString(index++, phieu.getXe() == null ? null : phieu.getXe().getMaXe());
         statement.setString(index++, phieu.getKhachHang() == null
-                ? null : phieu.getKhachHang().getMaKH());
-        statement.setString(index++, phieu.getTenKhachHang());
+                ? null
+                : phieu.getKhachHang().getMaKH());
+        statement.setString(index++, phieu.getKhachHang() == null
+                ? null
+                : phieu.getKhachHang().getHoTen());
         statement.setString(index++, phieu.getNhanVien() == null
-                ? null : phieu.getNhanVien().getMaNV());
+                ? null
+                : phieu.getNhanVien().getMaNV());
         statement.setString(index++, phieu.getTinhTrangXeHienTai());
         statement.setString(index++, phieu.getTenNguoiNhan());
         statement.setString(index, phieu.getSoDienThoaiNguoiNhan());

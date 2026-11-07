@@ -2,8 +2,6 @@ package dao;
 
 import connectDB.ConnectDB;
 import entity.DichVu;
-import util.MaTuDong;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,140 +10,77 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DichVuDAO {
-    private static final String CAU_LENH_LAY_DANH_SACH = """
-            SELECT maDV, tenDV, moTaDV, giaDV
-            FROM DichVu
-            ORDER BY maDV
-            """;
+    
+    public DichVuDAO() {
+    }
 
     public List<DichVu> findAll() throws SQLException {
-        List<DichVu> danhSach = new ArrayList<>();
-        try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(CAU_LENH_LAY_DANH_SACH);
-                ResultSet resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                danhSach.add(anhXa(resultSet));
+        List<DichVu> ds = new ArrayList<>();
+        String sql = "SELECT * FROM DichVu";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                DichVu dv = new DichVu();
+                dv.setMaDV(rs.getString("maDV"));
+                dv.setTenDV(rs.getString("tenDV"));
+                dv.setGiaDV(rs.getDouble("giaDV"));
+                dv.setMoTaDV(rs.getString("moTaDV"));
+                ds.add(dv);
             }
         }
-        return danhSach;
+        return ds;
     }
 
-    public DichVu findById(String maDV) throws SQLException {
-        kiemTraMa(maDV);
-        String sql = "SELECT maDV, tenDV, moTaDV, giaDV FROM DichVu WHERE maDV = ?";
-        try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, maDV.trim());
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? anhXa(resultSet) : null;
+    public DichVu findById(Object... keyValues) throws SQLException {
+        String sql = "SELECT * FROM DichVu WHERE maDV = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setObject(1, keyValues[0]);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    DichVu dv = new DichVu();
+                    dv.setMaDV(rs.getString("maDV"));
+                    dv.setTenDV(rs.getString("tenDV"));
+                    dv.setGiaDV(rs.getDouble("giaDV"));
+                    dv.setMoTaDV(rs.getString("moTaDV"));
+                    return dv;
+                }
             }
         }
+        return null;
     }
 
-    public String layMaTiepTheo() throws SQLException {
-        List<String> danhSachMa = new ArrayList<>();
-        for (DichVu dichVu : findAll()) {
-            danhSachMa.add(dichVu.getMaDV());
-        }
-        return MaTuDong.sinhMa(MaTuDong.TIEN_TO_DICH_VU, danhSachMa, ma -> ma);
-    }
-
-    public boolean them(DichVu dichVu) throws SQLException {
-        kiemTraDuLieu(dichVu);
-        String sql = "INSERT INTO DichVu (maDV, tenDV, moTaDV, giaDV) VALUES (?, ?, ?, ?)";
-        try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            ganThamSo(statement, dichVu);
-            return statement.executeUpdate() > 0;
+    public boolean insert(DichVu dv) throws SQLException {
+        String sql = "INSERT INTO DichVu (maDV, tenDV, giaDV, moTaDV) VALUES (?, ?, ?, ?)";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, dv.getMaDV());
+            stmt.setString(2, dv.getTenDV());
+            stmt.setDouble(3, dv.getGiaDV());
+            stmt.setString(4, dv.getMoTaDV());
+            return stmt.executeUpdate() > 0;
         }
     }
 
-    public boolean capNhat(DichVu dichVu) throws SQLException {
-        kiemTraDuLieu(dichVu);
-        String sql = "UPDATE DichVu SET tenDV = ?, moTaDV = ?, giaDV = ? WHERE maDV = ?";
-        try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, dichVu.getTenDV().trim());
-            statement.setString(2, dichVu.getMoTaDV());
-            ganGiaTien(statement, 3, dichVu.getGiaDV());
-            statement.setString(4, dichVu.getMaDV().trim());
-            return statement.executeUpdate() > 0;
+    public boolean update(DichVu dv) throws SQLException {
+        String sql = "UPDATE DichVu SET tenDV = ?, giaDV = ?, moTaDV = ? WHERE maDV = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, dv.getTenDV());
+            stmt.setDouble(2, dv.getGiaDV());
+            stmt.setString(3, dv.getMoTaDV());
+            stmt.setString(4, dv.getMaDV());
+            return stmt.executeUpdate() > 0;
         }
     }
 
-    public boolean xoa(String maDV) throws SQLException {
-        kiemTraMa(maDV);
+    public boolean deleteById(Object... keyValues) throws SQLException {
         String sql = "DELETE FROM DichVu WHERE maDV = ?";
-        try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, maDV.trim());
-            return statement.executeUpdate() > 0;
-        }
-    }
-
-    // Giữ API CRUD cũ cho các form chưa chuyển hoàn toàn sang controller.
-    public boolean insert(DichVu dichVu) throws SQLException {
-        return them(dichVu);
-    }
-
-    public boolean update(DichVu dichVu) throws SQLException {
-        return capNhat(dichVu);
-    }
-
-    public boolean deleteById(String maDV) throws SQLException {
-        return xoa(maDV);
-    }
-
-    private Connection moKetNoi() throws SQLException {
-        ConnectDB.getInstance().connect();
-        Connection connection = ConnectDB.getConnection();
-        if (connection == null) {
-            throw new SQLException("Không thể kết nối cơ sở dữ liệu.");
-        }
-        return connection;
-    }
-
-    private DichVu anhXa(ResultSet resultSet) throws SQLException {
-        DichVu dichVu = new DichVu();
-        dichVu.setMaDV(resultSet.getString("maDV"));
-        dichVu.setTenDV(resultSet.getString("tenDV"));
-        dichVu.setMoTaDV(resultSet.getString("moTaDV"));
-        java.math.BigDecimal giaDV = resultSet.getBigDecimal("giaDV");
-        dichVu.setGiaDV(giaDV == null ? null : giaDV.doubleValue());
-        return dichVu;
-    }
-
-    private void ganThamSo(PreparedStatement statement, DichVu dichVu) throws SQLException {
-        statement.setString(1, dichVu.getMaDV().trim());
-        statement.setString(2, dichVu.getTenDV().trim());
-        statement.setString(3, dichVu.getMoTaDV());
-        ganGiaTien(statement, 4, dichVu.getGiaDV());
-    }
-
-    private void ganGiaTien(PreparedStatement statement, int viTri, Double giaDV) throws SQLException {
-        if (giaDV == null) {
-            statement.setNull(viTri, java.sql.Types.DECIMAL);
-        } else {
-            statement.setDouble(viTri, giaDV);
-        }
-    }
-
-    private void kiemTraDuLieu(DichVu dichVu) throws SQLException {
-        if (dichVu == null) {
-            throw new SQLException("Thông tin dịch vụ không được để trống.");
-        }
-        kiemTraMa(dichVu.getMaDV());
-        if (dichVu.getTenDV() == null || dichVu.getTenDV().isBlank()) {
-            throw new SQLException("Tên dịch vụ không được để trống.");
-        }
-        if (dichVu.getGiaDV() != null && dichVu.getGiaDV() < 0) {
-            throw new SQLException("Giá dịch vụ không được âm.");
-        }
-    }
-
-    private void kiemTraMa(String maDV) throws SQLException {
-        if (maDV == null || maDV.isBlank()) {
-            throw new SQLException("Mã dịch vụ không được để trống.");
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setObject(1, keyValues[0]);
+            return stmt.executeUpdate() > 0;
         }
     }
 }
