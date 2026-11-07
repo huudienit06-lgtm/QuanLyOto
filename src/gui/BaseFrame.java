@@ -61,7 +61,7 @@ public class BaseFrame extends JFrame {
 	protected void onMenuAction(String featureName) {
 		if ("Trang Chủ".equals(featureName)) {
 			if (menuVaiTroDangNhap == null) {
-				FormUI.showError("Không xác định được menu theo vai trò đăng nhập.");
+				showError("Không xác định được menu theo vai trò đăng nhập.");
 				return;
 			}
 			setJMenuBar(menuVaiTroDangNhap);
@@ -425,11 +425,11 @@ public class BaseFrame extends JFrame {
 					lblGiaTri[3].setText(String.valueOf(thongKe.xeChoThanhToan()));
 				} catch (InterruptedException exception) {
 					Thread.currentThread().interrupt();
-					FormUI.showError("Đã ngắt khi tải thống kê hoạt động gara.");
+					showError("Đã ngắt khi tải thống kê hoạt động gara.");
 				} catch (ExecutionException exception) {
 					Throwable cause = exception.getCause();
 					String message = cause == null ? exception.getMessage() : cause.getMessage();
-					FormUI.showError("Không thể tải thống kê hoạt động gara: " + message);
+					showError("Không thể tải thống kê hoạt động gara: " + message);
 				} finally {
 					btnTaiLai.setEnabled(true);
 				}
@@ -456,16 +456,20 @@ public class BaseFrame extends JFrame {
 					lblGiaTri[3].setText(String.valueOf(thongKe.tongHoaDon()));
 				} catch (InterruptedException exception) {
 					Thread.currentThread().interrupt();
-					FormUI.showError("Đã ngắt khi tải thống kê dành cho quản lý.");
+					showError("Đã ngắt khi tải thống kê dành cho quản lý.");
 				} catch (ExecutionException exception) {
 					Throwable cause = exception.getCause();
 					String message = cause == null ? exception.getMessage() : cause.getMessage();
-					FormUI.showError("Không thể tải thống kê dành cho quản lý: " + message);
+					showError("Không thể tải thống kê dành cho quản lý: " + message);
 				} finally {
 					btnTaiLai.setEnabled(true);
 				}
 			}
 		}.execute();
+	}
+
+	private void showError(String message) {
+		javax.swing.JOptionPane.showMessageDialog(this, message, "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
 	}
 
 	private JPanel createStatusBar() {
