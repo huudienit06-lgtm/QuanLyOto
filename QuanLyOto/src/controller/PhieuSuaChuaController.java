@@ -17,6 +17,7 @@ import entity.TaiKhoan;
 import entity.Xe;
 import gui.FrmPhieuSuaChua;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public final class PhieuSuaChuaController {
     private final PhieuKiemTraDAO phieuKiemTraDAO = new PhieuKiemTraDAO();
     private final PhieuTiepNhanDAO phieuTiepNhanDAO = new PhieuTiepNhanDAO();
     private final XeDAO xeDAO = new XeDAO();
+    private final List<ChiTietPhieuSuaChua> chiTietChoTaoPhieu = new ArrayList<>();
 
     public PhieuSuaChuaController(FrmPhieuSuaChua view, TaiKhoan taiKhoanHienTai) {
         this.view = view;
@@ -94,7 +96,10 @@ public final class PhieuSuaChuaController {
     private void themPhieu() {
         try {
             PhieuSuaChua phieu = view.layPhieuNhap();
-            List<ChiTietPhieuSuaChua> danhSachChiTiet = view.layDanhSachChiTietNhap();
+            if (chiTietChoTaoPhieu.isEmpty()) {
+                throw new IllegalArgumentException("Hãy thêm ít nhất một chi tiết trước khi tạo phiếu");
+            }
+            List<ChiTietPhieuSuaChua> danhSachChiTiet = new ArrayList<>(chiTietChoTaoPhieu);
             if (phieuSuaChuaDAO.insertWithDetails(phieu, danhSachChiTiet)) {
                 phieuTiepNhanDAO.capNhatTienDoTheoPhieuKiemTra(
                         phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
@@ -194,16 +199,10 @@ public final class PhieuSuaChuaController {
             String maPSC = view.layMaPhieuNhap();
             List<ChiTietPhieuSuaChua> danhSachChiTiet = view.layDanhSachChiTietNhap();
             if (phieuSuaChuaDAO.findById(maPSC) == null) {
-                PhieuSuaChua phieu = view.layPhieuNhap();
-                if (phieuSuaChuaDAO.insertWithDetails(phieu, danhSachChiTiet)) {
-                    phieuTiepNhanDAO.capNhatTienDoTheoPhieuKiemTra(
-                            phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
-                            PhieuTiepNhan.TIEN_DO_DA_LAP_PHIEU_SUA_CHUA);
-                    taiDanhMuc();
-                    taiDanhSachPhieu();
-                    lamMoiForm();
-                    view.thongBaoThanhCong("Đã tạo phiếu và thêm chi tiết");
-                }
+                chiTietChoTaoPhieu.addAll(danhSachChiTiet);
+                view.hienThiChiTietChoTaoPhieu(chiTietChoTaoPhieu);
+                view.lamMoiNhapChiTiet();
+                view.thongBaoThanhCong("Đã thêm chi tiết. Bấm \"Tạo phiếu\" để lưu.");
                 return;
             }
 
@@ -227,6 +226,15 @@ public final class PhieuSuaChuaController {
             return;
         }
         try {
+            if (view.layMaChiTietDangChon() == null) {
+                int dong = view.layDongChiTietDangChon();
+                if (dong >= 0 && dong < chiTietChoTaoPhieu.size()) {
+                    chiTietChoTaoPhieu.remove(dong);
+                    view.hienThiChiTietChoTaoPhieu(chiTietChoTaoPhieu);
+                    view.thongBaoThanhCong("Đã xóa chi tiết");
+                }
+                return;
+            }
             if (!chiTietDAO.deleteById(view.layMaChiTietDangChon())) {
                 view.baoLoi("Không tìm thấy chi tiết cần xóa", null);
                 return;
@@ -250,6 +258,7 @@ public final class PhieuSuaChuaController {
                     : taiKhoanHienTai.getNhanVien().getMaNV();
             view.lamMoiForm(maMoi, maNV);
             view.lamMoiFormChiTiet();
+            chiTietChoTaoPhieu.clear();
         } catch (SQLException exception) {
             view.baoLoi("Không thể phát sinh mã phiếu sửa chữa", exception.getMessage());
             view.lamMoiForm("", "");
