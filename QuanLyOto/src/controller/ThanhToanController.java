@@ -3,7 +3,10 @@ package controller;
 import dao.ThanhToanDAO;
 import entity.GiaoDichThanhToan;
 import entity.HoaDon;
+import gui.FrmKhachHang;
 import gui.FrmThanhToan;
+import dao.ChinhSachBaoHanhDAO;
+import dao.ChinhSachBaoHanhDAO.PhuTungBaoHanh;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -20,6 +23,8 @@ import java.util.List;
 public class ThanhToanController {
     private final FrmThanhToan view;
     private final ThanhToanDAO dao = new ThanhToanDAO();
+    private final ChinhSachBaoHanhDAO baoHanhDAO = new ChinhSachBaoHanhDAO();
+    private final List<PhuTungBaoHanh> dsBaoHanh = new ArrayList<>();
 
     private String maHoaDon;
     private String maNhanVien = "";
@@ -111,10 +116,10 @@ public class ThanhToanController {
         });
     }
 
-    // ===================== Nạp dữ liệu =====================
     private void xoaDuLieu() {
         tongTien = daThanhToan = tienDV = tienPT = tienThue = tienGiamGia = BigDecimal.ZERO;
         chiTietHD.clear();
+        dsBaoHanh.clear();
         maNhanVien = maXe = maKhachHang = tenKhachHang = maPhieu = ngayLap = "";
         view.xoaThongTinHoaDon();
     }
@@ -147,9 +152,11 @@ public class ThanhToanController {
             maXe = nvl(hd.maXe);
             ngayLap = FrmThanhToan.dinhDangNgayGio(hd.ngayLap);
             view.hienThiThongTinHoaDon(hd);
-
             chiTietHD.clear();
             chiTietHD.addAll(dao.layChiTiet(maHoaDon));
+            dsBaoHanh.clear();
+            dsBaoHanh.addAll(
+                    baoHanhDAO.layPhuTungBaoHanhTheoHoaDon(maHoaDon));
             tienDV = BigDecimal.ZERO;
             tienPT = BigDecimal.ZERO;
             for (ThanhToanDAO.ChiTiet ct : chiTietHD) {
@@ -235,6 +242,19 @@ public class ThanhToanController {
             }
             return;
         }
+        String maKHCanGan = null;
+        boolean laHoaDonMuaPhuTung = maPhieu == null || maPhieu.trim().isEmpty();
+        boolean thanhToanMotPhan = soTien.compareTo(conNo) < 0;
+        boolean chuaCoKhachHang = maKhachHang == null || maKhachHang.trim().isEmpty();
+        if (laHoaDonMuaPhuTung && thanhToanMotPhan && chuaCoKhachHang) {
+            maKHCanGan = FrmKhachHang.moDialogTaoMoi(view);
+            if (maKHCanGan == null || maKHCanGan.trim().isEmpty()) {
+                view.thongBaoCanhBao(
+                        "Bạn đã hủy tạo khách hàng. Giao dịch thanh toán chưa được ghi nhận.");
+                return;
+            }
+            maKHCanGan = maKHCanGan.trim();
+        }
 
         FrmThanhToan.DuLieuHoaDon d = new FrmThanhToan.DuLieuHoaDon();
         d.maHoaDon = maHoaDon;
@@ -245,6 +265,7 @@ public class ThanhToanController {
         d.maXe = maXe;
         d.maNhanVien = maNhanVien;
         d.chiTiet = new ArrayList<>(chiTietHD);
+        d.dsBaoHanh = new ArrayList<>(dsBaoHanh);
         d.tienDV = tienDV;
         d.tienPT = tienPT;
         d.thue = tienThue;
@@ -274,14 +295,20 @@ public class ThanhToanController {
             d.phuongThuc = GiaoDichThanhToan.PT_CHUYEN_KHOAN;
         }
 
-        if (!ghiNhanThanhToan(soTien, d.phuongThuc))
+        if (!ghiNhanThanhToan(soTien, d.phuongThuc, maKHCanGan)) {
             return;
+        }
+        d.maKhach = maKhachHang;
+        d.tenKhach = tenKhachHang;
         view.baoThanhToanThanhCong(soTien, d.phuongThuc);
         if (view.hoiInHoaDon())
             view.hienThiHoaDon(d);
     }
 
-    private boolean ghiNhanThanhToan(BigDecimal soTien, String phuongThuc) {
+    private boolean ghiNhanThanhToan(
+            BigDecimal soTien,
+            String phuongThuc,
+            String maKHCanGan) {
         try {
             HoaDon hd = new HoaDon();
             hd.setMaHoaDon(maHoaDon);
@@ -289,22 +316,18 @@ public class ThanhToanController {
             gd.setHoaDon(hd);
             gd.setPhuongThucThanhToan(phuongThuc);
             gd.setSoTienThanhToan(soTien);
-            dao.ghiNhanThanhToan(gd);
+            dao.ghiNhanThanhToan(gd, maKHCanGan);
             view.setSoTienThanhToan("");
             view.setTienKhachDua("");
             taiHoaDon(maHoaDon);
             return true;
         } catch (SQLException e) {
+            e.printStackTrace();
             view.baoThanhToanThatBai(e.getMessage());
             return false;
         }
     }
 
-    // ===================== Tiện ích =====================
-    /**
-     * Chuyển chuỗi người dùng nhập (có thể có . , ₫ VND) thành số; null nếu không
-     * hợp lệ.
-     */
     private BigDecimal docSoTien(String text) {
         if (text == null || text.trim().isEmpty())
             return null;

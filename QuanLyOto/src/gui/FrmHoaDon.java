@@ -39,11 +39,6 @@ import static dao.HoaDonDAO.PHU_TUNG;
 import static dao.HoaDonDAO.SUA_CHUA;
 import static dao.HoaDonDAO.coPhieu;
 
-/**
- * View: chỉ dựng giao diện và hiển thị dữ liệu. Các sự kiện của nút/ô nhập
- * được HoaDonController đăng ký qua các phương thức khiXxx(...); không truy
- * cập DAO và không có nghiệp vụ ở đây.
- */
 public class FrmHoaDon extends JPanel {
     private static final String THE_TRONG = "trong";
     private static final String THE_SUA_CHUA = "suachua";
@@ -124,10 +119,8 @@ public class FrmHoaDon extends JPanel {
     private final JPanel pnlNguon = new JPanel(cardNguon);
     private The theNguon;
 
-    // Bảng chi tiết: Loại, Mã, Tên, Số lượng, Đơn giá (BigDecimal), Thành tiền
-    // (BigDecimal)
     private final DefaultTableModel modelChiTiet = new MoHinhBang(
-            "Loại", "Mã", "Tên dịch vụ / phụ tùng", "Số lượng", "Đơn giá", "Thành tiền");
+            "Loại", "Mã", "Tên dịch vụ / phụ tùng", "Số lượng", "Đơn giá", "Thành tiền", "Bảo hành");
     private final JTable tblChiTiet = new BangSoc(modelChiTiet);
 
     // Bảng bảo hành
@@ -163,6 +156,11 @@ public class FrmHoaDon extends JPanel {
         kieuCacOComponent();
         cauHinhBangChiTiet();
         cauHinhBangBaoHanh();
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tblBaoHanh.getColumnCount(); i++) {
+            tblBaoHanh.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
         cauHinhBangLichSu();
         add(taoTieuDe(), BorderLayout.NORTH);
         add(taoVungCuon(), BorderLayout.CENTER);
@@ -228,22 +226,91 @@ public class FrmHoaDon extends JPanel {
     }
 
     public void khiDoiChiTiet(Runnable r) {
-        modelChiTiet.addTableModelListener(e -> r.run());
+        modelChiTiet.addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE
+                    && e.getColumn() == 6) {
+                return;
+            }
+            r.run();
+        });
     }
 
     public void khiDoiKhuyenMai(Runnable r) {
         cboKhuyenMai.addActionListener(e -> r.run());
     }
 
-    // Chọn một hóa đơn trong lịch sử, truyền mã hóa đơn
     public void khiChonLichSu(Consumer<String> c) {
         tblLichSu.getSelectionModel().addListSelectionListener(e -> {
             int row = tblLichSu.getSelectedRow();
             if (e.getValueIsAdjusting() || row < 0) {
                 return;
             }
-            c.accept(modelLichSu.getValueAt(tblLichSu.convertRowIndexToModel(row), 0).toString());
+            String ma = modelLichSu.getValueAt(tblLichSu.convertRowIndexToModel(row), 0).toString();
+            SwingUtilities.invokeLater(() -> {
+                tblLichSu.clearSelection();
+                c.accept(ma);
+            });
         });
+    }
+
+    private String dinhDangThoiHanBaoHanh(PhuTungBaoHanh pt) {
+        if (pt == null || pt.thoiHan() <= 0) {
+            return "";
+        }
+
+        String donVi = switch (pt.donViThoiGian()) {
+            case "NGAY" -> "ngày";
+            case "THANG" -> "tháng";
+            case "NAM" -> "năm";
+            default -> "";
+        };
+
+        return donVi.isEmpty() ? "" : pt.thoiHan() + " " + donVi;
+    }
+
+    private void capNhatCotThoiHanBaoHanh(List<PhuTungBaoHanh> ds) {
+        // Xóa thời hạn bảo hành cũ trước khi cập nhật.
+        for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
+            modelChiTiet.setValueAt("", i, 6);
+        }
+
+        if (ds == null || ds.isEmpty()) {
+            return;
+        }
+
+        java.util.Map<String, String> thoiHanTheoMa = new java.util.HashMap<>();
+
+        for (PhuTungBaoHanh pt : ds) {
+            if (pt != null && pt.maPhuTung() != null) {
+                thoiHanTheoMa.put(
+                        pt.maPhuTung(),
+                        dinhDangThoiHanBaoHanh(pt));
+            }
+        }
+
+        // Đối chiếu mã phụ tùng trong hóa đơn với danh sách được bảo hành.
+        for (int i = 0; i < modelChiTiet.getRowCount(); i++) {
+            String loai = String.valueOf(modelChiTiet.getValueAt(i, 0));
+            String ma = String.valueOf(modelChiTiet.getValueAt(i, 1));
+
+            if (PHU_TUNG.equals(loai)) {
+                String thoiHan = thoiHanTheoMa.get(ma);
+
+                if (thoiHan != null) {
+                    modelChiTiet.setValueAt(thoiHan, i, 6);
+                }
+            }
+        }
+    }
+
+    // Trạng thái thanh toán của một hóa đơn trong bảng lịch sử
+    public String layTrangThaiLichSu(String maHD) {
+        for (int i = 0; i < modelLichSu.getRowCount(); i++) {
+            if (maHD.equals(modelLichSu.getValueAt(i, 0))) {
+                return String.valueOf(modelLichSu.getValueAt(i, 5));
+            }
+        }
+        return "";
     }
 
     // ĐỌC DỮ LIỆU TỪ FORM (cho controller)
@@ -381,8 +448,8 @@ public class FrmHoaDon extends JPanel {
 
     public void themDongChiTiet(DongChiTiet d) {
         modelChiTiet.addRow(new Object[] {
-                d.dichVu() ? DICH_VU : PHU_TUNG,
-                d.ma(), d.ten(), d.soLuong(), d.donGia(), d.thanhTien() });
+                d.dichVu() ? DICH_VU : PHU_TUNG, d.ma(), d.ten(), d.soLuong(), d.donGia(), d.thanhTien(), ""
+        });
     }
 
     // Đổi số lượng của một dòng, giữ đơn giá và tính lại thành tiền.
@@ -446,6 +513,7 @@ public class FrmHoaDon extends JPanel {
     // Bảo hành
     public void hienThiBaoHanh(List<PhuTungBaoHanh> ds, String thongBaoRong) {
         modelBaoHanh.setRowCount(0);
+        capNhatCotThoiHanBaoHanh(ds);
         dsBaoHanhHienThi.clear();
         dsBaoHanhHienThi.addAll(ds);
         for (PhuTungBaoHanh b : ds) {
@@ -545,7 +613,6 @@ public class FrmHoaDon extends JPanel {
                 h.trangThai() };
     }
 
-    // Đưa hóa đơn lên đầu lịch sử (thay dòng cũ nếu trùng mã) và chọn dòng đó.
     public void themVaoDauLichSu(LichSuHoaDon h) {
         for (int i = modelLichSu.getRowCount() - 1; i >= 0; i--) {
             if (h.ma().equals(modelLichSu.getValueAt(i, 0))) {
@@ -553,8 +620,6 @@ public class FrmHoaDon extends JPanel {
             }
         }
         modelLichSu.insertRow(0, dongLichSu(h));
-        tblLichSu.setRowSelectionInterval(0, 0);
-        tblLichSu.scrollRectToVisible(tblLichSu.getCellRect(0, 0, true));
     }
 
     // Cập nhật lại toàn bộ bảng lịch sử hóa đơn.
@@ -600,6 +665,163 @@ public class FrmHoaDon extends JPanel {
             }
         }));
         win.setVisible(true);
+    }
+
+    // KHUNG THÔNG TIN HÓA ĐƠN (giống bên Tìm kiếm hóa đơn)
+    public static final String DA_THANH_TOAN_TT = "Đã thanh toán";
+    public static final String CHUA_THANH_TOAN_TT = "Chưa thanh toán";
+    public static final String MOT_PHAN_TT = "Thanh toán một phần";
+
+    public DefaultTableModel taoModelDongHang() {
+        return new MoHinhBang("STT", "Mã", "Tên hàng hóa, dịch vụ", "SL", "Đơn giá", "Thành tiền", "Bảo hành");
+    }
+
+    private static Color mauTrangThai(String tt) {
+        if (DA_THANH_TOAN_TT.equals(tt))
+            return MAU_XANH_LA;
+        if (MOT_PHAN_TT.equals(tt))
+            return new Color(180, 83, 9);
+        if (CHUA_THANH_TOAN_TT.equals(tt))
+            return MAU_DO;
+        return MAU_CHU;
+    }
+
+    public void hienThiKhungThongTin(String maHD, String[][] thongTin, DefaultTableModel modelDong,
+            List<Object[]> dongTien, boolean choThanhToan, Runnable khiThanhToan) {
+        Window winCha = SwingUtilities.getWindowAncestor(this);
+        JDialog dlg = new JDialog(winCha, "Thông tin hóa đơn " + maHD, Dialog.ModalityType.APPLICATION_MODAL);
+
+        JLabel lblTieuDe = new JLabel("HÓA ĐƠN " + maHD, SwingConstants.CENTER);
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTieuDe.setForeground(MAU_CHU);
+
+        // Thông tin chung: 3 thông tin / dòng
+        The theThongTin = new The("THÔNG TIN CHUNG");
+        theThongTin.noiDung.setLayout(new GridLayout(0, 3, 20, 8));
+        for (String[] c : thongTin) {
+            JPanel cap = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+            cap.setOpaque(false);
+            JLabel nhan = new JLabel(c[0] + ":");
+            nhan.setFont(FONT_THUONG);
+            nhan.setForeground(MAU_PHU);
+            JLabel giaTri = new JLabel(c[1]);
+            giaTri.setFont(FONT_DAM);
+            giaTri.setForeground("Trạng thái".equals(c[0]) ? mauTrangThai(c[1]) : MAU_CHU);
+            cap.add(nhan);
+            cap.add(giaTri);
+            theThongTin.noiDung.add(cap);
+        }
+
+        // Bảng dịch vụ, phụ tùng (cao đúng bằng số dòng)
+        The theBang = new The("CHI TIẾT DỊCH VỤ, PHỤ TÙNG");
+        theBang.noiDung.setLayout(new BorderLayout());
+        JTable tbl = new JTable(modelDong);
+        tbl.setFont(FONT_THUONG);
+        tbl.setForeground(MAU_CHU);
+        tbl.setRowHeight(28);
+        tbl.setGridColor(MAU_VIEN);
+        tbl.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        tbl.getTableHeader().setReorderingAllowed(false);
+        tbl.getTableHeader().setPreferredSize(new Dimension(0, 32));
+        tbl.getTableHeader().setDefaultRenderer(new TieuDeCotRenderer());
+        int[] rong = { 40, 90, 250, 50, 110, 120, 150 };
+        int[] canLe = {
+                SwingConstants.CENTER,
+                SwingConstants.CENTER,
+                SwingConstants.LEFT,
+                SwingConstants.CENTER,
+                SwingConstants.RIGHT,
+                SwingConstants.RIGHT,
+                SwingConstants.CENTER
+        };
+        for (int i = 0; i < rong.length; i++) {
+            tbl.getColumnModel().getColumn(i).setPreferredWidth(rong[i]);
+            tbl.getColumnModel().getColumn(i).setCellRenderer(rendererChu(canLe[i], 8, 8));
+        }
+        JPanel pnlBang = new JPanel(new BorderLayout());
+        pnlBang.setBorder(BorderFactory.createLineBorder(MAU_VIEN));
+        pnlBang.add(tbl.getTableHeader(), BorderLayout.NORTH);
+        pnlBang.add(tbl, BorderLayout.CENTER);
+        theBang.noiDung.add(pnlBang, BorderLayout.CENTER);
+
+        // Tổng kết
+        The theTien = new The("TỔNG KẾT");
+        int h = 0;
+        for (Object[] d : dongTien) {
+            themDongKhung(theTien.noiDung, h++, (String) d[0], (String) d[1], (Color) d[2], (Boolean) d[3]);
+        }
+
+        // Nút
+        JButton btnDong = taoNutPhu("Đóng");
+        btnDong.addActionListener(e -> dlg.dispose());
+        JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        pnlNut.setOpaque(false);
+        pnlNut.add(btnDong);
+        if (choThanhToan) {
+            JButton btnTT = taoNut("Thanh toán");
+            btnTT.addActionListener(e -> {
+                dlg.dispose();
+                khiThanhToan.run();
+            });
+            pnlNut.add(btnTT);
+            dlg.getRootPane().setDefaultButton(btnTT);
+        } else {
+            dlg.getRootPane().setDefaultButton(btnDong);
+        }
+
+        JPanel pnlGiua = new JPanel(new BorderLayout(0, 12));
+        pnlGiua.setBackground(MAU_NEN_TRANG);
+        pnlGiua.add(theThongTin, BorderLayout.NORTH);
+        pnlGiua.add(theBang, BorderLayout.CENTER);
+        pnlGiua.add(theTien, BorderLayout.SOUTH);
+
+        JScrollPane scr = new JScrollPane(pnlGiua, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scr.setBorder(null);
+        scr.getViewport().setBackground(MAU_NEN_TRANG);
+        scr.getVerticalScrollBar().setUnitIncrement(18);
+
+        JPanel root = new JPanel(new BorderLayout(0, 12));
+        root.setBackground(MAU_NEN_TRANG);
+        root.setBorder(new EmptyBorder(16, 20, 16, 20));
+        root.add(lblTieuDe, BorderLayout.NORTH);
+        root.add(scr, BorderLayout.CENTER);
+        root.add(pnlNut, BorderLayout.SOUTH);
+
+        dlg.setContentPane(root);
+        dlg.pack();
+
+        Rectangle man = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int caoToiDa = man.height - 40;
+        boolean canCuon = dlg.getHeight() > caoToiDa;
+        dlg.setSize(Math.max(dlg.getWidth(), 800) + (canCuon ? 20 : 0), Math.min(dlg.getHeight(), caoToiDa));
+        dlg.setResizable(false);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+
+    private void themDongKhung(JPanel pnl, int hang, String nhan, String giaTri, Color mau, boolean dam) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = hang;
+        c.gridx = 0;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new Insets(4, 0, 4, 0);
+        JLabel lblNhan = new JLabel(nhan);
+        lblNhan.setFont(dam ? FONT_DAM : FONT_THUONG);
+        lblNhan.setForeground(dam ? mau : MAU_PHU);
+        pnl.add(lblNhan, c);
+
+        c.gridx = 1;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
+        c.insets = new Insets(4, 24, 4, 0);
+        JLabel lblGiaTri = new JLabel(giaTri);
+        lblGiaTri.setFont(dam ? new Font("Segoe UI", Font.BOLD, 14) : FONT_THUONG);
+        lblGiaTri.setForeground(mau);
+        pnl.add(lblGiaTri, c);
     }
 
     // DỰNG GIAO DIỆN
@@ -1147,11 +1369,12 @@ public class FrmHoaDon extends JPanel {
     }
 
     private void cauHinhBangChiTiet() {
-        kieuBang(tblChiTiet, 30, 80, 90, 280, 70, 120, 130);
+        kieuBang(tblChiTiet, 30, 80, 90, 250, 65, 110, 110, 100);
         TableCellRenderer giua = rendererChu(SwingConstants.CENTER, 0, 0);
         TableCellRenderer trai = rendererChu(SwingConstants.LEFT, 10, 6);
         TableCellRenderer tien = rendererTien(SwingConstants.RIGHT, 6, 12);
-        datRenderer(tblChiTiet, giua, giua, trai, giua, tien, tien);
+        datRenderer(tblChiTiet,
+                giua, giua, trai, giua, tien, tien, giua);
     }
 
     private void cauHinhBangBaoHanh() {
@@ -1283,6 +1506,24 @@ public class FrmHoaDon extends JPanel {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
+        }
+    }
+
+    // Tiêu đề cột của khung thông tin: chữ đậm, căn giữa, nền xanh nhạt
+    private static class TieuDeCotRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable tbl, Object val, boolean sel,
+                boolean foc, int row, int col) {
+            super.getTableCellRendererComponent(tbl, val, false, false, row, col);
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setFont(FONT_DAM);
+            setOpaque(true);
+            setBackground(MAU_NEN_TIEU_DE);
+            setForeground(MAU_CHU);
+            setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, MAU_VIEN),
+                    new EmptyBorder(0, 6, 0, 6)));
+            return this;
         }
     }
 

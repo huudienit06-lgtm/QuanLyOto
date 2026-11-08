@@ -16,42 +16,96 @@ import java.util.List;
 public class CongNoDao {
     // Danh sách công nợ theo khách hàng
     private static final String SQL_CONG_NO = "SELECT kh.maKH, kh.hoTen, kh.soDT, " +
-            "ISNULL(cn.tongNo, 0) AS tongNo, ISNULL(cn.soHDNo, 0) AS soHDNo, " +
-            "cn.ngayCapNhat AS ngayCapNhat " +
+            "       ISNULL(cn.tongNo, 0) AS tongNo, " +
+            "       ISNULL(cn.soHDNo, 0) AS soHDNo, " +
+            "       cn.ngayCapNhat AS ngayCapNhat " +
             "FROM KhachHang kh " +
-            "OUTER APPLY (SELECT " +
-            " SUM(CASE WHEN hd.soTien-ISNULL(tt.daTra,0)>0 " +
-            " THEN hd.soTien-ISNULL(tt.daTra,0) ELSE 0 END) AS tongNo, " +
-            " SUM(CASE WHEN hd.maHoaDon IS NOT NULL AND hd.soTien-ISNULL(tt.daTra,0)>0 " +
-            " THEN 1 ELSE 0 END) AS soHDNo, MAX(hd.ngayLap) AS ngayCapNhat " +
-            " FROM PhieuSuaChua p JOIN HoaDon hd ON hd.maPhieuSuaChua=p.maPhieuSuaChua " +
-            " OUTER APPLY (SELECT SUM(g.soTienThanhToan) AS daTra FROM GiaoDichThanhToan g " +
-            " WHERE g.maHoaDon=hd.maHoaDon " +
-            " AND (g.trangThaiGD IS NULL OR g.trangThaiGD=N'Thành công')) tt " +
-            " WHERE p.maKH=kh.maKH) cn " +
-            "WHERE ISNULL(cn.tongNo, 0) > 0 " +
-            "AND (? = '' OR kh.maKH LIKE ? OR kh.hoTen LIKE ? OR kh.soDT LIKE ? " +
-            " OR EXISTS (SELECT 1 FROM PhieuSuaChua p2 JOIN HoaDon h2 ON h2.maPhieuSuaChua=p2.maPhieuSuaChua " +
-            " WHERE p2.maKH=kh.maKH AND h2.maHoaDon LIKE ?)) " +
-            "AND (? = N'Tất cả' OR (? = N'Còn nợ' AND ISNULL(cn.tongNo,0) > 0) " +
-            " OR (? = N'Đã thanh toán' AND ISNULL(cn.tongNo,0) <= 0)) " +
-            "AND (? = N'Tất cả' OR EXISTS (SELECT 1 FROM PhieuSuaChua p3 " +
-            " JOIN HoaDon h3 ON h3.maPhieuSuaChua=p3.maPhieuSuaChua WHERE p3.maKH=kh.maKH " +
-            " AND ((? = N'Hôm nay' AND CAST(h3.ngayLap AS DATE)=CAST(GETDATE() AS DATE)) " +
-            " OR (? = N'7 ngày gần nhất' AND h3.ngayLap >= DATEADD(DAY,-7,GETDATE())) " +
-            " OR (? = N'30 ngày gần nhất' AND h3.ngayLap >= DATEADD(DAY,-30,GETDATE()))))) " +
+            "OUTER APPLY ( " +
+            "    SELECT " +
+            "        SUM(CASE " +
+            "            WHEN hd.soTien - ISNULL(tt.daTra, 0) > 0 " +
+            "            THEN hd.soTien - ISNULL(tt.daTra, 0) " +
+            "            ELSE 0 " +
+            "        END) AS tongNo, " +
+            "        SUM(CASE " +
+            "            WHEN hd.maHoaDon IS NOT NULL " +
+            "             AND hd.soTien - ISNULL(tt.daTra, 0) > 0 " +
+            "            THEN 1 ELSE 0 " +
+            "        END) AS soHDNo, " +
+            "        MAX(hd.ngayLap) AS ngayCapNhat " +
+            "    FROM HoaDon hd " +
+            "    LEFT JOIN PhieuSuaChua p " +
+            "        ON hd.maPhieuSuaChua = p.maPhieuSuaChua " +
+            "    OUTER APPLY ( " +
+            "        SELECT SUM(g.soTienThanhToan) AS daTra " +
+            "        FROM GiaoDichThanhToan g " +
+            "        WHERE g.maHoaDon = hd.maHoaDon " +
+            "          AND (g.trangThaiGD IS NULL " +
+            "               OR g.trangThaiGD = N'Thành công') " +
+            "    ) tt " +
+            "    WHERE COALESCE(hd.maKH, p.maKH) = kh.maKH " +
+            ") cn " +
+            "WHERE " +
+            // Tìm kiếm khách hàng hoặc mã hóa đơn
+            "(? = '' " +
+            " OR kh.maKH LIKE ? " +
+            " OR kh.hoTen LIKE ? " +
+            " OR kh.soDT LIKE ? " +
+            " OR EXISTS ( " +
+            "     SELECT 1 " +
+            "     FROM HoaDon h2 " +
+            "     LEFT JOIN PhieuSuaChua p2 " +
+            "         ON h2.maPhieuSuaChua = p2.maPhieuSuaChua " +
+            "     WHERE COALESCE(h2.maKH, p2.maKH) = kh.maKH " +
+            "       AND h2.maHoaDon LIKE ? " +
+            " )) " +
+            // Lọc trạng thái công nợ
+            "AND ( " +
+            "    ? = N'Tất cả' " +
+            "    OR (? = N'Còn nợ' AND ISNULL(cn.tongNo, 0) > 0) " +
+            "    OR (? = N'Đã thanh toán' AND ISNULL(cn.tongNo, 0) <= 0) " +
+            ") " +
+            // Lọc thời gian phát sinh hóa đơn
+            "AND ( " +
+            "    ? = N'Tất cả' " +
+            "    OR EXISTS ( " +
+            "        SELECT 1 " +
+            "        FROM HoaDon h3 " +
+            "        LEFT JOIN PhieuSuaChua p3 " +
+            "            ON h3.maPhieuSuaChua = p3.maPhieuSuaChua " +
+            "        WHERE COALESCE(h3.maKH, p3.maKH) = kh.maKH " +
+            "          AND ( " +
+            "              (? = N'Hôm nay' " +
+            "               AND CAST(h3.ngayLap AS DATE) = CAST(GETDATE() AS DATE)) " +
+            "              OR (? = N'7 ngày gần nhất' " +
+            "                  AND h3.ngayLap >= DATEADD(DAY, -7, GETDATE())) " +
+            "              OR (? = N'30 ngày gần nhất' " +
+            "                  AND h3.ngayLap >= DATEADD(DAY, -30, GETDATE())) " +
+            "          ) " +
+            "    ) " +
+            ") " +
             "ORDER BY cn.ngayCapNhat DESC, kh.maKH";
 
     // Thông tin một khách hàng
     private static final String SQL_KHACH_HANG = "SELECT maKH, hoTen, soDT, diaChi FROM KhachHang WHERE maKH = ?";
 
     // Hóa đơn còn nợ của một khách hàng
-    private static final String SQL_HOA_DON_NO = "SELECT hd.maHoaDon, hd.ngayLap, hd.soTien, ISNULL(tt.daTra,0) AS daTra, "
-            + "hd.soTien-ISNULL(tt.daTra,0) AS conPhaiTra "
-            + "FROM PhieuSuaChua psc JOIN HoaDon hd ON hd.maPhieuSuaChua=psc.maPhieuSuaChua "
-            + "OUTER APPLY (SELECT SUM(g.soTienThanhToan) daTra FROM GiaoDichThanhToan g "
-            + "WHERE g.maHoaDon=hd.maHoaDon AND (g.trangThaiGD IS NULL OR g.trangThaiGD=N'Thành công')) tt "
-            + "WHERE psc.maKH=? AND hd.soTien-ISNULL(tt.daTra,0)>0 ORDER BY hd.ngayLap";
+    private static final String SQL_HOA_DON_NO = "SELECT hd.maHoaDon, hd.ngayLap, hd.soTien, " +
+            "       ISNULL(tt.daTra, 0) AS daTra, " +
+            "       hd.soTien - ISNULL(tt.daTra, 0) AS conPhaiTra " +
+            "FROM HoaDon hd " +
+            "LEFT JOIN PhieuSuaChua psc " +
+            "    ON hd.maPhieuSuaChua = psc.maPhieuSuaChua " +
+            "OUTER APPLY ( " +
+            "    SELECT SUM(g.soTienThanhToan) AS daTra " +
+            "    FROM GiaoDichThanhToan g " +
+            "    WHERE g.maHoaDon = hd.maHoaDon " +
+            "      AND (g.trangThaiGD IS NULL " +
+            "           OR g.trangThaiGD = N'Thành công') " +
+            ") tt " +
+            "WHERE COALESCE(hd.maKH, psc.maKH) = ? " +
+            "  AND hd.soTien - ISNULL(tt.daTra, 0) > 0 " +
+            "ORDER BY hd.ngayLap";
 
     private Connection layKetNoi() throws SQLException {
         ConnectDB.getInstance().connect();

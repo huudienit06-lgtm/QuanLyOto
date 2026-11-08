@@ -164,6 +164,7 @@ public class FrmTimKiemHoaDon extends JPanel {
     private JDateChooser dchNgayLap;
     private JComboBox<String> cmbTrangThai;
     // Nút
+    private JButton btnThem;
     private JButton btnTimKiem;
     private JButton btnLamMoi;
     private JButton btnXemChiTiet;
@@ -190,13 +191,39 @@ public class FrmTimKiemHoaDon extends JPanel {
         add(pnlNoiDung, BorderLayout.CENTER);
     }
 
-    // Tiêu đề
-    private JLabel taoTieuDe() {
+    private JPanel taoTieuDe() {
         JLabel lblTieuDe = new JLabel("TÌM KIẾM HÓA ĐƠN", SwingConstants.CENTER);
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTieuDe.setForeground(MAU_CHU);
-        lblTieuDe.setBorder(new EmptyBorder(0, 0, 4, 0));
-        return lblTieuDe;
+
+        btnThem = taoNut("+ Thêm", MAU_XANH_LA, new Color(21, 110, 60),
+                Color.WHITE, new Color(21, 110, 60));
+        Dimension dNut = new Dimension(110, 34);
+        btnThem.setPreferredSize(dNut);
+        btnThem.setMinimumSize(dNut);
+
+        // Bên phải: nút, canh giữa theo chiều dọc
+        JPanel pnlPhai = new JPanel(new GridBagLayout());
+        pnlPhai.setOpaque(false);
+        pnlPhai.add(btnThem);
+
+        // Bên trái: khoảng trống cùng bề rộng với nút để tiêu đề vẫn nằm đúng giữa
+        JPanel pnlTrai = new JPanel();
+        pnlTrai.setOpaque(false);
+        pnlTrai.setPreferredSize(dNut);
+
+        JPanel pnlTieuDe = new JPanel(new BorderLayout());
+        pnlTieuDe.setOpaque(false);
+        pnlTieuDe.setBorder(new EmptyBorder(0, 0, 4, 0));
+        pnlTieuDe.add(pnlTrai, BorderLayout.WEST);
+        pnlTieuDe.add(lblTieuDe, BorderLayout.CENTER);
+        pnlTieuDe.add(pnlPhai, BorderLayout.EAST);
+        btnThem.addActionListener(e -> {
+            if (khiNhanThem != null) {
+                khiNhanThem.run();
+            }
+        });
+        return pnlTieuDe;
     }
 
     private The taoTheTimKiem() {
@@ -507,6 +534,10 @@ public class FrmTimKiemHoaDon extends JPanel {
         return cmbTrangThai;
     }
 
+    public JButton getBtnThem() {
+        return btnThem;
+    }
+
     public JButton getBtnTimKiem() {
         return btnTimKiem;
     }
@@ -716,6 +747,13 @@ public class FrmTimKiemHoaDon extends JPanel {
         lblGiaTri.setFont(dam ? new Font("Segoe UI", Font.BOLD, 14) : FONT_THUONG);
         lblGiaTri.setForeground(mau);
         pnl.add(lblGiaTri, c);
+    }
+
+    // Chuyển cửa sổ hiện tại sang giao diện Hóa đơn
+    private Runnable khiNhanThem;
+
+    public void setKhiNhanThem(Runnable r) {
+        this.khiNhanThem = r;
     }
 
     // 7. TIỆN ÍCH TẠO THÀNH PHẦN

@@ -34,7 +34,15 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 public class FrmKhachHang extends JPanel {
-    private final KhachHangController controller = new KhachHangController(this);
+    private final boolean cheDoTaoMoi;
+    private final KhachHangController controller;
+    private javax.swing.JDialog dialogTaoKhachHang;
+    private String maKHVuaTao;
+
+    public FrmKhachHang() {
+        this(false);
+    }
+
     private final JTextField txtMaKH = createTextField(16);
     private final JTextField txtHoTen = createTextField(16);
     private final JTextField txtSoDienThoai = createTextField(16);
@@ -69,34 +77,35 @@ public class FrmKhachHang extends JPanel {
     private final JButton btnTaiLai = createButton(
             "Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
 
-    public FrmKhachHang() {
+    public FrmKhachHang(boolean cheDoTaoMoi) {
+        this.cheDoTaoMoi = cheDoTaoMoi;
         setLayout(new BorderLayout(0, 16));
         setBackground(UIConfig.COLOR_BACKGROUND);
         setBorder(new EmptyBorder(20, 24, 20, 24));
-
-        // Header trang
-        add(createHeaderPanel(), BorderLayout.NORTH);
-
-        JPanel pnlContent = new JPanel(new BorderLayout(0, 8));
-        pnlContent.setOpaque(false);
-        JSplitPane splContent = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                createFormCard(),
-                createTableCard());
-        splContent.setBorder(null);
-        splContent.setResizeWeight(0.38);
-        splContent.setDividerSize(7);
-        splContent.setEnabled(false);
-        SwingUtilities.invokeLater(() -> splContent.setDividerLocation(0.38));
-        pnlContent.add(splContent, BorderLayout.CENTER);
-
-        add(pnlContent, BorderLayout.CENTER);
-        add(createStatusPanel(), BorderLayout.SOUTH);
-
+        if (cheDoTaoMoi) {
+            add(createHeaderPanel(), BorderLayout.NORTH);
+            add(createFormCard(), BorderLayout.CENTER);
+            add(createStatusPanel(), BorderLayout.SOUTH);
+        } else {
+            add(createHeaderPanel(), BorderLayout.NORTH);
+            JPanel pnlContent = new JPanel(new BorderLayout(0, 8));
+            pnlContent.setOpaque(false);
+            JSplitPane splContent = new JSplitPane(
+                    JSplitPane.VERTICAL_SPLIT,
+                    createFormCard(),
+                    createTableCard());
+            splContent.setBorder(null);
+            splContent.setResizeWeight(0.38);
+            splContent.setDividerSize(7);
+            splContent.setEnabled(false);
+            SwingUtilities.invokeLater(() -> splContent.setDividerLocation(0.38));
+            pnlContent.add(splContent, BorderLayout.CENTER);
+            add(pnlContent, BorderLayout.CENTER);
+            add(createStatusPanel(), BorderLayout.SOUTH);
+        }
         txtMaKH.setEditable(false);
         txtCongNo.setEditable(false);
         txtCongNo.setFocusable(false);
-
-        // Style bảng
         tblKhachHang.setFont(UIConfig.FONT_REGULAR);
         tblKhachHang.setForeground(UIConfig.COLOR_TEXT);
         tblKhachHang.setRowHeight(30);
@@ -106,16 +115,57 @@ public class FrmKhachHang extends JPanel {
         tblKhachHang.setRowSorter(sorterKhachHang);
         tblKhachHang.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblKhachHang.setFillsViewportHeight(true);
-
         tblKhachHang.getTableHeader().setFont(UIConfig.FONT_BOLD);
         tblKhachHang.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
         tblKhachHang.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
         tblKhachHang.getTableHeader().setPreferredSize(new Dimension(0, 34));
-
         lblThongBao.setFont(UIConfig.FONT_REGULAR);
         lblThongBao.setForeground(UIConfig.COLOR_MUTED);
-
+        if (cheDoTaoMoi) {
+            btnCapNhat.setVisible(false);
+            btnXoa.setVisible(false);
+            btnLamMoi.setVisible(false);
+            btnTaiLai.setVisible(false);
+        }
+        controller = new KhachHangController(this);
         controller.khoiTao();
+    }
+
+    public boolean isCheDoTaoMoi() {
+        return cheDoTaoMoi;
+    }
+
+    public void ganDialogTaoKhachHang(javax.swing.JDialog dialog) {
+        this.dialogTaoKhachHang = dialog;
+    }
+
+    public void dongDialogSauKhiTao(String maKH) {
+        this.maKHVuaTao = maKH;
+
+        if (dialogTaoKhachHang != null) {
+            dialogTaoKhachHang.dispose();
+        }
+    }
+
+    public String getMaKHVuaTao() {
+        return maKHVuaTao;
+    }
+
+    public static String moDialogTaoMoi(Component parent) {
+        java.awt.Window owner = SwingUtilities.getWindowAncestor(parent);
+        javax.swing.JDialog dialog = new javax.swing.JDialog(
+                owner,
+                "TẠO KHÁCH HÀNG",
+                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        FrmKhachHang form = new FrmKhachHang(true);
+        form.ganDialogTaoKhachHang(dialog);
+        dialog.setContentPane(form);
+        dialog.setDefaultCloseOperation(javax.swing.JDialog.DISPOSE_ON_CLOSE);
+        dialog.setSize(850, 430);
+        dialog.setMinimumSize(new Dimension(750, 380));
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
+        return form.getMaKHVuaTao();
     }
 
     private JPanel createHeaderPanel() {
@@ -432,16 +482,45 @@ public class FrmKhachHang extends JPanel {
         return maKHDangChon;
     }
 
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnCapNhat() { return btnCapNhat; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTaiLai() { return btnTaiLai; }
-    public JTable getTblKhachHang() { return tblKhachHang; }
-    public JTextField getTxtLocMaKH() { return txtLocMaKH; }
-    public JTextField getTxtLocHoTen() { return txtLocHoTen; }
-    public JTextField getTxtLocSoDienThoai() { return txtLocSoDienThoai; }
-    public JTextField getTxtLocEmail() { return txtLocEmail; }
+    public JButton getBtnThem() {
+        return btnThem;
+    }
+
+    public JButton getBtnCapNhat() {
+        return btnCapNhat;
+    }
+
+    public JButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public JButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public JButton getBtnTaiLai() {
+        return btnTaiLai;
+    }
+
+    public JTable getTblKhachHang() {
+        return tblKhachHang;
+    }
+
+    public JTextField getTxtLocMaKH() {
+        return txtLocMaKH;
+    }
+
+    public JTextField getTxtLocHoTen() {
+        return txtLocHoTen;
+    }
+
+    public JTextField getTxtLocSoDienThoai() {
+        return txtLocSoDienThoai;
+    }
+
+    public JTextField getTxtLocEmail() {
+        return txtLocEmail;
+    }
 
     public void hienThiLoi(String noiDung) {
         JOptionPane.showMessageDialog(this, noiDung, "Lỗi", JOptionPane.ERROR_MESSAGE);
