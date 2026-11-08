@@ -42,7 +42,10 @@ public final class PhieuSuaChuaController {
         view.layNutThemPhieu().addActionListener(event -> themPhieu());
         view.layNutCapNhatPhieu().addActionListener(event -> capNhatPhieu());
         view.layNutXoaPhieu().addActionListener(event -> xoaPhieu());
-        view.layNutLamMoiPhieu().addActionListener(event -> lamMoiForm());
+        view.layNutLamMoiPhieu().addActionListener(event -> {
+            taiDanhMuc();
+            lamMoiForm();
+        });
         view.layNutTaiLai().addActionListener(event -> {
             view.xoaBoLoc();
             taiLaiDuLieu();
@@ -67,8 +70,7 @@ public final class PhieuSuaChuaController {
         try {
             view.hienThiDanhSachDichVu(dichVuDAO.findAll());
             view.hienThiDanhSachPhuTung(phuTungDAO.findAll());
-                List<PhieuKiemTra> danhSachPhieuKiemTra =
-                    phieuKiemTraDAO.findAllDuDieuKienLapPhieuSuaChua();
+            List<PhieuKiemTra> danhSachPhieuKiemTra = phieuKiemTraDAO.findAllDuDieuKienLapPhieuSuaChua();
             Map<String, String> bienSoTheoMaXe = new HashMap<>();
             for (Xe xe : xeDAO.findAll()) {
                 bienSoTheoMaXe.put(xe.getMaXe(), xe.getBienSo());
@@ -92,7 +94,8 @@ public final class PhieuSuaChuaController {
     private void themPhieu() {
         try {
             PhieuSuaChua phieu = view.layPhieuNhap();
-            if (phieuSuaChuaDAO.insert(phieu)) {
+            List<ChiTietPhieuSuaChua> danhSachChiTiet = view.layDanhSachChiTietNhap();
+            if (phieuSuaChuaDAO.insertWithDetails(phieu, danhSachChiTiet)) {
                 phieuTiepNhanDAO.capNhatTienDoTheoPhieuKiemTra(
                         phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
                         PhieuTiepNhan.TIEN_DO_DA_LAP_PHIEU_SUA_CHUA);
@@ -129,10 +132,17 @@ public final class PhieuSuaChuaController {
             return;
         }
         try {
+            PhieuSuaChua phieu = phieuSuaChuaDAO.findById(maPSC);
             if (!phieuSuaChuaDAO.deleteById(maPSC)) {
                 view.baoLoi("Không tìm thấy phiếu cần xóa", null);
                 return;
             }
+            if (phieu != null && phieu.getMaPhieuKiemTra() != null) {
+                phieuTiepNhanDAO.capNhatTienDoTheoPhieuKiemTra(
+                        phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
+                        PhieuTiepNhan.TIEN_DO_DA_LAP_PHIEU_KIEM_TRA);
+            }
+            taiDanhMuc();
             taiDanhSachPhieu();
             lamMoiForm();
             view.thongBaoThanhCong("Đã xóa phiếu " + maPSC);
@@ -181,7 +191,27 @@ public final class PhieuSuaChuaController {
 
     private void themChiTiet() {
         try {
-            if (chiTietDAO.insert(view.layChiTietNhap())) {
+            String maPSC = view.layMaPhieuNhap();
+            List<ChiTietPhieuSuaChua> danhSachChiTiet = view.layDanhSachChiTietNhap();
+            if (phieuSuaChuaDAO.findById(maPSC) == null) {
+                PhieuSuaChua phieu = view.layPhieuNhap();
+                if (phieuSuaChuaDAO.insertWithDetails(phieu, danhSachChiTiet)) {
+                    phieuTiepNhanDAO.capNhatTienDoTheoPhieuKiemTra(
+                            phieu.getMaPhieuKiemTra().getMaPhieuKiemTra(),
+                            PhieuTiepNhan.TIEN_DO_DA_LAP_PHIEU_SUA_CHUA);
+                    taiDanhMuc();
+                    taiDanhSachPhieu();
+                    lamMoiForm();
+                    view.thongBaoThanhCong("Đã tạo phiếu và thêm chi tiết");
+                }
+                return;
+            }
+
+            boolean daThem = false;
+            for (ChiTietPhieuSuaChua chiTiet : danhSachChiTiet) {
+                daThem |= chiTietDAO.insert(chiTiet);
+            }
+            if (daThem) {
                 hienThiPhieuDangChon();
                 view.thongBaoThanhCong("Đã thêm chi tiết vào phiếu");
             }
