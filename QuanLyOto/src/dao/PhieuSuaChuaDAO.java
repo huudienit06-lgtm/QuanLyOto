@@ -2,6 +2,7 @@ package dao;
 
 import connectDB.ConnectDB;
 import entity.PhieuSuaChua;
+import entity.ChiTietPhieuSuaChua;
 import entity.Xe;
 import entity.PhieuKiemTra;
 import entity.KhachHang;
@@ -60,6 +61,56 @@ public class PhieuSuaChuaDAO {
         }
     }
 
+    public boolean insertWithDetails(PhieuSuaChua phieu, List<ChiTietPhieuSuaChua> danhSachChiTiet)
+            throws SQLException {
+        kiemTraDuLieu(phieu);
+        if (danhSachChiTiet == null || danhSachChiTiet.isEmpty()) {
+            throw new SQLException("Phiếu sửa chữa phải có ít nhất một chi tiết.");
+        }
+        String sqlPhieu = "INSERT INTO PhieuSuaChua "
+                + "(maPhieuSuaChua, maPhieuKiemTra, maXe, maKH, maNV, "
+                + "ngayBatDau, ngayHoanThanhDuKien, trangThai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlChiTiet = "INSERT INTO ChiTietPhieuSuaChua "
+                + "(maPhieuSuaChua, maPhuTung, maDV, soLuong, donGia) VALUES (?, ?, ?, ?, ?)";
+        Connection connection = moKetNoi();
+        try (PreparedStatement phieuStatement = connection.prepareStatement(sqlPhieu);
+                PreparedStatement chiTietStatement = connection.prepareStatement(sqlChiTiet)) {
+            connection.setAutoCommit(false);
+            ganThamSo(phieuStatement, phieu, true);
+            phieuStatement.executeUpdate();
+            for (ChiTietPhieuSuaChua chiTiet : danhSachChiTiet) {
+                kiemTraChiTiet(chiTiet);
+                chiTietStatement.setString(1, chiTiet.getMaPhieuSuaChua().trim());
+                chiTietStatement.setString(2, chiTiet.getMaPhuTung());
+                chiTietStatement.setString(3, chiTiet.getMaDV());
+                chiTietStatement.setInt(4, chiTiet.getSoLuong());
+                chiTietStatement.setBigDecimal(5, chiTiet.getDonGia());
+                chiTietStatement.addBatch();
+            }
+            chiTietStatement.executeBatch();
+            connection.commit();
+            return true;
+        } catch (SQLException exception) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                exception.addSuppressed(rollbackException);
+            }
+            throw exception;
+        } finally {
+            connection.close();
+        }
+    }
+
+    private void kiemTraChiTiet(ChiTietPhieuSuaChua chiTiet) throws SQLException {
+        boolean coPhuTung = chiTiet.getMaPhuTung() != null && !chiTiet.getMaPhuTung().isBlank();
+        boolean coDichVu = chiTiet.getMaDV() != null && !chiTiet.getMaDV().isBlank();
+        if (coPhuTung == coDichVu || chiTiet.getSoLuong() == null || chiTiet.getSoLuong() <= 0
+                || chiTiet.getDonGia() == null || chiTiet.getDonGia().signum() < 0) {
+            throw new SQLException("Chi tiết sửa chữa không hợp lệ.");
+        }
+    }
+
     public boolean update(PhieuSuaChua phieu) throws SQLException {
         kiemTraDuLieu(phieu);
         String sql = "UPDATE PhieuSuaChua SET maPhieuKiemTra = ?, maXe = ?, maKH = ?, maNV = ?, "
@@ -81,10 +132,21 @@ public class PhieuSuaChuaDAO {
 
     public boolean deleteById(String maPhieuSuaChua) throws SQLException {
         kiemTraMa(maPhieuSuaChua);
+        String maPSC = maPhieuSuaChua.trim();
         try (Connection connection = moKetNoi();
+                PreparedStatement kiemTraHoaDon = connection.prepareStatement(
+                        "SELECT COUNT(*) FROM HoaDon WHERE maPhieuSuaChua = ?");
                 PreparedStatement statement = connection.prepareStatement(
                         "DELETE FROM PhieuSuaChua WHERE maPhieuSuaChua = ?")) {
-            statement.setString(1, maPhieuSuaChua.trim());
+            kiemTraHoaDon.setString(1, maPSC);
+            try (ResultSet resultSet = kiemTraHoaDon.executeQuery()) {
+                resultSet.next();
+                if (resultSet.getInt(1) > 0) {
+                    throw new SQLException(
+                            "Không thể xóa phiếu đã lập hóa đơn. Hãy xóa hóa đơn liên quan trước.");
+                }
+            }
+            statement.setString(1, maPSC);
             return statement.executeUpdate() > 0;
         }
     }

@@ -56,9 +56,9 @@ public class FrmPhieuKiemTra extends JPanel {
     private final JTextField txtMaXe = createTextField(16);
     private final JTextField txtBienSo = createTextField(16);
     private final JComboBox<LichLamViecDAO.NhanVienTrongCa> cboNhanVienKiemTra = new JComboBox<>();
-        private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {
+    private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {
             PhieuKiemTra.TRANG_THAI_CHO_KIEM_TRA, PhieuKiemTra.TRANG_THAI_DA_KIEM_TRA
-        });
+    });
     private final JTextArea txaTrangThai = new JTextArea(2, 20);
     private final JTextArea txaVanDe = new JTextArea(3, 20);
     private final JTextField txtLocMaPKT = createTextField(12);
@@ -88,8 +88,7 @@ public class FrmPhieuKiemTra extends JPanel {
         }
     };
     private final JTable tblPhieuKiemTra = new JTable(modelPhieuKiemTra);
-    private final TableRowSorter<DefaultTableModel> sorterPhieuKiemTra =
-            new TableRowSorter<>(modelPhieuKiemTra);
+    private final TableRowSorter<DefaultTableModel> sorterPhieuKiemTra = new TableRowSorter<>(modelPhieuKiemTra);
 
     public FrmPhieuKiemTra() {
         this(null);
@@ -310,10 +309,12 @@ public class FrmPhieuKiemTra extends JPanel {
 
     private void cauHinhThanhPhan() {
         txtMaPKT.setEditable(false);
-        for (JTextField txtField : new JTextField[] {txtMaKH, txtMaXe, txtBienSo}) {
+        for (JTextField txtField : new JTextField[] { txtMaKH, txtMaXe, txtBienSo }) {
             txtField.setEditable(false);
             txtField.setBackground(UIConfig.COLOR_BACKGROUND);
         }
+        cboTrangThai.addActionListener(event -> capNhatTrangThaiVanDe());
+        capNhatTrangThaiVanDe();
         cboMaPTN.setFont(UIConfig.FONT_REGULAR);
         cboNhanVienKiemTra.setFont(UIConfig.FONT_REGULAR);
         cboNhanVienKiemTra.setRenderer(new DefaultListCellRenderer() {
@@ -323,7 +324,9 @@ public class FrmPhieuKiemTra extends JPanel {
                 JLabel lblItem = (JLabel) super.getListCellRendererComponent(
                         list, value, index, isSelected, cellHasFocus);
                 if (value instanceof LichLamViecDAO.NhanVienTrongCa nhanVien) {
-                    lblItem.setText(nhanVien.hoTen() + " (" + nhanVien.maNV() + ")");
+                    lblItem.setText(nhanVien.hoTen() == null || nhanVien.hoTen().isBlank()
+                            ? nhanVien.maNV()
+                            : nhanVien.hoTen());
                 }
                 return lblItem;
             }
@@ -344,6 +347,16 @@ public class FrmPhieuKiemTra extends JPanel {
         tblPhieuKiemTra.getColumnModel().getColumn(1).setPreferredWidth(120);
         tblPhieuKiemTra.getColumnModel().getColumn(6).setPreferredWidth(180);
         tblPhieuKiemTra.getColumnModel().getColumn(7).setPreferredWidth(220);
+    }
+
+    private void capNhatTrangThaiVanDe() {
+        boolean daKiemTra = PhieuKiemTra.TRANG_THAI_DA_KIEM_TRA.equals(cboTrangThai.getSelectedItem());
+        txaVanDe.setEditable(daKiemTra);
+        txaVanDe.setFocusable(daKiemTra);
+        txaVanDe.setBackground(daKiemTra ? UIConfig.COLOR_SURFACE : UIConfig.COLOR_BACKGROUND);
+        if (!daKiemTra) {
+            txaVanDe.setText("");
+        }
     }
 
     private JPanel createCardPanel() {
@@ -484,7 +497,7 @@ public class FrmPhieuKiemTra extends JPanel {
             cboMaPTN.addItem(phieuTiepNhanTam);
         }
         chonPhieuTiepNhan(maPTN);
-        chonNhanVien(phieuKiemTra.getNhanVien().getMaNV());
+        chonNhanVien(phieuKiemTra.getNhanVien().getMaNV(), phieuKiemTra.getNhanVien().getHoTen());
         cboTrangThai.setSelectedItem(phieuKiemTra.getTrangThai());
         txaTrangThai.setText(phieuKiemTra.getTrangThaiBanDau());
         txaVanDe.setText(phieuKiemTra.getVanDeHuHong());
@@ -497,8 +510,7 @@ public class FrmPhieuKiemTra extends JPanel {
             throw new IllegalArgumentException("Vui lòng chọn phiếu tiếp nhận.");
         }
 
-        LichLamViecDAO.NhanVienTrongCa nhanVien =
-                (LichLamViecDAO.NhanVienTrongCa) cboNhanVienKiemTra.getSelectedItem();
+        LichLamViecDAO.NhanVienTrongCa nhanVien = (LichLamViecDAO.NhanVienTrongCa) cboNhanVienKiemTra.getSelectedItem();
         if (nhanVien == null) {
             throw new IllegalArgumentException("Không có nhân viên đang trong ca để kiểm tra xe.");
         }
@@ -507,8 +519,11 @@ public class FrmPhieuKiemTra extends JPanel {
         if (trangThai.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập trạng thái xe ban đầu.");
         }
-        String vanDe = txaVanDe.getText().trim();
-        if (vanDe.isEmpty()) {
+        String vanDe = PhieuKiemTra.TRANG_THAI_DA_KIEM_TRA.equals(cboTrangThai.getSelectedItem())
+                ? txaVanDe.getText().trim()
+                : "";
+        if (PhieuKiemTra.TRANG_THAI_DA_KIEM_TRA.equals(cboTrangThai.getSelectedItem())
+                && vanDe.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập vấn đề hư hỏng.");
         }
 
@@ -535,13 +550,25 @@ public class FrmPhieuKiemTra extends JPanel {
     }
 
     public void chonNhanVien(String maNV) {
+        chonNhanVien(maNV, "");
+    }
+
+    public void chonNhanVien(String maNV, String hoTen) {
         for (int index = 0; index < cboNhanVienKiemTra.getItemCount(); index++) {
             LichLamViecDAO.NhanVienTrongCa nhanVien = cboNhanVienKiemTra.getItemAt(index);
             if (nhanVien.maNV().equals(maNV)) {
+                if ((nhanVien.hoTen() == null || nhanVien.hoTen().isBlank())
+                        && hoTen != null && !hoTen.isBlank()) {
+                    cboNhanVienKiemTra.removeItemAt(index);
+                    cboNhanVienKiemTra.insertItemAt(
+                            new LichLamViecDAO.NhanVienTrongCa(maNV, hoTen), index);
+                }
                 cboNhanVienKiemTra.setSelectedIndex(index);
                 return;
             }
         }
+        cboNhanVienKiemTra.addItem(new LichLamViecDAO.NhanVienTrongCa(maNV, ""));
+        cboNhanVienKiemTra.setSelectedIndex(cboNhanVienKiemTra.getItemCount() - 1);
     }
 
     public void lamMoiForm(String maMoi) {
@@ -624,14 +651,43 @@ public class FrmPhieuKiemTra extends JPanel {
         JOptionPane.showMessageDialog(this, message, "Phiếu kiểm tra", JOptionPane.ERROR_MESSAGE);
     }
 
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnSua() { return btnSua; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTaiLai() { return btnTaiLai; }
-    public JComboBox<PhieuTiepNhan> getCboMaPTN() { return cboMaPTN; }
-    public JTable getTblPhieuKiemTra() { return tblPhieuKiemTra; }
-    public JTextField getTxtLocMaPKT() { return txtLocMaPKT; }
-    public JTextField getTxtLocMaPTN() { return txtLocMaPTN; }
-    public JTextField getTxtLocMaXe() { return txtLocMaXe; }
+    public JButton getBtnThem() {
+        return btnThem;
+    }
+
+    public JButton getBtnSua() {
+        return btnSua;
+    }
+
+    public JButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public JButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public JButton getBtnTaiLai() {
+        return btnTaiLai;
+    }
+
+    public JComboBox<PhieuTiepNhan> getCboMaPTN() {
+        return cboMaPTN;
+    }
+
+    public JTable getTblPhieuKiemTra() {
+        return tblPhieuKiemTra;
+    }
+
+    public JTextField getTxtLocMaPKT() {
+        return txtLocMaPKT;
+    }
+
+    public JTextField getTxtLocMaPTN() {
+        return txtLocMaPTN;
+    }
+
+    public JTextField getTxtLocMaXe() {
+        return txtLocMaXe;
+    }
 }

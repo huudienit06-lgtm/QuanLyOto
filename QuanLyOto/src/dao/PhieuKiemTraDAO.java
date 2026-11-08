@@ -15,8 +15,10 @@ import java.util.List;
 
 public class PhieuKiemTraDAO {
     public List<PhieuKiemTra> findAll() throws SQLException {
-        String sql = "SELECT maPhieuKiemTra, maPhieuTiepNhan, maKH, maXe, maNV, "
-            + "trangThai, trangThaiBanDau, vanDeHuHong FROM PhieuKiemTra ORDER BY maPhieuKiemTra";
+        String sql = "SELECT pkt.maPhieuKiemTra, pkt.maPhieuTiepNhan, pkt.maKH, pkt.maXe, pkt.maNV, "
+                + "pkt.trangThai, pkt.trangThaiBanDau, pkt.vanDeHuHong, nv.hoTen "
+                + "FROM PhieuKiemTra pkt JOIN NhanVien nv ON nv.maNV = pkt.maNV "
+                + "ORDER BY pkt.maPhieuKiemTra";
         List<PhieuKiemTra> danhSach = new ArrayList<>();
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql);
@@ -29,9 +31,10 @@ public class PhieuKiemTraDAO {
     }
 
     public PhieuKiemTra findById(String maPhieuKiemTra) throws SQLException {
-        String sql = "SELECT maPhieuKiemTra, maPhieuTiepNhan, maKH, maXe, maNV, "
-                + "trangThai, trangThaiBanDau, vanDeHuHong "
-                + "FROM PhieuKiemTra WHERE maPhieuKiemTra = ?";
+        String sql = "SELECT pkt.maPhieuKiemTra, pkt.maPhieuTiepNhan, pkt.maKH, pkt.maXe, pkt.maNV, "
+                + "pkt.trangThai, pkt.trangThaiBanDau, pkt.vanDeHuHong, nv.hoTen "
+                + "FROM PhieuKiemTra pkt JOIN NhanVien nv ON nv.maNV = pkt.maNV "
+                + "WHERE pkt.maPhieuKiemTra = ?";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, maPhieuKiemTra);
@@ -43,10 +46,14 @@ public class PhieuKiemTraDAO {
 
     public List<PhieuKiemTra> findAllDuDieuKienLapPhieuSuaChua() throws SQLException {
         String sql = "SELECT pkt.maPhieuKiemTra, pkt.maPhieuTiepNhan, pkt.maKH, pkt.maXe, pkt.maNV, "
-                + "pkt.trangThai, pkt.trangThaiBanDau, pkt.vanDeHuHong "
+                + "pkt.trangThai, pkt.trangThaiBanDau, pkt.vanDeHuHong, nv.hoTen "
                 + "FROM PhieuKiemTra pkt JOIN PhieuTiepNhan ptn "
                 + "ON ptn.maPhieuTiepNhan = pkt.maPhieuTiepNhan "
-                + "WHERE pkt.trangThai = ? AND ptn.tienDo = ? ORDER BY pkt.maPhieuKiemTra";
+                + "JOIN NhanVien nv ON nv.maNV = pkt.maNV "
+                + "WHERE pkt.trangThai = ? AND ptn.tienDo = ? "
+                + "AND NOT EXISTS (SELECT 1 FROM PhieuSuaChua psc "
+                + "WHERE psc.maPhieuKiemTra = pkt.maPhieuKiemTra) "
+                + "ORDER BY pkt.maPhieuKiemTra";
         List<PhieuKiemTra> danhSach = new ArrayList<>();
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -63,8 +70,8 @@ public class PhieuKiemTraDAO {
 
     public boolean insert(PhieuKiemTra phieu) throws SQLException {
         String sql = "INSERT INTO PhieuKiemTra "
-            + "(maPhieuKiemTra, maPhieuTiepNhan, maKH, maXe, maNV, trangThai, trangThaiBanDau, vanDeHuHong) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(maPhieuKiemTra, maPhieuTiepNhan, maKH, maXe, maNV, trangThai, trangThaiBanDau, vanDeHuHong) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             ganThamSo(statement, phieu);
@@ -74,11 +81,12 @@ public class PhieuKiemTraDAO {
 
     public boolean update(PhieuKiemTra phieu) throws SQLException {
         String sql = "UPDATE PhieuKiemTra SET maPhieuTiepNhan = ?, maKH = ?, maXe = ?, maNV = ?, "
-            + "trangThai = ?, trangThaiBanDau = ?, vanDeHuHong = ? WHERE maPhieuKiemTra = ?";
+                + "trangThai = ?, trangThaiBanDau = ?, vanDeHuHong = ? WHERE maPhieuKiemTra = ?";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, phieu.getPhieuTiepNhan() == null
-                    ? null : phieu.getPhieuTiepNhan().getMaPhieuTiepNhan());
+                    ? null
+                    : phieu.getPhieuTiepNhan().getMaPhieuTiepNhan());
             statement.setString(2, phieu.getKhachHang() == null ? null : phieu.getKhachHang().getMaKH());
             statement.setString(3, phieu.getXe() == null ? null : phieu.getXe().getMaXe());
             statement.setString(4, phieu.getNhanVien() == null ? null : phieu.getNhanVien().getMaNV());
@@ -100,12 +108,14 @@ public class PhieuKiemTraDAO {
     }
 
     private PhieuKiemTra mapRow(ResultSet resultSet) throws SQLException {
+        NhanVien nhanVien = new NhanVien(resultSet.getString("maNV"));
+        nhanVien.setHoTen(resultSet.getString("hoTen"));
         return new PhieuKiemTra(
                 resultSet.getString("maPhieuKiemTra"),
                 new PhieuTiepNhan(resultSet.getString("maPhieuTiepNhan")),
                 new KhachHang(resultSet.getString("maKH")),
                 new Xe(resultSet.getString("maXe")),
-                new NhanVien(resultSet.getString("maNV")),
+                nhanVien,
                 resultSet.getString("trangThai"),
                 resultSet.getString("trangThaiBanDau"),
                 resultSet.getString("vanDeHuHong"));
@@ -114,7 +124,8 @@ public class PhieuKiemTraDAO {
     private void ganThamSo(PreparedStatement statement, PhieuKiemTra phieu) throws SQLException {
         statement.setString(1, phieu.getMaPhieuKiemTra());
         statement.setString(2, phieu.getPhieuTiepNhan() == null
-                ? null : phieu.getPhieuTiepNhan().getMaPhieuTiepNhan());
+                ? null
+                : phieu.getPhieuTiepNhan().getMaPhieuTiepNhan());
         statement.setString(3, phieu.getKhachHang() == null ? null : phieu.getKhachHang().getMaKH());
         statement.setString(4, phieu.getXe() == null ? null : phieu.getXe().getMaXe());
         statement.setString(5, phieu.getNhanVien() == null ? null : phieu.getNhanVien().getMaNV());
