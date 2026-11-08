@@ -1,5 +1,6 @@
 package gui;
 
+import controller.BaoCaoTongHopController;
 import dao.BaoCaoTongHopDAO;
 import dao.BaoCaoTongHopDAO.ChiTieuBaoCao;
 import dao.BaoCaoTongHopDAO.DiemXuHuong;
@@ -59,8 +60,13 @@ public class FrmBaoCaoTongHop extends JPanel {
     private JLabel lblTieuDeBieuDo;
 
     // ── DAO và bảng dữ liệu ───────────────────────────────────────────────────
-    private final BaoCaoTongHopDAO baoCaoTongHopDAO = new BaoCaoTongHopDAO();
-    private final DefaultTableModel modelBaoCao=new DefaultTableModel(new Object[]{"Chỉ tiêu","Kỳ trước","Kỳ báo cáo","Chênh lệch"},0){@Override public boolean isCellEditable(int row,int column){return false;}};
+    private final DefaultTableModel modelBaoCao = new DefaultTableModel(
+            new Object[] { "Chỉ tiêu", "Kỳ trước", "Kỳ báo cáo", "Chênh lệch" }, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
     private final JTable tblBaoCao = new JTable(modelBaoCao);
 
     // ── Biểu đồ đường ─────────────────────────────────────────────────────────
@@ -103,8 +109,6 @@ public class FrmBaoCaoTongHop extends JPanel {
         // Áp dụng style nút bấm
         styleButtonPrimary(btnTaoBaoCao);
         styleButtonSecondary(btnXuatBaoCao);
-        btnTaoBaoCao.addActionListener(event -> taoBaoCao());
-        btnXuatBaoCao.addActionListener(event -> xuatBaoCao());
 
         // Nhãn trạng thái
         lblTrangThai.setFont(UIConfig.FONT_REGULAR);
@@ -143,6 +147,7 @@ public class FrmBaoCaoTongHop extends JPanel {
         add(pnlStatus, BorderLayout.SOUTH);
 
         datTrangThaiChuaThongKe();
+        new BaoCaoTongHopController(this).khoiTao();
     }
 
     // ── Helper: style nút Primary ──────────────────────────────────────────────
@@ -353,7 +358,7 @@ public class FrmBaoCaoTongHop extends JPanel {
     }
 
     // ── Tạo báo cáo ──────────────────────────────────────────────────────────
-    private void taoBaoCao() {
+    public void taoBaoCao(BaoCaoTongHopDAO baoCaoTongHopDAO) {
         LocalDate tuNgay = layNgayBatDau();
         LocalDate denNgay = layNgayKetThuc(tuNgay);
         String loaiKy = (String) cboLoaiKy.getSelectedItem();
@@ -520,7 +525,7 @@ public class FrmBaoCaoTongHop extends JPanel {
                 .replaceAll(",00$", "");
     }
 
-    private void xuatBaoCao() {
+    public void xuatBaoCao() {
         if (modelBaoCao.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Hãy tạo báo cáo trước khi xuất.",
                     "Chưa có dữ liệu", JOptionPane.INFORMATION_MESSAGE);
@@ -568,6 +573,14 @@ public class FrmBaoCaoTongHop extends JPanel {
         JOptionPane.showMessageDialog(this, noiDung, "Báo cáo tổng hợp", JOptionPane.ERROR_MESSAGE);
     }
 
+    public JButton getBtnTaoBaoCao() {
+        return btnTaoBaoCao;
+    }
+
+    public JButton getBtnXuatBaoCao() {
+        return btnXuatBaoCao;
+    }
+
     // ── Lớp nội: vẽ biểu đồ đường ────────────────────────────────────────────
     private static final class BieuDoDuong extends JComponent {
         private static final int PADDING_LEFT = 64;
@@ -575,9 +588,9 @@ public class FrmBaoCaoTongHop extends JPanel {
         private static final int PADDING_TOP = 42;
         private static final int PADDING_BOTTOM = 54;
         private static final Color[] MAU_DUONG = {
-            UIConfig.COLOR_PRIMARY,
-            UIConfig.COLOR_SUCCESS,
-            UIConfig.COLOR_DANGER
+                UIConfig.COLOR_PRIMARY,
+                UIConfig.COLOR_SUCCESS,
+                UIConfig.COLOR_DANGER
         };
         private String[] nhan = new String[0];
         private String[] tenDuong = new String[0];
@@ -606,25 +619,26 @@ public class FrmBaoCaoTongHop extends JPanel {
             Graphics2D g2 = (Graphics2D) graphics.create();
             try {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                int width  = getWidth();
+                int width = getWidth();
                 int height = getHeight();
-                int chartWidth  = width  - PADDING_LEFT - PADDING_RIGHT;
-                int chartHeight = height - PADDING_TOP  - PADDING_BOTTOM;
-                if (chartWidth <= 0 || chartHeight <= 0) return;
+                int chartWidth = width - PADDING_LEFT - PADDING_RIGHT;
+                int chartHeight = height - PADDING_TOP - PADDING_BOTTOM;
+                if (chartWidth <= 0 || chartHeight <= 0)
+                    return;
 
                 if (nhan.length == 0 || giaTri.length == 0) {
                     g2.setColor(UIConfig.COLOR_MUTED);
                     String message = "Chưa có dữ liệu biểu đồ";
                     FontMetrics metrics = g2.getFontMetrics();
                     g2.drawString(message,
-                            (width  - metrics.stringWidth(message)) / 2,
+                            (width - metrics.stringWidth(message)) / 2,
                             (height + metrics.getAscent()) / 2);
                     return;
                 }
 
                 double giaTriLonNhat = Arrays.stream(giaTri)
                         .flatMapToDouble(Arrays::stream).max().orElse(0);
-                double mocTruc  = giaTriLonNhat == 0 ? 1 : giaTriLonNhat * 1.1;
+                double mocTruc = giaTriLonNhat == 0 ? 1 : giaTriLonNhat * 1.1;
                 int soDuongLuoi = 4;
                 for (int moc = 0; moc <= soDuongLuoi; moc++) {
                     int y = PADDING_TOP + chartHeight - chartHeight * moc / soDuongLuoi;
@@ -662,7 +676,8 @@ public class FrmBaoCaoTongHop extends JPanel {
                                 : PADDING_LEFT + (int) ((long) diem * chartWidth / (nhan.length - 1));
                         int y = PADDING_TOP + chartHeight
                                 - (int) Math.round(giaTri[duong][diem] / mocTruc * chartHeight);
-                        if (xTruoc >= 0) g2.drawLine(xTruoc, yTruoc, x, y);
+                        if (xTruoc >= 0)
+                            g2.drawLine(xTruoc, yTruoc, x, y);
                         g2.fillOval(x - 4, y - 4, 8, 8);
                         xTruoc = x;
                         yTruoc = y;

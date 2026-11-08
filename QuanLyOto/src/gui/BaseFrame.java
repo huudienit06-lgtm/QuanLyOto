@@ -115,6 +115,16 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Quản lý công nợ");
 			return;
 		}
+		if ("Công nợ".equals(featureName)) {
+			new FrmThongKeCongNo().setVisible(true);
+			lblStatus.setText("Thống kê công nợ");
+			return;
+		}
+		if ("Thống kê Công nợ".equals(featureName)) {
+			new FrmThongKeCongNo().setVisible(true);
+			lblStatus.setText("Thống kê công nợ");
+			return;
+		}
 		if ("Khách hàng".equals(featureName) || "Cập nhật khách hàng".equals(featureName)) {
 			setContent(new FrmKhachHang());
 			lblStatus.setText("Quản lý khách hàng");
@@ -126,6 +136,11 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Thống kê Doanh thu".equals(featureName)) {
+			setContent(new FrmThongKeDoanhThu());
+			lblStatus.setText("Thống kê doanh thu");
+			return;
+		}
+		if ("Doanh thu".equals(featureName)) {
 			setContent(new FrmThongKeDoanhThu());
 			lblStatus.setText("Thống kê doanh thu");
 			return;
@@ -199,6 +214,11 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Thống kê Sửa chữa".equals(featureName)) {
+			setContent(new FrmThongKeSuaChua());
+			lblStatus.setText("Sửa chữa");
+			return;
+		}
+		if ("Sửa chữa".equals(featureName)) {
 			setContent(new FrmThongKeSuaChua());
 			lblStatus.setText("Sửa chữa");
 			return;

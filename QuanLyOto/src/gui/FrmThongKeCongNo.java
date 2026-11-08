@@ -1,6 +1,7 @@
 package gui;
 
-import connectDB.ConnectDB;
+import controller.ThongKeCongNoController;
+import dao.ThongKeCongNoDAO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -63,26 +64,6 @@ public class FrmThongKeCongNo extends JFrame {
     // Tiêu đề cột bảng danh sách theo từng chế độ
     private static final String[] COT_NGAY = { "Mã hóa đơn", "Khách hàng", "Số điện thoại", "Biển số xe",
             "Tổng tiền HĐ", "Còn nợ", "Trạng thái" };
-    // Câu lệnh SQL
-    private static final String SQL_KHACH_HANG = "SELECT maKH, hoTen, soDT FROM KhachHang ORDER BY maKH";
-    // Hóa đơn kèm tổng tiền đã thanh toán thành công
-    private static final String SQL_HOA_DON = "SELECT hd.maHoaDon, hd.ngayLap, hd.soTien, " +
-            "       psc.maKH, " +
-            "       COALESCE(tt.daThanhToan, 0) AS daThanhToan " +
-            "FROM HoaDon hd " +
-            "LEFT JOIN PhieuSuaChua psc " +
-            "       ON hd.maPhieuSuaChua = psc.maPhieuSuaChua " +
-            "LEFT JOIN ( " +
-            "    SELECT maHoaDon, " +
-            "           SUM(soTienThanhToan) AS daThanhToan " +
-            "    FROM GiaoDichThanhToan " +
-            "    WHERE trangThaiGD = N'Thành công' " +
-            "    GROUP BY maHoaDon " +
-            ") tt ON hd.maHoaDon = tt.maHoaDon " +
-            "ORDER BY hd.ngayLap DESC";
-    // Lịch sử giao dịch của một hóa đơn
-    private static final String SQL_GIAO_DICH = "SELECT thoiGianGD, phuongThucThanhToan, soTienThanhToan, trangThaiGD "
-            + "FROM GiaoDichThanhToan WHERE maHoaDon = ? ORDER BY thoiGianGD";
 
     // LỚP DỮ LIỆU
     private static class KhachHang {
@@ -120,6 +101,7 @@ public class FrmThongKeCongNo extends JFrame {
     // DỮ LIỆU VÀ TRẠNG THÁI
     private final Map<String, KhachHang> dsKhachHang = new LinkedHashMap<>();
     private final List<HoaDon> dsHoaDon = new ArrayList<>();
+    private final ThongKeCongNoController controller = new ThongKeCongNoController(this);
 
     // Dòng đang hiển thị trên bảng danh sách (để mở chi tiết / đi sâu xuống ngày,
     // tháng)
@@ -161,7 +143,7 @@ public class FrmThongKeCongNo extends JFrame {
         getContentPane().setBackground(BG);
         setLayout(new BorderLayout());
         try {
-            taiDuLieu();
+            controller.taiDuLieu();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
                     "Không thể tải dữ liệu công nợ từ CSDL:\n" + ex.getMessage(),
@@ -178,43 +160,16 @@ public class FrmThongKeCongNo extends JFrame {
     }
 
     // TẢI DỮ LIỆU TỪ SQL SERVER
-    private void taiDuLieu() throws SQLException {
+    public void napDuLieu(ThongKeCongNoDAO.DuLieuCongNo duLieu) {
         dsKhachHang.clear();
         dsHoaDon.clear();
-
-        ConnectDB.getInstance().connect();
-        Connection con = ConnectDB.getConnection();
-        if (con == null) {
-            throw new SQLException("Không thể kết nối SQL Server.");
+        for (ThongKeCongNoDAO.KhachHangData khachHang : duLieu.khachHang()) {
+            dsKhachHang.put(khachHang.ma(), new KhachHang(khachHang.ma(), khachHang.ten(), khachHang.sdt()));
         }
-        // 1. Danh sách khách hàng
-        try (PreparedStatement ps = con.prepareStatement(SQL_KHACH_HANG); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                String ma = rs.getString("maKH");
-                dsKhachHang.put(ma, new KhachHang(ma, rs.getString("hoTen"), rs.getString("soDT")));
-            }
+        for (ThongKeCongNoDAO.HoaDonData hoaDon : duLieu.hoaDon()) {
+            dsHoaDon.add(new HoaDon(hoaDon.ma(), "-", hoaDon.ngay(), hoaDon.maKH(),
+                    hoaDon.tong(), hoaDon.tong(), hoaDon.conNo()));
         }
-        // 2. Hóa đơn và số tiền đã thanh toán thành công
-        try (PreparedStatement ps = con.prepareStatement(SQL_HOA_DON); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Timestamp ngayLap = rs.getTimestamp("ngayLap");
-                if (ngayLap == null) {
-                    continue;
-                }
-                long tong = laySo(rs.getBigDecimal("soTien"));
-                long daTra = laySo(rs.getBigDecimal("daThanhToan"));
-                dsHoaDon.add(new HoaDon(
-                        rs.getString("maHoaDon"),
-                        "-", // Biển số: cần bổ sung JOIN bảng Xe
-                        ngayLap.toLocalDateTime().toLocalDate(),
-                        rs.getString("maKH"),
-                        tong, tong, Math.max(0L, tong - daTra)));
-            }
-        }
-    }
-
-    private static long laySo(BigDecimal so) {
-        return so == null ? 0L : so.longValue();
     }
 
     private String tenKhachHang(String ma) {
@@ -992,21 +947,15 @@ public class FrmThongKeCongNo extends JFrame {
     private List<GiaoDich> taiGiaoDich(String maHoaDon) {
         List<GiaoDich> dsGiaoDich = new ArrayList<>();
         try {
-            ConnectDB.getInstance().connect();
-            Connection con = ConnectDB.getConnection();
-            try (PreparedStatement ps = con.prepareStatement(SQL_GIAO_DICH)) {
-                ps.setString(1, maHoaDon);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        GiaoDich gd = new GiaoDich();
-                        Timestamp thoiGian = rs.getTimestamp("thoiGianGD");
-                        gd.thoiGian = thoiGian == null ? "-" : thoiGian.toLocalDateTime().format(GIO_NGAY);
-                        gd.phuongThuc = rs.getString("phuongThucThanhToan");
-                        gd.soTien = laySo(rs.getBigDecimal("soTienThanhToan"));
-                        gd.trangThai = rs.getString("trangThaiGD");
-                        dsGiaoDich.add(gd);
-                    }
-                }
+            for (ThongKeCongNoDAO.GiaoDichData giaoDich : controller.taiGiaoDich(maHoaDon)) {
+                GiaoDich gd = new GiaoDich();
+                gd.thoiGian = giaoDich.thoiGian() == null
+                        ? "-"
+                        : giaoDich.thoiGian().format(GIO_NGAY);
+                gd.phuongThuc = giaoDich.phuongThuc();
+                gd.soTien = giaoDich.soTien();
+                gd.trangThai = giaoDich.trangThai();
+                dsGiaoDich.add(gd);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
