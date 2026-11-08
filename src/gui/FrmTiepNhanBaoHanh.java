@@ -8,69 +8,45 @@ import entity.HoaDon;
 import entity.PhieuYeuCauBaoHanh;
 import entity.PhuTung;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Insets;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class FrmTiepNhanBaoHanh extends JPanel {
     private static final DateTimeFormatter DINH_DANG_NGAY_GIO =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final JTextField txtMaPhieuYCBH = createTextField(14);
+    private final AppTextField txtMaPhieuYCBH = new AppTextField(14);
     private final JComboBox<LuaChonHoaDon> cboHoaDon = new JComboBox<>();
     private final JComboBox<LuaChonPhuTung> cboPhuTung = new JComboBox<>();
-    private final JTextField txtKetQuaBaoHanh = createTextField(20);
+    private final AppTextField txtKetQuaBaoHanh = new AppTextField(20);
     private final JSpinner spnSoLuong = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
     private final JTextArea txaLyDo = taoOThongTin();
     private final JTextArea txaGhiChuXuLy = taoOThongTin();
-    private final JTextField txtTimKiem = createTextField(20);
-    private final JLabel lblThongBao = new JLabel(
-            "Yêu cầu chờ xử lý được ưu tiên hiển thị trước.");
-
-    private final JButton btnThem = createButton(
-            "Tiếp nhận", "/resources/icons/plus.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-    private final JButton btnCapNhat = createButton(
-            "Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
-    private final JButton btnXoa = createButton(
-            "Xóa", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
-    private final JButton btnChapNhan = createButton(
-            "Chấp nhận bảo hành", "/resources/icons/plus.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
-    private final JButton btnHoanThanh = createButton(
-            "Hoàn thành", "/resources/icons/update.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-    private final JButton btnTuChoi = createButton(
-            "Từ chối", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
-    private final JButton btnLamMoi = createButton(
-            "Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
-    private final JButton btnTimKiem = createButton(
-            "Tìm kiếm", "/resources/icons/search.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-    private final JButton btnTaiLai = createButton(
-            "Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
+    private final AppTextField txtTimKiem = new AppTextField(20);
+    private final JLabel lblThongBao = new AppLabel(
+            "Yêu cầu chờ xử lý được ưu tiên hiển thị trước.", AppLabel.Style.MUTED);
+    private final AppButton btnThem = new AppButton("Tiếp nhận");
+    private final AppButton btnCapNhat = new AppButton("Cập nhật", AppButton.Style.SUCCESS);
+    private final AppButton btnXoa = new AppButton("Xóa", AppButton.Style.DANGER);
+    private final AppButton btnChapNhan = new AppButton("Chấp nhận bảo hành", AppButton.Style.SUCCESS);
+    private final AppButton btnHoanThanh = new AppButton("Hoàn thành", AppButton.Style.PRIMARY);
+    private final AppButton btnTuChoi = new AppButton("Từ chối", AppButton.Style.DANGER);
+    private final AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
+    private final AppButton btnTimKiem = new AppButton("Tìm kiếm");
+    private final AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
 
     private final DefaultTableModel modelYeuCau = new DefaultTableModel(
             new Object[] { "Mã yêu cầu", "Hóa đơn", "Phụ tùng", "Khách hàng", "SL", "Ngày tiếp nhận", "Trạng thái" },
@@ -80,80 +56,35 @@ public class FrmTiepNhanBaoHanh extends JPanel {
             return false;
         }
     };
-    private final JTable tblYeuCau = new JTable(modelYeuCau);
+    private final JTable tblYeuCau = FormUI.createTable(modelYeuCau);
     private final TiepNhanBaoHanhController controller;
     private boolean baoHanhConHan;
 
     public FrmTiepNhanBaoHanh() {
-        setLayout(new BorderLayout(0, 16));
-        setBackground(UIConfig.COLOR_BACKGROUND);
-        setBorder(new EmptyBorder(20, 24, 20, 24));
-
+        setLayout(new BorderLayout());
+        setOpaque(false);
         txtMaPhieuYCBH.setEditable(false);
         txtKetQuaBaoHanh.setEditable(false);
         txtKetQuaBaoHanh.setToolTipText("Kết quả tính theo ngày lập hóa đơn và thời hạn bảo hành");
-        cboHoaDon.setFont(UIConfig.FONT_REGULAR);
-        cboPhuTung.setFont(UIConfig.FONT_REGULAR);
-        spnSoLuong.setFont(UIConfig.FONT_REGULAR);
-
-        // Header trang
-        add(createHeaderPanel(), BorderLayout.NORTH);
-
-        JPanel pnlNoiDung = new JPanel(new BorderLayout(0, 14));
-        pnlNoiDung.setOpaque(false);
-        pnlNoiDung.add(taoKhungThongTin(), BorderLayout.NORTH);
-        pnlNoiDung.add(taoBangYeuCau(), BorderLayout.CENTER);
-
-        add(pnlNoiDung, BorderLayout.CENTER);
-
-        tblYeuCau.setFont(UIConfig.FONT_REGULAR);
-        tblYeuCau.setForeground(UIConfig.COLOR_TEXT);
-        tblYeuCau.setRowHeight(30);
-        tblYeuCau.setGridColor(UIConfig.COLOR_TABLE_GRID);
-        tblYeuCau.setSelectionBackground(UIConfig.COLOR_SELECTION);
-        tblYeuCau.setSelectionForeground(UIConfig.COLOR_TEXT);
         tblYeuCau.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblYeuCau.setAutoCreateRowSorter(false);
 
-        tblYeuCau.getTableHeader().setFont(UIConfig.FONT_BOLD);
-        tblYeuCau.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
-        tblYeuCau.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
-        tblYeuCau.getTableHeader().setPreferredSize(new Dimension(0, 34));
-
-        lblThongBao.setFont(UIConfig.FONT_REGULAR);
-        lblThongBao.setForeground(UIConfig.COLOR_MUTED);
+        JPanel pnlNoiDung = new JPanel(new BorderLayout(0, 12));
+        pnlNoiDung.setOpaque(false);
+        pnlNoiDung.add(taoKhungThongTin(), BorderLayout.NORTH);
+        pnlNoiDung.add(taoBangYeuCau(), BorderLayout.CENTER);
+        add(FormUI.createPage("TIẾP NHẬN BẢO HÀNH",
+                "Tiếp nhận, xử lý và theo dõi các yêu cầu bảo hành phụ tùng", pnlNoiDung),
+                BorderLayout.CENTER);
 
         controller = new TiepNhanBaoHanhController(this);
         controller.khoiTao();
     }
 
-    private JPanel createHeaderPanel() {
-        JPanel pnlHeading = new JPanel(new BorderLayout(0, 4));
-        pnlHeading.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("TIẾP NHẬN BẢO HÀNH");
-        lblTitle.setFont(UIConfig.FONT_TITLE);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-
-        JLabel lblSubtitle = new JLabel("Tiếp nhận, xử lý và theo dõi các yêu cầu bảo hành phụ tùng");
-        lblSubtitle.setFont(UIConfig.FONT_REGULAR);
-        lblSubtitle.setForeground(UIConfig.COLOR_MUTED);
-
-        pnlHeading.add(lblTitle, BorderLayout.NORTH);
-        pnlHeading.add(lblSubtitle, BorderLayout.CENTER);
-        return pnlHeading;
-    }
-
     private JPanel taoKhungThongTin() {
-        JPanel pnlCard = createCardPanel();
-        pnlCard.setLayout(new BorderLayout(0, 12));
-
-        JLabel lblSection = new JLabel("Thông tin yêu cầu bảo hành");
-        lblSection.setFont(UIConfig.FONT_SECTION);
-        lblSection.setForeground(UIConfig.COLOR_TITLE);
-        pnlCard.add(lblSection, BorderLayout.NORTH);
-
-        JPanel pnlNoiDung = new JPanel(new BorderLayout(16, 0));
+        AppPanel pnlCard = FormUI.createCard();
+        pnlCard.add(FormUI.createSectionTitle("Thông tin yêu cầu bảo hành"), BorderLayout.NORTH);
+        JPanel pnlNoiDung = new JPanel(new BorderLayout(12, 0));
         pnlNoiDung.setOpaque(false);
         pnlNoiDung.add(taoCacTruong(), BorderLayout.CENTER);
         pnlNoiDung.add(taoGhiChu(), BorderLayout.EAST);
@@ -162,36 +93,19 @@ public class FrmTiepNhanBaoHanh extends JPanel {
     }
 
     private JPanel taoCacTruong() {
-        JPanel pnlTruong = new JPanel(new GridBagLayout());
-        pnlTruong.setOpaque(false);
-
-        addField(pnlTruong, "Mã yêu cầu", txtMaPhieuYCBH, 0, 0);
-        addField(pnlTruong, "Hóa đơn *", cboHoaDon, 2, 0);
-        addField(pnlTruong, "Phụ tùng *", cboPhuTung, 0, 1);
-        addField(pnlTruong, "Số lượng *", spnSoLuong, 2, 1);
-
-        JScrollPane scrLyDo = new JScrollPane(txaLyDo);
-        scrLyDo.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        addField(pnlTruong, "Lý do yêu cầu *", scrLyDo, 0, 2);
-        addField(pnlTruong, "Kết quả bảo hành", txtKetQuaBaoHanh, 2, 2);
-
+        JPanel pnlTruong = FormUI.createFieldsPanel();
+        FormUI.addField(pnlTruong, "Mã yêu cầu", txtMaPhieuYCBH, 0, 0);
+        FormUI.addField(pnlTruong, "Hóa đơn *", cboHoaDon, 2, 0);
+        FormUI.addField(pnlTruong, "Phụ tùng *", cboPhuTung, 0, 1);
+        FormUI.addField(pnlTruong, "Số lượng *", spnSoLuong, 2, 1);
+        FormUI.addField(pnlTruong, "Lý do yêu cầu *", new AppScrollPane(txaLyDo), 0, 2);
+        FormUI.addField(pnlTruong, "Kết quả bảo hành", txtKetQuaBaoHanh, 2, 2);
         JPanel pnlNoiDung = new JPanel(new BorderLayout(0, 10));
         pnlNoiDung.setOpaque(false);
         pnlNoiDung.add(pnlTruong, BorderLayout.CENTER);
-
-        JPanel pnlButtons = new JPanel(new GridBagLayout());
-        pnlButtons.setOpaque(false);
-        JButton[] buttons = { btnThem, btnCapNhat, btnXoa, btnChapNhan, btnHoanThanh, btnTuChoi, btnLamMoi };
-        for (int i = 0; i < buttons.length; i++) {
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = i;
-            gbc.gridy = 0;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.insets = new Insets(0, 0, 0, 8);
-            pnlButtons.add(buttons[i], gbc);
-        }
-
-        pnlNoiDung.add(pnlButtons, BorderLayout.SOUTH);
+        pnlNoiDung.add(FormUI.createButtonRow(
+                btnThem, btnCapNhat, btnXoa, btnChapNhan, btnHoanThanh, btnTuChoi, btnLamMoi),
+                BorderLayout.SOUTH);
         return pnlNoiDung;
     }
 
@@ -199,30 +113,16 @@ public class FrmTiepNhanBaoHanh extends JPanel {
         JPanel pnlGhiChu = new JPanel(new BorderLayout(0, 5));
         pnlGhiChu.setOpaque(false);
         pnlGhiChu.setPreferredSize(new Dimension(300, 180));
-
-        JLabel lblGhiChu = new JLabel("Ghi chú xử lý");
-        lblGhiChu.setFont(UIConfig.FONT_REGULAR);
-        lblGhiChu.setForeground(UIConfig.COLOR_MUTED);
-        pnlGhiChu.add(lblGhiChu, BorderLayout.NORTH);
-
-        JScrollPane scrGhiChu = new JScrollPane(txaGhiChuXuLy);
-        scrGhiChu.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        pnlGhiChu.add(scrGhiChu, BorderLayout.CENTER);
+        pnlGhiChu.add(new AppLabel("Ghi chú xử lý"), BorderLayout.NORTH);
+        pnlGhiChu.add(new AppScrollPane(txaGhiChuXuLy), BorderLayout.CENTER);
         return pnlGhiChu;
     }
 
     private JPanel taoBangYeuCau() {
-        JPanel pnlBang = createCardPanel();
-        pnlBang.setLayout(new BorderLayout(0, 10));
-
+        AppPanel pnlBang = FormUI.createCard();
         JPanel pnlDau = new JPanel(new BorderLayout(10, 0));
         pnlDau.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("Danh sách yêu cầu bảo hành");
-        lblTitle.setFont(UIConfig.FONT_SECTION);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-        pnlDau.add(lblTitle, BorderLayout.WEST);
-
+        pnlDau.add(FormUI.createSectionTitle("Danh sách yêu cầu bảo hành"), BorderLayout.WEST);
         txtTimKiem.setToolTipText("Tìm mã yêu cầu, hóa đơn, phụ tùng, khách hàng hoặc trạng thái");
         JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         pnlTimKiem.setOpaque(false);
@@ -230,84 +130,10 @@ public class FrmTiepNhanBaoHanh extends JPanel {
         pnlTimKiem.add(btnTimKiem);
         pnlTimKiem.add(btnTaiLai);
         pnlDau.add(pnlTimKiem, BorderLayout.EAST);
-
         pnlBang.add(pnlDau, BorderLayout.NORTH);
-
-        JScrollPane scrTable = new JScrollPane(tblYeuCau);
-        scrTable.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        scrTable.getViewport().setBackground(UIConfig.COLOR_SURFACE);
-        pnlBang.add(scrTable, BorderLayout.CENTER);
+        pnlBang.add(new AppScrollPane(tblYeuCau), BorderLayout.CENTER);
         pnlBang.add(lblThongBao, BorderLayout.SOUTH);
         return pnlBang;
-    }
-
-    private JPanel createCardPanel() {
-        JPanel card = new JPanel();
-        card.setBackground(UIConfig.COLOR_SURFACE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(14, 16, 14, 16)));
-        return card;
-    }
-
-    private JTextField createTextField(int columns) {
-        JTextField tf = new JTextField(columns);
-        tf.setFont(UIConfig.FONT_REGULAR);
-        tf.setForeground(UIConfig.COLOR_TEXT);
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(6, 8, 6, 8)));
-        return tf;
-    }
-
-    private JButton createButton(String text, String iconPath, Color background, Color foreground) {
-        JButton btn = new JButton(text);
-        btn.setFont(UIConfig.FONT_BOLD);
-        btn.setBackground(background);
-        btn.setForeground(foreground);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(8, 14, 8, 14));
-
-        ImageIcon icon = getScaledIcon(iconPath, 16, 16);
-        if (icon != null) {
-            btn.setIcon(icon);
-            btn.setIconTextGap(6);
-        }
-        return btn;
-    }
-
-    private ImageIcon getScaledIcon(String path, int width, int height) {
-        try {
-            java.net.URL url = getClass().getResource(path);
-            if (url != null) {
-                ImageIcon originalIcon = new ImageIcon(url);
-                Image img = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                return new ImageIcon(img);
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
-    }
-
-    private void addField(JPanel pnlFields, String labelText, Component component, int col, int row) {
-        GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = col;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.WEST;
-        gbcLabel.insets = new Insets(5, 0, 5, 8);
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(UIConfig.FONT_REGULAR);
-        lbl.setForeground(UIConfig.COLOR_TEXT);
-        pnlFields.add(lbl, gbcLabel);
-
-        GridBagConstraints gbcInput = new GridBagConstraints();
-        gbcInput.gridx = col + 1;
-        gbcInput.gridy = row;
-        gbcInput.weightx = 1.0;
-        gbcInput.fill = GridBagConstraints.HORIZONTAL;
-        gbcInput.insets = new Insets(5, 0, 5, 18);
-        pnlFields.add(component, gbcInput);
     }
 
     public void hienThiDanhSachHoaDon(List<LuaChonHoaDon> danhSach) {
@@ -501,18 +327,18 @@ public class FrmTiepNhanBaoHanh extends JPanel {
         thongBao(noiDung, JOptionPane.WARNING_MESSAGE);
     }
 
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnCapNhat() { return btnCapNhat; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnChapNhan() { return btnChapNhan; }
-    public JButton getBtnHoanThanh() { return btnHoanThanh; }
-    public JButton getBtnTuChoi() { return btnTuChoi; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTimKiem() { return btnTimKiem; }
-    public JButton getBtnTaiLai() { return btnTaiLai; }
+    public AppButton getBtnThem() { return btnThem; }
+    public AppButton getBtnCapNhat() { return btnCapNhat; }
+    public AppButton getBtnXoa() { return btnXoa; }
+    public AppButton getBtnChapNhan() { return btnChapNhan; }
+    public AppButton getBtnHoanThanh() { return btnHoanThanh; }
+    public AppButton getBtnTuChoi() { return btnTuChoi; }
+    public AppButton getBtnLamMoi() { return btnLamMoi; }
+    public AppButton getBtnTimKiem() { return btnTimKiem; }
+    public AppButton getBtnTaiLai() { return btnTaiLai; }
     public JComboBox<LuaChonHoaDon> getCboHoaDon() { return cboHoaDon; }
     public JComboBox<LuaChonPhuTung> getCboPhuTung() { return cboPhuTung; }
-    public JTextField getTxtTimKiem() { return txtTimKiem; }
+    public AppTextField getTxtTimKiem() { return txtTimKiem; }
     public JTable getTblYeuCau() { return tblYeuCau; }
 
     public void chonHoaDon(String maHoaDon) {

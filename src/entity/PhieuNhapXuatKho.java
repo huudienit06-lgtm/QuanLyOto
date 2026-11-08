@@ -19,4 +19,10 @@ public class PhieuNhapXuatKho {
     public void setNgayLapPhieu(Timestamp ngayLapPhieu) { this.ngayLapPhieu = ngayLapPhieu; }
     public String getKieuPhieu() { return kieuPhieu; }
     public void setKieuPhieu(String kieuPhieu) { this.kieuPhieu = kieuPhieu; }
+
+    public void setGhiChu(String trim) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setGhiChu'");
+    }
 }
+

@@ -7,58 +7,37 @@ import entity.PhieuBanGiao;
 import entity.TaiKhoan;
 import entity.Xe;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 public class FrmBanGiaoXe extends JPanel {
-    private final JTextField txtMaPhieuBanGiao = createTextField(14);
-    private final JComboBox<Xe> cboXe = new JComboBox<>();
-    private final JTextField txtMaKH = createTextField(14);
-    private final JTextField txtTenKhachHang = createTextField(14);
-    private final JComboBox<NhanVien> cboNhanVien = new JComboBox<>();
-    private final JTextField txtTenNguoiNhan = createTextField(14);
-    private final JTextField txtSoDienThoaiNguoiNhan = createTextField(14);
+    private final AppTextField txtMaPhieuBanGiao = new AppTextField(14);
+    private final AppComboBox<Xe> cboXe = new AppComboBox<>();
+    private final AppTextField txtMaKH = new AppTextField(14);
+    private final AppTextField txtTenKhachHang = new AppTextField(14);
+    private final AppComboBox<NhanVien> cboNhanVien = new AppComboBox<>();
+    private final AppTextField txtTenNguoiNhan = new AppTextField(14);
+    private final AppTextField txtSoDienThoaiNguoiNhan = new AppTextField(14);
     private final JTextArea txaTinhTrangXe = new JTextArea(5, 20);
-    private final JTextField txtTimKiem = createTextField(20);
-    private final JLabel lblThongBao = new JLabel("Sẵn sàng");
-
-    private final JButton btnThem = createButton(
-            "Lập phiếu", "/resources/icons/plus.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
-    private final JButton btnCapNhat = createButton(
-            "Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-    private final JButton btnXoa = createButton(
-            "Xóa", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
-    private final JButton btnLamMoi = createButton(
-            "Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
-    private final JButton btnTaiLai = createButton(
-            "Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
+    private final AppTextField txtTimKiem = new AppTextField(20);
+    private final AppLabel lblThongBao = new AppLabel("Sẵn sàng", AppLabel.Style.MUTED);
+    private final AppButton btnThem = new AppButton("Lập phiếu", AppButton.Style.SUCCESS);
+    private final AppButton btnCapNhat = new AppButton("Cập nhật", AppButton.Style.PRIMARY);
+    private final AppButton btnXoa = new AppButton("Xóa", AppButton.Style.DANGER);
+    private final AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
+    private final AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
 
     private final DefaultTableModel modelBanGiao = new DefaultTableModel(
             new Object[] {
@@ -70,7 +49,7 @@ public class FrmBanGiaoXe extends JPanel {
             return false;
         }
     };
-    private final JTable tblBanGiao = new JTable(modelBanGiao);
+    private final JTable tblBanGiao = FormUI.createTable(modelBanGiao);
     private final TableRowSorter<DefaultTableModel> sorterBanGiao = new TableRowSorter<>(modelBanGiao);
     private final BanGiaoXeController controller;
 
@@ -79,146 +58,77 @@ public class FrmBanGiaoXe extends JPanel {
     }
 
     public FrmBanGiaoXe(TaiKhoan taiKhoanHienTai) {
-        setLayout(new BorderLayout(0, 16));
-        setBackground(UIConfig.COLOR_BACKGROUND);
-        setBorder(new EmptyBorder(20, 24, 20, 24));
+        setLayout(new BorderLayout(0, 10));
+        setOpaque(false);
 
-        // Header trang
-        add(createHeaderPanel(), BorderLayout.NORTH);
-
-        JPanel pnlContent = new JPanel(new BorderLayout(0, 14));
+        JPanel pnlContent = new JPanel(new BorderLayout(0, 10));
         pnlContent.setOpaque(false);
         pnlContent.add(createFormCard(), BorderLayout.NORTH);
-        pnlContent.add(createTableCard(), BorderLayout.CENTER);
+        pnlContent.add(FormUI.createTableCard(
+                "Danh sách phiếu bàn giao",
+                createSearchToolbar(),
+                new JScrollPane(tblBanGiao)),
+                BorderLayout.CENTER);
 
-        add(pnlContent, BorderLayout.CENTER);
+        add(FormUI.createPage(
+                "PHIẾU BÀN GIAO XE",
+                "Xác nhận tình trạng xe và thông tin người nhận sau khi hoàn tất dịch vụ",
+                pnlContent),
+                BorderLayout.CENTER);
         add(createStatusPanel(), BorderLayout.SOUTH);
-
         configureComponents();
         controller = new BanGiaoXeController(this, taiKhoanHienTai);
         controller.khoiTao();
     }
 
-    private JPanel createHeaderPanel() {
-        JPanel pnlHeading = new JPanel(new BorderLayout(0, 4));
-        pnlHeading.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("PHIẾU BÀN GIAO XE");
-        lblTitle.setFont(UIConfig.FONT_TITLE);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-
-        JLabel lblSubtitle = new JLabel("Xác nhận tình trạng xe và thông tin người nhận sau khi hoàn tất dịch vụ");
-        lblSubtitle.setFont(UIConfig.FONT_REGULAR);
-        lblSubtitle.setForeground(UIConfig.COLOR_MUTED);
-
-        pnlHeading.add(lblTitle, BorderLayout.NORTH);
-        pnlHeading.add(lblSubtitle, BorderLayout.CENTER);
-        return pnlHeading;
-    }
-
     private JPanel createFormCard() {
-        JPanel pnlCard = createCardPanel();
-        pnlCard.setLayout(new BorderLayout(0, 12));
+        AppPanel pnlCard = FormUI.createCard();
+        pnlCard.setLayout(new BorderLayout(0, 10));
 
-        JLabel lblSection = new JLabel("Thông tin bàn giao");
-        lblSection.setFont(UIConfig.FONT_SECTION);
-        lblSection.setForeground(UIConfig.COLOR_TITLE);
-        pnlCard.add(lblSection, BorderLayout.NORTH);
+        JPanel pnlFields = FormUI.createFieldsPanel();
+        FormUI.addField(pnlFields, "Mã phiếu (tự động)", txtMaPhieuBanGiao, 0, 0);
+        FormUI.addField(pnlFields, "Xe bàn giao *", cboXe, 2, 0);
+        FormUI.addField(pnlFields, "Mã khách hàng", txtMaKH, 0, 1);
+        FormUI.addField(pnlFields, "Tên khách hàng", txtTenKhachHang, 2, 1);
+        FormUI.addField(pnlFields, "Nhân viên lập phiếu *", cboNhanVien, 0, 2);
+        FormUI.addField(pnlFields, "Tên người nhận *", txtTenNguoiNhan, 2, 2);
+        FormUI.addField(pnlFields, "Số điện thoại *", txtSoDienThoaiNguoiNhan, 0, 3);
 
-        // Các ô nhập
-        JPanel pnlFields = new JPanel(new GridBagLayout());
-        pnlFields.setOpaque(false);
-        addField(pnlFields, "Mã phiếu (tự động)", txtMaPhieuBanGiao, 0, 0);
-        addField(pnlFields, "Xe bàn giao *", cboXe, 2, 0);
-        addField(pnlFields, "Mã khách hàng", txtMaKH, 0, 1);
-        addField(pnlFields, "Tên khách hàng", txtTenKhachHang, 2, 1);
-        addField(pnlFields, "Nhân viên lập phiếu *", cboNhanVien, 0, 2);
-        addField(pnlFields, "Tên người nhận *", txtTenNguoiNhan, 2, 2);
-        addField(pnlFields, "Số điện thoại *", txtSoDienThoaiNguoiNhan, 0, 3);
-
-        // Khu vực tình trạng xe
-        JPanel pnlCondition = new JPanel(new BorderLayout(0, 4));
+        JPanel pnlCondition = new JPanel(new BorderLayout(0, 5));
         pnlCondition.setOpaque(false);
-        JLabel lblCondition = new JLabel("Tình trạng xe hiện tại *");
-        lblCondition.setFont(UIConfig.FONT_REGULAR);
-        lblCondition.setForeground(UIConfig.COLOR_MUTED);
-        pnlCondition.add(lblCondition, BorderLayout.NORTH);
-
+        pnlCondition.add(new AppLabel("Tình trạng xe hiện tại *", AppLabel.Style.MUTED), BorderLayout.NORTH);
         txaTinhTrangXe.setLineWrap(true);
         txaTinhTrangXe.setWrapStyleWord(true);
-        txaTinhTrangXe.setFont(UIConfig.FONT_REGULAR);
-        txaTinhTrangXe.setBorder(new EmptyBorder(6, 8, 6, 8));
-
-        JScrollPane scrCondition = new JScrollPane(txaTinhTrangXe);
-        scrCondition.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        pnlCondition.add(scrCondition, BorderLayout.CENTER);
+        pnlCondition.add(new JScrollPane(txaTinhTrangXe), BorderLayout.CENTER);
 
         JPanel pnlBody = new JPanel(new GridLayout(1, 2, 24, 0));
         pnlBody.setOpaque(false);
         pnlBody.add(pnlFields);
         pnlBody.add(pnlCondition);
 
-        // Hàng nút chức năng
-        JPanel pnlButtons = new JPanel(new GridBagLayout());
-        pnlButtons.setOpaque(false);
-        JButton[] buttons = { btnThem, btnCapNhat, btnXoa, btnLamMoi };
-        for (int i = 0; i < buttons.length; i++) {
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = i;
-            gbc.gridy = 0;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.insets = new Insets(0, 0, 0, 8);
-            pnlButtons.add(buttons[i], gbc);
-        }
+        btnThem.setPreferredSize(new Dimension(100, btnThem.getPreferredSize().height));
+        btnCapNhat.setPreferredSize(new Dimension(100, btnCapNhat.getPreferredSize().height));
+        btnXoa.setPreferredSize(new Dimension(100, btnXoa.getPreferredSize().height));
+        btnLamMoi.setPreferredSize(new Dimension(100, btnLamMoi.getPreferredSize().height));
 
+        pnlCard.add(FormUI.createSectionTitle("Thông tin bàn giao"), BorderLayout.NORTH);
         pnlCard.add(pnlBody, BorderLayout.CENTER);
-        pnlCard.add(pnlButtons, BorderLayout.SOUTH);
+        pnlCard.add(FormUI.createButtonRow(btnThem, btnCapNhat, btnXoa, btnLamMoi), BorderLayout.SOUTH);
         return pnlCard;
     }
 
-    private JPanel createTableCard() {
-        JPanel pnlCard = createCardPanel();
-        pnlCard.setLayout(new BorderLayout(0, 10));
-
-        JPanel pnlHeader = new JPanel(new BorderLayout(12, 0));
-        pnlHeader.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("Danh sách phiếu bàn giao");
-        lblTitle.setFont(UIConfig.FONT_SECTION);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-        pnlHeader.add(lblTitle, BorderLayout.WEST);
-
-        // Toolbar tìm kiếm
+    private JPanel createSearchToolbar() {
         JPanel pnlToolbar = new JPanel(new BorderLayout(8, 0));
         pnlToolbar.setOpaque(false);
-        JLabel lblTimKiem = new JLabel("Tìm kiếm");
-        lblTimKiem.setFont(UIConfig.FONT_REGULAR);
-        lblTimKiem.setForeground(UIConfig.COLOR_MUTED);
-        ImageIcon iconSearch = getScaledIcon("/resources/icons/search.png", 14, 14);
-        if (iconSearch != null) {
-            lblTimKiem.setIcon(iconSearch);
-            lblTimKiem.setIconTextGap(4);
-        }
-        pnlToolbar.add(lblTimKiem, BorderLayout.WEST);
+        pnlToolbar.add(new AppLabel("Tìm kiếm", AppLabel.Style.MUTED), BorderLayout.WEST);
         pnlToolbar.add(txtTimKiem, BorderLayout.CENTER);
         pnlToolbar.add(btnTaiLai, BorderLayout.EAST);
-
-        pnlHeader.add(pnlToolbar, BorderLayout.EAST);
-        pnlCard.add(pnlHeader, BorderLayout.NORTH);
-
-        JScrollPane scrTable = new JScrollPane(tblBanGiao);
-        scrTable.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        scrTable.getViewport().setBackground(UIConfig.COLOR_SURFACE);
-        pnlCard.add(scrTable, BorderLayout.CENTER);
-
-        return pnlCard;
+        return pnlToolbar;
     }
 
     private JPanel createStatusPanel() {
         JPanel pnlStatus = new JPanel(new BorderLayout());
         pnlStatus.setOpaque(false);
-        lblThongBao.setFont(UIConfig.FONT_REGULAR);
-        lblThongBao.setForeground(UIConfig.COLOR_MUTED);
         pnlStatus.add(lblThongBao, BorderLayout.WEST);
         return pnlStatus;
     }
@@ -228,130 +138,49 @@ public class FrmBanGiaoXe extends JPanel {
         txtMaPhieuBanGiao.setToolTipText("Mã phiếu duy nhất, ví dụ: PBG001");
         txtMaKH.setEditable(false);
         txtTenKhachHang.setEditable(false);
-
-        cboXe.setFont(UIConfig.FONT_REGULAR);
-        cboNhanVien.setFont(UIConfig.FONT_REGULAR);
-
-        cboXe.setRenderer(new ComboBoxRenderer<Xe>() {
-            @Override
-            protected String getText(Xe value) {
-                return value.getBienSo() + " - " + value.getHangXe() + " " + value.getDongXe();
-            }
-        });
-        cboNhanVien.setRenderer(new ComboBoxRenderer<NhanVien>() {
-            @Override
-            protected String getText(NhanVien value) {
-                return value.getMaNV() + " - " + value.getHoTen();
-            }
-        });
-
-        tblBanGiao.setFont(UIConfig.FONT_REGULAR);
-        tblBanGiao.setForeground(UIConfig.COLOR_TEXT);
-        tblBanGiao.setRowHeight(30);
-        tblBanGiao.setGridColor(UIConfig.COLOR_TABLE_GRID);
-        tblBanGiao.setSelectionBackground(UIConfig.COLOR_SELECTION);
-        tblBanGiao.setSelectionForeground(UIConfig.COLOR_TEXT);
+        txtMaKH.setFocusable(false);
+        txtTenKhachHang.setFocusable(false);
+        tblBanGiao.setRowSorter(sorterBanGiao);
         tblBanGiao.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblBanGiao.setFillsViewportHeight(true);
-        tblBanGiao.setRowSorter(sorterBanGiao);
-
-        tblBanGiao.getTableHeader().setFont(UIConfig.FONT_BOLD);
-        tblBanGiao.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
-        tblBanGiao.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
-        tblBanGiao.getTableHeader().setPreferredSize(new Dimension(0, 34));
     }
 
-    // --- Tiện ích style nội bộ ---
-    private JPanel createCardPanel() {
-        JPanel card = new JPanel();
-        card.setBackground(UIConfig.COLOR_SURFACE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(14, 16, 14, 16)));
-        return card;
-    }
-
-    private JTextField createTextField(int columns) {
-        JTextField tf = new JTextField(columns);
-        tf.setFont(UIConfig.FONT_REGULAR);
-        tf.setForeground(UIConfig.COLOR_TEXT);
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(6, 8, 6, 8)));
-        return tf;
-    }
-
-    private JButton createButton(String text, String iconPath, Color background, Color foreground) {
-        JButton btn = new JButton(text);
-        btn.setFont(UIConfig.FONT_BOLD);
-        btn.setBackground(background);
-        btn.setForeground(foreground);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(8, 14, 8, 14));
-
-        ImageIcon icon = getScaledIcon(iconPath, 16, 16);
-        if (icon != null) {
-            btn.setIcon(icon);
-            btn.setIconTextGap(6);
-        }
-        return btn;
-    }
-
-    private ImageIcon getScaledIcon(String path, int width, int height) {
-        try {
-            java.net.URL url = getClass().getResource(path);
-            if (url != null) {
-                ImageIcon originalIcon = new ImageIcon(url);
-                Image img = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                return new ImageIcon(img);
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
-    }
-
-    private void addField(JPanel pnlFields, String labelText, Component component, int col, int row) {
-        GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = col;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.WEST;
-        gbcLabel.insets = new Insets(5, 0, 5, 8);
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(UIConfig.FONT_REGULAR);
-        lbl.setForeground(UIConfig.COLOR_TEXT);
-        pnlFields.add(lbl, gbcLabel);
-
-        GridBagConstraints gbcInput = new GridBagConstraints();
-        gbcInput.gridx = col + 1;
-        gbcInput.gridy = row;
-        gbcInput.weightx = 1.0;
-        gbcInput.fill = GridBagConstraints.HORIZONTAL;
-        gbcInput.insets = new Insets(5, 0, 5, 18);
-        pnlFields.add(component, gbcInput);
-    }
-
-    // --- Các phương thức nghiệp vụ kết nối với Controller ---
-    public void hienThiDanhSachXe(List<Xe> danhSachXe) {
+    public void hienThiDanhMuc(List<Xe> danhSachXe, List<NhanVien> danhSachNhanVien) {
         cboXe.setModel(new DefaultComboBoxModel<>(danhSachXe.toArray(new Xe[0])));
-    }
-
-    public void hienThiDanhSachNhanVien(List<NhanVien> danhSachNhanVien) {
+        cboXe.setRenderer(new ComboBoxRenderer<Xe>() {
+            @Override
+            protected String getText(Xe xe) {
+                return xe.getMaXe() + " - " + xe.getBienSo();
+            }
+        });
         cboNhanVien.setModel(new DefaultComboBoxModel<>(danhSachNhanVien.toArray(new NhanVien[0])));
+        cboNhanVien.setRenderer(new ComboBoxRenderer<NhanVien>() {
+            @Override
+            protected String getText(NhanVien nhanVien) {
+                return nhanVien.toString();
+            }
+        });
     }
 
-    public void hienThiDanhSachPhieu(List<PhieuBanGiao> danhSachPhieu) {
+    public void hienThiThongTinKhachHang(KhachHang khachHang, boolean tuDongDienNguoiNhan) {
+        txtMaKH.setText(khachHang == null ? "" : khachHang.getMaKH());
+        txtTenKhachHang.setText(khachHang == null ? "" : khachHang.getHoTen());
+        if (tuDongDienNguoiNhan && khachHang != null
+                && txtTenNguoiNhan.getText().trim().isEmpty()) {
+            txtTenNguoiNhan.setText(khachHang.getHoTen());
+            txtSoDienThoaiNguoiNhan.setText(khachHang.getSoDT());
+        }
+    }
+
+    public void hienThiDanhSachPhieu(List<PhieuBanGiao> danhSach) {
         modelBanGiao.setRowCount(0);
-        for (PhieuBanGiao phieu : danhSachPhieu) {
-            Xe xe = phieu.getXe();
-            KhachHang khachHang = phieu.getKhachHang();
-            NhanVien nhanVien = phieu.getNhanVien();
+        for (PhieuBanGiao phieu : danhSach) {
             modelBanGiao.addRow(new Object[] {
                     phieu.getMaPhieuBanGiao(),
-                    xe == null ? "" : xe.getBienSo(),
-                    khachHang == null ? "" : khachHang.getMaKH(),
-                    khachHang == null ? "" : khachHang.getHoTen(),
-                    nhanVien == null ? "" : nhanVien.getHoTen(),
+                    phieu.getXe() == null ? "" : phieu.getXe().getMaXe(),
+                    phieu.getKhachHang() == null ? "" : phieu.getKhachHang().getMaKH(),
+                    phieu.getTenKhachHang(),
+                    phieu.getNhanVien() == null ? "" : phieu.getNhanVien().getMaNV(),
                     phieu.getTenNguoiNhan(),
                     phieu.getSoDienThoaiNguoiNhan()
             });
@@ -359,47 +188,71 @@ public class FrmBanGiaoXe extends JPanel {
         locDanhSach();
     }
 
-    public void hienThiThongTinKhachHang(KhachHang khachHang) {
-        txtMaKH.setText(khachHang == null ? "" : khachHang.getMaKH());
-        txtTenKhachHang.setText(khachHang == null ? "" : khachHang.getHoTen());
-    }
-
     public void hienThiPhieu(PhieuBanGiao phieu) {
         txtMaPhieuBanGiao.setText(phieu.getMaPhieuBanGiao());
         chonXe(phieu.getXe() == null ? null : phieu.getXe().getMaXe());
         chonNhanVien(phieu.getNhanVien() == null ? null : phieu.getNhanVien().getMaNV());
+        txaTinhTrangXe.setText(phieu.getTinhTrangXeHienTai());
         txtTenNguoiNhan.setText(phieu.getTenNguoiNhan());
         txtSoDienThoaiNguoiNhan.setText(phieu.getSoDienThoaiNguoiNhan());
-        txaTinhTrangXe.setText(phieu.getTinhTrangXeHienTai());
-        thongBao("Đang chọn phiếu " + phieu.getMaPhieuBanGiao());
     }
 
-    public void lamMoiBieuMau(String maMoi, String maNVDangNhap) {
-        txtMaPhieuBanGiao.setText(maMoi);
+    public void lamMoiBieuMau(String maPhieuMoi, String maNhanVienMacDinh) {
+        txtMaPhieuBanGiao.setText(maPhieuMoi);
         if (cboXe.getItemCount() > 0) {
             cboXe.setSelectedIndex(0);
         } else {
-            hienThiThongTinKhachHang(null);
+            hienThiThongTinKhachHang(null, false);
         }
-        chonNhanVien(maNVDangNhap);
+        if (maNhanVienMacDinh != null) {
+            chonNhanVien(maNhanVienMacDinh.trim());
+        } else if (cboNhanVien.getItemCount() > 0) {
+            cboNhanVien.setSelectedIndex(0);
+        }
         txtTenNguoiNhan.setText("");
         txtSoDienThoaiNguoiNhan.setText("");
         txaTinhTrangXe.setText("");
         tblBanGiao.clearSelection();
-        thongBao("Sẵn sàng");
+        thongBao("Sẵn sàng lập phiếu bàn giao");
     }
 
     public void locDanhSach() {
-        String tuKhoa = txtTimKiem.getText().trim();
-        sorterBanGiao.setRowFilter(tuKhoa.isEmpty()
+        String keyword = txtTimKiem.getText().trim();
+        sorterBanGiao.setRowFilter(keyword.isEmpty()
                 ? null
-                : RowFilter.regexFilter("(?iu)" + java.util.regex.Pattern.quote(tuKhoa)));
-        lblThongBao.setText("Hiển thị " + sorterBanGiao.getViewRowCount()
-                + " / " + modelBanGiao.getRowCount() + " phiếu bàn giao");
+                : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(keyword)));
+    }
+
+    public boolean xacThucForm() {
+        if (txtMaPhieuBanGiao.getText().trim().isEmpty()
+                || cboXe.getSelectedItem() == null
+                || cboNhanVien.getSelectedItem() == null
+                || txtTenNguoiNhan.getText().trim().isEmpty()
+                || txtSoDienThoaiNguoiNhan.getText().trim().isEmpty()
+                || txaTinhTrangXe.getText().trim().isEmpty()) {
+            FormUI.showError("Vui lòng nhập đầy đủ các trường bắt buộc.");
+            return false;
+        }
+        if (!FormValidator.isValidPhoneNumber(txtSoDienThoaiNguoiNhan.getText().trim())) {
+            FormUI.showError(
+                    "Số điện thoại người nhận không hợp lệ. Ví dụ: 0912345678 hoặc +84912345678.");
+            txtSoDienThoaiNguoiNhan.requestFocus();
+            return false;
+        }
+        if (!FormValidator.isWithinMaxLength(txtTenNguoiNhan.getText().trim(), 100)) {
+            FormUI.showError("Tên người nhận không được vượt quá 100 ký tự.");
+            txtTenNguoiNhan.requestFocus();
+            return false;
+        }
+        return true;
     }
 
     public String getMaPhieuNhap() {
         return txtMaPhieuBanGiao.getText().trim();
+    }
+
+    public String getTenKhachHangNhap() {
+        return txtTenKhachHang.getText().trim();
     }
 
     public Xe getXeDuocChon() {
@@ -432,15 +285,6 @@ public class FrmBanGiaoXe extends JPanel {
         return value == null ? null : value.toString();
     }
 
-    public boolean xacNhanXoa(String maPhieu) {
-        return JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc muốn xóa phiếu bàn giao " + maPhieu + "?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
-    }
-
     public void thongBao(String message) {
         lblThongBao.setForeground(UIConfig.COLOR_MUTED);
         lblThongBao.setText(message);
@@ -449,16 +293,16 @@ public class FrmBanGiaoXe extends JPanel {
     public void hienThiLoi(String message) {
         lblThongBao.setForeground(UIConfig.COLOR_DANGER);
         lblThongBao.setText(message);
-        JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        FormUI.showError(message);
     }
 
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnCapNhat() { return btnCapNhat; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTaiLai() { return btnTaiLai; }
-    public JComboBox<Xe> getCboXe() { return cboXe; }
-    public JTextField getTxtTimKiem() { return txtTimKiem; }
+    public AppButton getBtnThem() { return btnThem; }
+    public AppButton getBtnCapNhat() { return btnCapNhat; }
+    public AppButton getBtnXoa() { return btnXoa; }
+    public AppButton getBtnLamMoi() { return btnLamMoi; }
+    public AppButton getBtnTaiLai() { return btnTaiLai; }
+    public AppComboBox<Xe> getCboXe() { return cboXe; }
+    public AppTextField getTxtTimKiem() { return txtTimKiem; }
     public JTable getTblBanGiao() { return tblBanGiao; }
 
     private void chonXe(String maXe) {

@@ -2,50 +2,35 @@ package gui;
 
 import controller.KhachHangController;
 import entity.KhachHang;
+import gui.AppButton.Style;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 public class FrmKhachHang extends JPanel {
     private final KhachHangController controller = new KhachHangController(this);
-    private final JTextField txtMaKH = createTextField(16);
-    private final JTextField txtHoTen = createTextField(16);
-    private final JTextField txtSoDienThoai = createTextField(16);
-    private final JTextField txtEmail = createTextField(16);
-    private final JTextField txtDiaChi = createTextField(16);
-    private final JTextField txtCongNo = createTextField(16);
-    private final JTextField txtLocMaKH = createTextField(10);
-    private final JTextField txtLocHoTen = createTextField(12);
-    private final JTextField txtLocSoDienThoai = createTextField(12);
-    private final JTextField txtLocEmail = createTextField(12);
-    private final JLabel lblThongBao = new JLabel("Sẵn sàng");
+    private final AppTextField txtMaKH = new AppTextField(16);
+    private final AppTextField txtHoTen = new AppTextField(16);
+    private final AppTextField txtSoDienThoai = new AppTextField(16);
+    private final AppTextField txtEmail = new AppTextField(16);
+    private final AppTextField txtDiaChi = new AppTextField(16);
+    private final AppTextField txtCongNo = new AppTextField(16);
+    private final AppTextField txtLocMaKH = new AppTextField(10);
+    private final AppTextField txtLocHoTen = new AppTextField(12);
+    private final AppTextField txtLocSoDienThoai = new AppTextField(12);
+    private final AppTextField txtLocEmail = new AppTextField(12);
+    private final JLabel lblThongBao = new AppLabel("Sẵn sàng", AppLabel.Style.MUTED);
     private String maKHDangChon;
 
     private final DefaultTableModel modelKhachHang = new DefaultTableModel(
@@ -55,33 +40,24 @@ public class FrmKhachHang extends JPanel {
             return false;
         }
     };
-    private final JTable tblKhachHang = new JTable(modelKhachHang);
+    private final javax.swing.JTable tblKhachHang = FormUI.createTable(modelKhachHang);
     private final TableRowSorter<DefaultTableModel> sorterKhachHang = new TableRowSorter<>(modelKhachHang);
-
-    private final JButton btnThem = createButton(
-            "Thêm mới", "/resources/icons/plus.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-    private final JButton btnCapNhat = createButton(
-            "Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
-    private final JButton btnXoa = createButton(
-            "Xóa", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
-    private final JButton btnLamMoi = createButton(
-            "Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
-    private final JButton btnTaiLai = createButton(
-            "Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
+    private final AppButton btnThem = new AppButton("Thêm mới");
+    private final AppButton btnCapNhat = new AppButton("Cập nhật", Style.SUCCESS);
+    private final AppButton btnXoa = new AppButton("Xóa", Style.DANGER);
+    private final AppButton btnLamMoi = new AppButton("Làm mới", Style.SECONDARY);
+    private final AppButton btnTaiLai = new AppButton("Tải lại", Style.SECONDARY);
 
     public FrmKhachHang() {
-        setLayout(new BorderLayout(0, 16));
-        setBackground(UIConfig.COLOR_BACKGROUND);
-        setBorder(new EmptyBorder(20, 24, 20, 24));
-
-        // Header trang
-        add(createHeaderPanel(), BorderLayout.NORTH);
+        setLayout(new BorderLayout(0, 10));
+        setOpaque(false);
 
         JPanel pnlContent = new JPanel(new BorderLayout(0, 8));
         pnlContent.setOpaque(false);
         JSplitPane splContent = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 createFormCard(),
-                createTableCard());
+                FormUI.createTableCard("Danh sách khách hàng", createSearchToolbar(),
+                        new AppScrollPane(tblKhachHang)));
         splContent.setBorder(null);
         splContent.setResizeWeight(0.38);
         splContent.setDividerSize(7);
@@ -89,107 +65,37 @@ public class FrmKhachHang extends JPanel {
         SwingUtilities.invokeLater(() -> splContent.setDividerLocation(0.38));
         pnlContent.add(splContent, BorderLayout.CENTER);
 
-        add(pnlContent, BorderLayout.CENTER);
+        add(FormUI.createPage("QUẢN LÝ KHÁCH HÀNG",
+                "Thông tin khách hàng và dữ liệu giao dịch của gara", pnlContent), BorderLayout.CENTER);
         add(createStatusPanel(), BorderLayout.SOUTH);
 
         txtMaKH.setEditable(false);
         txtCongNo.setEditable(false);
         txtCongNo.setFocusable(false);
-
-        // Style bảng
-        tblKhachHang.setFont(UIConfig.FONT_REGULAR);
-        tblKhachHang.setForeground(UIConfig.COLOR_TEXT);
-        tblKhachHang.setRowHeight(30);
-        tblKhachHang.setGridColor(UIConfig.COLOR_TABLE_GRID);
-        tblKhachHang.setSelectionBackground(UIConfig.COLOR_SELECTION);
-        tblKhachHang.setSelectionForeground(UIConfig.COLOR_TEXT);
         tblKhachHang.setRowSorter(sorterKhachHang);
         tblKhachHang.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblKhachHang.setFillsViewportHeight(true);
-
-        tblKhachHang.getTableHeader().setFont(UIConfig.FONT_BOLD);
-        tblKhachHang.getTableHeader().setForeground(UIConfig.COLOR_TITLE);
-        tblKhachHang.getTableHeader().setBackground(UIConfig.COLOR_TABLE_HEADER);
-        tblKhachHang.getTableHeader().setPreferredSize(new Dimension(0, 34));
-
-        lblThongBao.setFont(UIConfig.FONT_REGULAR);
-        lblThongBao.setForeground(UIConfig.COLOR_MUTED);
-
         controller.khoiTao();
     }
 
-    private JPanel createHeaderPanel() {
-        JPanel pnlHeading = new JPanel(new BorderLayout(0, 4));
-        pnlHeading.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("QUẢN LÝ KHÁCH HÀNG");
-        lblTitle.setFont(UIConfig.FONT_TITLE);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-
-        JLabel lblSubtitle = new JLabel("Thông tin khách hàng và dữ liệu giao dịch của gara");
-        lblSubtitle.setFont(UIConfig.FONT_REGULAR);
-        lblSubtitle.setForeground(UIConfig.COLOR_MUTED);
-
-        pnlHeading.add(lblTitle, BorderLayout.NORTH);
-        pnlHeading.add(lblSubtitle, BorderLayout.CENTER);
-        return pnlHeading;
-    }
-
     private JPanel createFormCard() {
-        JPanel pnlCard = createCardPanel();
-        pnlCard.setLayout(new BorderLayout(0, 12));
+        AppPanel pnlCard = FormUI.createCard();
+        JPanel pnlFields = FormUI.createFieldsPanel();
+        FormUI.addField(pnlFields, "Mã khách hàng *", txtMaKH, 0, 0);
+        FormUI.addField(pnlFields, "Họ và tên *", txtHoTen, 2, 0);
+        FormUI.addField(pnlFields, "Số điện thoại *", txtSoDienThoai, 4, 0);
+        FormUI.addField(pnlFields, "Email", txtEmail, 0, 1);
+        FormUI.addField(pnlFields, "Địa chỉ", txtDiaChi, 2, 1);
+        FormUI.addField(pnlFields, "Công nợ", txtCongNo, 4, 1);
 
-        JLabel lblSection = new JLabel("Thông tin khách hàng");
-        lblSection.setFont(UIConfig.FONT_SECTION);
-        lblSection.setForeground(UIConfig.COLOR_TITLE);
-        pnlCard.add(lblSection, BorderLayout.NORTH);
+        btnThem.setPreferredSize(new Dimension(100, btnThem.getPreferredSize().height));
+        btnCapNhat.setPreferredSize(new Dimension(100, btnCapNhat.getPreferredSize().height));
+        btnXoa.setPreferredSize(new Dimension(100, btnXoa.getPreferredSize().height));
+        btnLamMoi.setPreferredSize(new Dimension(100, btnLamMoi.getPreferredSize().height));
 
-        JPanel pnlFields = new JPanel(new GridBagLayout());
-        pnlFields.setOpaque(false);
-        addField(pnlFields, "Mã khách hàng *", txtMaKH, 0, 0);
-        addField(pnlFields, "Họ và tên *", txtHoTen, 2, 0);
-        addField(pnlFields, "Số điện thoại *", txtSoDienThoai, 4, 0);
-        addField(pnlFields, "Email", txtEmail, 0, 1);
-        addField(pnlFields, "Địa chỉ", txtDiaChi, 2, 1);
-        addField(pnlFields, "Công nợ", txtCongNo, 4, 1);
-
-        JPanel pnlButtons = new JPanel(new GridBagLayout());
-        pnlButtons.setOpaque(false);
-        JButton[] buttons = { btnThem, btnCapNhat, btnXoa, btnLamMoi };
-        for (int i = 0; i < buttons.length; i++) {
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = i;
-            gbc.gridy = 0;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.insets = new Insets(0, 0, 0, 8);
-            pnlButtons.add(buttons[i], gbc);
-        }
-
+        pnlCard.add(FormUI.createSectionTitle("Thông tin khách hàng"), BorderLayout.NORTH);
         pnlCard.add(pnlFields, BorderLayout.CENTER);
-        pnlCard.add(pnlButtons, BorderLayout.SOUTH);
-        return pnlCard;
-    }
-
-    private JPanel createTableCard() {
-        JPanel pnlCard = createCardPanel();
-        pnlCard.setLayout(new BorderLayout(0, 10));
-
-        JPanel pnlHeader = new JPanel(new BorderLayout(12, 0));
-        pnlHeader.setOpaque(false);
-
-        JLabel lblTitle = new JLabel("Danh sách khách hàng");
-        lblTitle.setFont(UIConfig.FONT_SECTION);
-        lblTitle.setForeground(UIConfig.COLOR_TITLE);
-        pnlHeader.add(lblTitle, BorderLayout.WEST);
-
-        pnlHeader.add(createSearchToolbar(), BorderLayout.EAST);
-        pnlCard.add(pnlHeader, BorderLayout.NORTH);
-
-        JScrollPane scrTable = new JScrollPane(tblKhachHang);
-        scrTable.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        scrTable.getViewport().setBackground(UIConfig.COLOR_SURFACE);
-        pnlCard.add(scrTable, BorderLayout.CENTER);
-
+        pnlCard.add(FormUI.createButtonRow(btnThem, btnCapNhat, btnXoa, btnLamMoi), BorderLayout.SOUTH);
         return pnlCard;
     }
 
@@ -207,13 +113,10 @@ public class FrmKhachHang extends JPanel {
         return pnlSearch;
     }
 
-    private JPanel createSearchField(String labelText, JTextField txtField) {
+    private JPanel createSearchField(String labelText, AppTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
-        JLabel lblField = new JLabel(labelText);
-        lblField.setFont(UIConfig.FONT_REGULAR);
-        lblField.setForeground(UIConfig.COLOR_MUTED);
-        pnlField.add(lblField, BorderLayout.NORTH);
+        pnlField.add(new AppLabel(labelText, AppLabel.Style.MUTED), BorderLayout.NORTH);
         pnlField.add(txtField, BorderLayout.CENTER);
         return pnlField;
     }
@@ -225,123 +128,54 @@ public class FrmKhachHang extends JPanel {
         return pnlStatus;
     }
 
-    private JPanel createCardPanel() {
-        JPanel card = new JPanel();
-        card.setBackground(UIConfig.COLOR_SURFACE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(14, 16, 14, 16)));
-        return card;
-    }
-
-    private JTextField createTextField(int columns) {
-        JTextField tf = new JTextField(columns);
-        tf.setFont(UIConfig.FONT_REGULAR);
-        tf.setForeground(UIConfig.COLOR_TEXT);
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1),
-                new EmptyBorder(6, 8, 6, 8)));
-        return tf;
-    }
-
-    private JButton createButton(String text, String iconPath, Color background, Color foreground) {
-        JButton btn = new JButton(text);
-        btn.setFont(UIConfig.FONT_BOLD);
-        btn.setBackground(background);
-        btn.setForeground(foreground);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(8, 14, 8, 14));
-
-        ImageIcon icon = getScaledIcon(iconPath, 16, 16);
-        if (icon != null) {
-            btn.setIcon(icon);
-            btn.setIconTextGap(6);
-        }
-        return btn;
-    }
-
-    private ImageIcon getScaledIcon(String path, int width, int height) {
-        try {
-            java.net.URL url = getClass().getResource(path);
-            if (url != null) {
-                ImageIcon originalIcon = new ImageIcon(url);
-                Image img = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                return new ImageIcon(img);
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
-    }
-
-    private void addField(JPanel pnlFields, String labelText, Component component, int col, int row) {
-        GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = col;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.WEST;
-        gbcLabel.insets = new Insets(5, 0, 5, 8);
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(UIConfig.FONT_REGULAR);
-        lbl.setForeground(UIConfig.COLOR_TEXT);
-        pnlFields.add(lbl, gbcLabel);
-
-        GridBagConstraints gbcInput = new GridBagConstraints();
-        gbcInput.gridx = col + 1;
-        gbcInput.gridy = row;
-        gbcInput.weightx = 1.0;
-        gbcInput.fill = GridBagConstraints.HORIZONTAL;
-        gbcInput.insets = new Insets(5, 0, 5, 18);
-        pnlFields.add(component, gbcInput);
-    }
-
     public boolean validateForm() {
         if (!FormValidator.isValidIdentifier(txtMaKH.getText().trim())) {
-            hienThiLoi("Mã khách hàng không được để trống và chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới.");
+            FormUI.showError("Mã khách hàng không được để trống và chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới.");
             txtMaKH.requestFocus();
             return false;
         }
         if (!FormValidator.isWithinMaxLength(txtMaKH.getText().trim(), 20)) {
-            hienThiLoi("Mã khách hàng không được vượt quá 20 ký tự.");
+            FormUI.showError("Mã khách hàng không được vượt quá 20 ký tự.");
             txtMaKH.requestFocus();
             return false;
         }
         if (!FormValidator.isValidFullName(txtHoTen.getText().trim())) {
-            hienThiLoi("Họ và tên không hợp lệ.");
+            FormUI.showError("Họ và tên không hợp lệ.");
             txtHoTen.requestFocus();
             return false;
         }
         if (!FormValidator.isWithinMaxLength(txtHoTen.getText().trim(), 100)) {
-            hienThiLoi("Họ và tên không được vượt quá 100 ký tự.");
+            FormUI.showError("Họ và tên không được vượt quá 100 ký tự.");
             txtHoTen.requestFocus();
             return false;
         }
         if (txtSoDienThoai.getText().trim().isEmpty()) {
-            hienThiLoi("Số điện thoại không được để trống.");
+            FormUI.showError("Số điện thoại không được để trống.");
             txtSoDienThoai.requestFocus();
             return false;
         }
         if (!FormValidator.isValidOptionalPhoneNumber(txtSoDienThoai.getText().trim())) {
-            hienThiLoi("Số điện thoại phải có định dạng Việt Nam, ví dụ 0912345678 hoặc +84912345678.");
+            FormUI.showError("Số điện thoại phải có định dạng Việt Nam, ví dụ 0912345678 hoặc +84912345678.");
             txtSoDienThoai.requestFocus();
             return false;
         }
         if (!FormValidator.isWithinMaxLength(txtSoDienThoai.getText().trim(), 15)) {
-            hienThiLoi("Số điện thoại không được vượt quá 15 ký tự.");
+            FormUI.showError("Số điện thoại không được vượt quá 15 ký tự.");
             txtSoDienThoai.requestFocus();
             return false;
         }
         if (!FormValidator.isValidOptionalEmail(txtEmail.getText().trim())) {
-            hienThiLoi("Email không hợp lệ.");
+            FormUI.showError("Email không hợp lệ.");
             txtEmail.requestFocus();
             return false;
         }
         if (!FormValidator.isWithinMaxLength(txtEmail.getText().trim(), 100)) {
-            hienThiLoi("Email không được vượt quá 100 ký tự.");
+            FormUI.showError("Email không được vượt quá 100 ký tự.");
             txtEmail.requestFocus();
             return false;
         }
         if (!FormValidator.isWithinMaxLength(txtDiaChi.getText().trim(), 255)) {
-            hienThiLoi("Địa chỉ không được vượt quá 255 ký tự.");
+            FormUI.showError("Địa chỉ không được vượt quá 255 ký tự.");
             txtDiaChi.requestFocus();
             return false;
         }
@@ -432,22 +266,23 @@ public class FrmKhachHang extends JPanel {
         return maKHDangChon;
     }
 
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnCapNhat() { return btnCapNhat; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTaiLai() { return btnTaiLai; }
-    public JTable getTblKhachHang() { return tblKhachHang; }
-    public JTextField getTxtLocMaKH() { return txtLocMaKH; }
-    public JTextField getTxtLocHoTen() { return txtLocHoTen; }
-    public JTextField getTxtLocSoDienThoai() { return txtLocSoDienThoai; }
-    public JTextField getTxtLocEmail() { return txtLocEmail; }
+    public AppButton getBtnThem() { return btnThem; }
+    public AppButton getBtnCapNhat() { return btnCapNhat; }
+    public AppButton getBtnXoa() { return btnXoa; }
+    public AppButton getBtnLamMoi() { return btnLamMoi; }
+    public AppButton getBtnTaiLai() { return btnTaiLai; }
+    public javax.swing.JTable getTblKhachHang() { return tblKhachHang; }
+    public AppTextField getTxtLocMaKH() { return txtLocMaKH; }
+    public AppTextField getTxtLocHoTen() { return txtLocHoTen; }
+    public AppTextField getTxtLocSoDienThoai() { return txtLocSoDienThoai; }
+    public AppTextField getTxtLocEmail() { return txtLocEmail; }
 
     public void hienThiLoi(String noiDung) {
-        JOptionPane.showMessageDialog(this, noiDung, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        FormUI.showError(noiDung);
     }
 
     public void thongBaoThanhCong(String noiDung, String tieuDe) {
-        JOptionPane.showMessageDialog(this, noiDung, tieuDe, JOptionPane.INFORMATION_MESSAGE);
+        javax.swing.JOptionPane.showMessageDialog(this, noiDung, tieuDe, javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
+
 }

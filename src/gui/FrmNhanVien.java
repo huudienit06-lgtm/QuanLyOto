@@ -8,11 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -21,20 +19,20 @@ import javax.swing.SwingUtilities;
 
 public class FrmNhanVien extends JPanel {
     private final NhanVienController controller = new NhanVienController(this);
-    private final javax.swing.JTextField txtMaNV = new javax.swing.JTextField(16);
-    private final javax.swing.JTextField txtHoTen = new javax.swing.JTextField(16);
-    private final javax.swing.JTextField txtSoDienThoai = new javax.swing.JTextField(16);
-    private final javax.swing.JTextField txtEmail = new javax.swing.JTextField(16);
-    private final javax.swing.JTextField txtLocMaNV = new javax.swing.JTextField(10);
-    private final javax.swing.JTextField txtLocHoTen = new javax.swing.JTextField(12);
-    private final javax.swing.JTextField txtLocSoDienThoai = new javax.swing.JTextField(12);
-    private final javax.swing.JTextField txtLocEmail = new javax.swing.JTextField(12);
-    private final JLabel lblThongBao = new JLabel("Sẵn sàng");
-    private final javax.swing.JComboBox<String> cboChucVu = new javax.swing.JComboBox<>();
-    private final javax.swing.JComboBox<String> cboTrangThai = new javax.swing.JComboBox<>();
+    private final AppTextField txtMaNV = new AppTextField(16);
+    private final AppTextField txtHoTen = new AppTextField(16);
+    private final AppTextField txtSoDienThoai = new AppTextField(16);
+    private final AppTextField txtEmail = new AppTextField(16);
+    private final AppTextField txtLocMaNV = new AppTextField(10);
+    private final AppTextField txtLocHoTen = new AppTextField(12);
+    private final AppTextField txtLocSoDienThoai = new AppTextField(12);
+    private final AppTextField txtLocEmail = new AppTextField(12);
+    private final JLabel lblThongBao = new AppLabel("Sẵn sàng", AppLabel.Style.MUTED);
+    private final AppComboBox<String> cboChucVu = new AppComboBox<>();
+    private final AppComboBox<String> cboTrangThai = new AppComboBox<>();
     private String maNVDangChon;
     private final DefaultTableModel modelNhanVien = new DefaultTableModel(
-            new Object[] { "Mã nhân viên", "Họ và tên", "Chức vụ", "Số điện thoại", "Email", "Trạng thái" }, 0) {
+            new Object[] {"Mã nhân viên", "Họ và tên", "Chức vụ", "Số điện thoại", "Email", "Trạng thái"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -42,11 +40,11 @@ public class FrmNhanVien extends JPanel {
     };
     private final javax.swing.JTable tblNhanVien = FormUI.createTable(modelNhanVien);
     private final TableRowSorter<DefaultTableModel> sorterNhanVien = new TableRowSorter<>(modelNhanVien);
-    private final JButton btnThem = new JButton("Thêm nhân viên");
-    private final JButton btnCapNhat = new JButton("Cập nhật");
-    private final JButton btnXoa = new JButton("Xóa");
-    private final JButton btnLamMoi = new JButton("Làm mới");
-    private final JButton btnTaiLai = new JButton("Tải lại");
+    private final AppButton btnThem = new AppButton("Thêm nhân viên");
+    private final AppButton btnCapNhat = new AppButton("Cập nhật", AppButton.Style.SUCCESS);
+    private final AppButton btnXoa = new AppButton("Xóa", AppButton.Style.DANGER);
+    private final AppButton btnLamMoi = new AppButton("Làm mới", AppButton.Style.SECONDARY);
+    private final AppButton btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
 
     public FrmNhanVien() {
         setLayout(new BorderLayout(0, 10));
@@ -74,7 +72,7 @@ public class FrmNhanVien extends JPanel {
         tblNhanVien.setRowHeight(30);
         tblNhanVien.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         tblNhanVien.setFillsViewportHeight(true);
-        int[] doRongCot = { 105, 180, 145, 145, 220, 140 };
+        int[] doRongCot = {105, 180, 145, 145, 220, 140};
         for (int cot = 0; cot < doRongCot.length; cot++) {
             tblNhanVien.getColumnModel().getColumn(cot).setPreferredWidth(doRongCot[cot]);
         }
@@ -95,12 +93,12 @@ public class FrmNhanVien extends JPanel {
         return pnlSearch;
     }
 
-    private JPanel createSearchField(String labelText, JTextField txtLocMaNV2) {
+    private JPanel createSearchField(String labelText, AppTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
         JLabel lblField = new AppLabel(labelText, AppLabel.Style.MUTED);
         pnlField.add(lblField, BorderLayout.NORTH);
-        pnlField.add(txtLocMaNV2, BorderLayout.CENTER);
+        pnlField.add(txtField, BorderLayout.CENTER);
         return pnlField;
     }
 
@@ -123,9 +121,9 @@ public class FrmNhanVien extends JPanel {
         FormUI.addField(pnlFields, "Trạng thái", cboTrangThai, 4, 1);
 
         cboChucVu.setModel(new DefaultComboBoxModel<>(
-                new String[] { "Chọn chức vụ", "Quản lý", "Cố vấn dịch vụ", "Lễ tân", "Kỹ thuật viên", "Thu ngân" }));
+                new String[] {"Chọn chức vụ", "Quản lý", "Cố vấn dịch vụ", "Lễ tân", "Kỹ thuật viên", "Thu ngân"}));
         cboTrangThai.setModel(new DefaultComboBoxModel<>(
-                new String[] { "Đang làm việc", "Tạm nghỉ", "Đã nghỉ việc" }));
+                new String[] {"Đang làm việc", "Tạm nghỉ", "Đã nghỉ việc"}));
 
         JPanel pnlButtons = FormUI.createButtonRow(btnThem, btnCapNhat, btnXoa, btnLamMoi);
         pnlCard.add(FormUI.createSectionTitle("Thông tin nhân viên"), BorderLayout.NORTH);
@@ -133,13 +131,12 @@ public class FrmNhanVien extends JPanel {
         pnlCard.add(pnlButtons, BorderLayout.SOUTH);
         return pnlCard;
     }
-
     public boolean validateForm() {
         String maNV = txtMaNV.getText().trim();
         String hoTen = txtHoTen.getText().trim();
         String soDienThoai = txtSoDienThoai.getText().trim();
         String email = txtEmail.getText().trim();
-        String chucVu = (String) cboChucVu.getSelectedItem();
+        String chucVu  = (String) cboChucVu.getSelectedItem();
         String trangThai = (String) cboTrangThai.getSelectedItem();
 
         if (!FormValidator.isValidIdentifier(maNV)) {
@@ -296,45 +293,16 @@ public class FrmNhanVien extends JPanel {
         return maNVDangChon;
     }
 
-    public AppButton getBtnThem() {
-        return btnThem;
-    }
-
-    public AppButton getBtnCapNhat() {
-        return btnCapNhat;
-    }
-
-    public AppButton getBtnXoa() {
-        return btnXoa;
-    }
-
-    public AppButton getBtnLamMoi() {
-        return btnLamMoi;
-    }
-
-    public AppButton getBtnTaiLai() {
-        return btnTaiLai;
-    }
-
-    public javax.swing.JTable getTblNhanVien() {
-        return tblNhanVien;
-    }
-
-    public AppTextField getTxtLocMaNV() {
-        return txtLocMaNV;
-    }
-
-    public AppTextField getTxtLocHoTen() {
-        return txtLocHoTen;
-    }
-
-    public AppTextField getTxtLocSoDienThoai() {
-        return txtLocSoDienThoai;
-    }
-
-    public AppTextField getTxtLocEmail() {
-        return txtLocEmail;
-    }
+    public AppButton getBtnThem() { return btnThem; }
+    public AppButton getBtnCapNhat() { return btnCapNhat; }
+    public AppButton getBtnXoa() { return btnXoa; }
+    public AppButton getBtnLamMoi() { return btnLamMoi; }
+    public AppButton getBtnTaiLai() { return btnTaiLai; }
+    public javax.swing.JTable getTblNhanVien() { return tblNhanVien; }
+    public AppTextField getTxtLocMaNV() { return txtLocMaNV; }
+    public AppTextField getTxtLocHoTen() { return txtLocHoTen; }
+    public AppTextField getTxtLocSoDienThoai() { return txtLocSoDienThoai; }
+    public AppTextField getTxtLocEmail() { return txtLocEmail; }
 
     public void hienThiLoi(String noiDung) {
         FormUI.showError(noiDung);

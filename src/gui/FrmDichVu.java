@@ -1,33 +1,11 @@
 package gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
+import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
@@ -54,24 +32,20 @@ public class FrmDichVu extends JPanel {
     private final JLabel lblThongBao = new JLabel("Sẵn sàng");
 
     private final DefaultTableModel modelDichVu = new DefaultTableModel(
-            new Object[] {
-                    "MÃ DỊCH VỤ",
-                    "TÊN DỊCH VỤ",
-                    "GIÁ TIỀN",
-                    "MÔ TẢ"
-            },
-            0);
+            new Object[] { "MÃ DỊCH VỤ", "TÊN DỊCH VỤ", "GIÁ TIỀN", "MÔ TẢ" }, 0);
     private final JTable tblDichVu = new JTable(modelDichVu);
 
     private JButton btnAdd = new JButton();
     private JButton btnUpdate = new JButton();
     private JButton btnDel = new JButton();
-    private JButton btnReset = new JButton();
-    private JButton btnTaiLai;
+    private JButton btnReset;
+    private AppButton btnTaiLai;
 
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
-
     private final TableRowSorter<DefaultTableModel> sortedDichVu = new TableRowSorter<>(modelDichVu);
+
+    // [MVC] Khởi tạo Controller điều phối
+    private final DichVuController controller = new DichVuController(this);
 
     public FrmDichVu() {
         setLayout(new BorderLayout(0, 18));
@@ -91,25 +65,21 @@ public class FrmDichVu extends JPanel {
         tblDichVu.getTableHeader().setForeground(new Color(32, 55, 92));
         tblDichVu.getTableHeader().setBackground(new Color(239, 245, 253));
         tblDichVu.getTableHeader().setPreferredSize(new Dimension(0, 34));
+        
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tblDichVu.getColumnModel().getColumn(2).setCellRenderer(renderer);
-        tblDichVu.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && tblDichVu.getSelectedRow() >= 0) {
-                hienThiDichVuDaChon();
-            }
-        });
-        new DichVuController(this).taiDuLieuBanDau();
+        
+        // [MVC] Kích hoạt sự kiện từ Controller
+        controller.khoiTao();
     }
 
     private JPanel createHeading() {
         JPanel pnlHeading = new JPanel(new BorderLayout());
         pnlHeading.setOpaque(false);
-
         JLabel lblTitle = new JLabel("QUẢN LÝ DỊCH VỤ");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 23));
         lblTitle.setForeground(new Color(32, 55, 92));
-
         pnlHeading.add(lblTitle, BorderLayout.NORTH);
         return pnlHeading;
     }
@@ -118,14 +88,8 @@ public class FrmDichVu extends JPanel {
         JPanel pnlContent = new JPanel(new BorderLayout(0, 14));
         pnlContent.setOpaque(false);
         pnlContent.add(createFormPanel(), BorderLayout.NORTH);
-        pnlContent.add(
-                FormUI.createTableCard(
-                        "Danh sách dịch vụ",
-                        createSearchToolbar(),
-                        new JScrollPane(tblDichVu)),
-                BorderLayout.CENTER);
+        pnlContent.add(FormUI.createTableCard("Danh sách dịch vụ", createSearchToolbar(), new AppScrollPane(tblDichVu)), BorderLayout.CENTER);
         return pnlContent;
-
     }
 
     private JPanel createFormPanel() {
@@ -146,27 +110,12 @@ public class FrmDichVu extends JPanel {
 
         JPanel pnlButtons = new JPanel(new GridBagLayout());
         pnlButtons.setOpaque(false);
-        btnAdd = createButton(
-                "Thêm mới",
-                new ImageIcon(getClass().getResource("/resources/icons/plus.png")),
-                new Color(0x33cc33),
-                new Color(0xffffff));
+        
+        btnAdd = createButton("Thêm mới", new ImageIcon(getClass().getResource("/resources/icons/plus.png")), new Color(0x33cc33), new Color(0xffffff));
+        btnUpdate = createButton("Cập nhật", new ImageIcon(getClass().getResource("/resources/icons/update.png")), new Color(0x3366cc), new Color(0xffffff));
+        btnDel = createButton("Xóa", new ImageIcon(getClass().getResource("/resources/icons/trash.png")), new Color(0xff0033), new Color(0xffffff));
+        btnReset = createButton("Làm mới", new ImageIcon(getClass().getResource("/resources/icons/reset.png")), new Color(0x555555), new Color(0xffffff));
 
-        btnUpdate = createButton(
-                "Cập nhật",
-                new ImageIcon(getClass().getResource("/resources/icons/update.png")),
-                new Color(0x3366cc),
-                new Color(0xffffff));
-        btnDel = createButton(
-                "Xóa",
-                new ImageIcon(getClass().getResource("/resources/icons/trash.png")),
-                new Color(0xff0033),
-                new Color(0xffffff));
-        btnReset = createButton(
-                "Làm mới",
-                new ImageIcon(getClass().getResource("/resources/icons/reset.png")),
-                new Color(0x555555),
-                new Color(0xffffff));
         pnlButtons.add(btnAdd, buttonConstraints(0));
         pnlButtons.add(btnUpdate, buttonConstraints(1));
         pnlButtons.add(btnDel, buttonConstraints(2));
@@ -198,29 +147,20 @@ public class FrmDichVu extends JPanel {
         pnlLoc.setOpaque(false);
         pnlLoc.add(createSearchField("Mã dịch vụ", txtLocMaDichVu));
         pnlLoc.add(createSearchField("Tên dịch vụ", txtLocTenDichVu));
-        btnTaiLai = new JButton("Tải lại");
-        btnTaiLai.setFont(UIConfig.FONT_BOLD);
-        btnTaiLai.setBackground(UIConfig.COLOR_SECONDARY);
-        btnTaiLai.setForeground(UIConfig.COLOR_TEXT);
-        btnTaiLai.setOpaque(true);
-        btnTaiLai.setBorderPainted(false);
-        btnTaiLai.setFocusPainted(false);
-        btnTaiLai.setMargin(new Insets(6, 14, 6, 14));
-        btnTaiLai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        btnTaiLai = new AppButton("Tải lại", AppButton.Style.SECONDARY);
         pnlSearch.add(pnlLoc, BorderLayout.CENTER);
         pnlSearch.add(btnTaiLai, BorderLayout.EAST);
+        
         themBoLangNghe(txtLocMaDichVu);
         themBoLangNghe(txtLocTenDichVu);
-
         return pnlSearch;
     }
 
     private JPanel createSearchField(String labelText, JTextField txtField) {
         JPanel pnlField = new JPanel(new BorderLayout(0, 3));
         pnlField.setOpaque(false);
-        JLabel lblField = new JLabel(labelText);
-        lblField.setFont(UIConfig.FONT_REGULAR);
-        lblField.setForeground(UIConfig.COLOR_MUTED);
+        JLabel lblField = new AppLabel(labelText, AppLabel.Style.MUTED);
         pnlField.add(lblField, BorderLayout.NORTH);
         pnlField.add(txtField, BorderLayout.CENTER);
         return pnlField;
@@ -228,30 +168,18 @@ public class FrmDichVu extends JPanel {
 
     private void themBoLangNghe(JTextField txtField) {
         txtField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent event) {
-                locDanhSachDichVu();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent event) {
-                locDanhSachDichVu();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent event) {
-                locDanhSachDichVu();
-            }
+            @Override public void insertUpdate(DocumentEvent event) { locDanhSachDichVu(); }
+            @Override public void removeUpdate(DocumentEvent event) { locDanhSachDichVu(); }
+            @Override public void changedUpdate(DocumentEvent event) { locDanhSachDichVu(); }
         });
     }
 
-    private void locDanhSachDichVu() {
+    public void locDanhSachDichVu() {
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
         themBoLoc(filters, txtLocMaDichVu.getText(), 0);
         themBoLoc(filters, txtLocTenDichVu.getText(), 1);
         sortedDichVu.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
-        lblThongBao
-                .setText("Hiển thị " + sortedDichVu.getViewRowCount() + " / " + modelDichVu.getRowCount() + " dịch vụ");
+        lblThongBao.setText("Hiển thị " + sortedDichVu.getViewRowCount() + " / " + modelDichVu.getRowCount() + " dịch vụ");
     }
 
     private void themBoLoc(List<RowFilter<Object, Object>> filters, String value, int column) {
@@ -263,75 +191,48 @@ public class FrmDichVu extends JPanel {
 
     private void addField(JPanel pnlFields, String label, Component component, int column, int row) {
         GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = column;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.WEST;
-        gbcLabel.insets = new Insets(5, 0, 5, 8);
+        gbcLabel.gridx = column; gbcLabel.gridy = row; gbcLabel.anchor = GridBagConstraints.WEST; gbcLabel.insets = new Insets(5, 0, 5, 8);
         JLabel lblField = new JLabel(label);
-        lblField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblField.setForeground(TEXT);
+        lblField.setFont(new Font("Segoe UI", Font.PLAIN, 12)); lblField.setForeground(TEXT);
         pnlFields.add(lblField, gbcLabel);
 
         GridBagConstraints gbcInput = new GridBagConstraints();
-        gbcInput.gridx = column + 1;
-        gbcInput.gridy = row;
-        gbcInput.weightx = 1;
-        gbcInput.fill = GridBagConstraints.HORIZONTAL;
-        gbcInput.insets = new Insets(5, 0, 5, 18);
+        gbcInput.gridx = column + 1; gbcInput.gridy = row; gbcInput.weightx = 1; gbcInput.fill = GridBagConstraints.HORIZONTAL; gbcInput.insets = new Insets(5, 0, 5, 18);
         if (component instanceof JTextField) {
             styleTextField((JTextField) component);
-        } else if (component instanceof JComboBox<?>) {
-            component.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         }
         pnlFields.add(component, gbcInput);
     }
 
     private JButton createButton(String text, ImageIcon icon, Color background, Color foreground) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBackground(background);
-        btn.setForeground(foreground);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12)); btn.setBackground(background); btn.setForeground(foreground);
         Image image = icon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
-        btn.setIcon(new ImageIcon(image));
-        btn.setIconTextGap(3);
-        btn.setFocusPainted(false);
-        btn.setBorder(new EmptyBorder(8, 13, 8, 13));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setIcon(new ImageIcon(image)); btn.setIconTextGap(3); btn.setFocusPainted(false);
+        btn.setBorder(new EmptyBorder(8, 13, 8, 13)); btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(130, btn.getPreferredSize().height));
-
         return btn;
     }
 
     private GridBagConstraints buttonConstraints(int column) {
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = column;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(0, 0, 0, 8);
+        gbc.gridx = column; gbc.gridy = 0; gbc.anchor = GridBagConstraints.WEST; gbc.insets = new Insets(0, 0, 0, 8);
         return gbc;
     }
 
     private void styleTextField(JTextField txtField) {
-        txtField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        txtField.setForeground(TEXT);
-        txtField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1, true),
-                new EmptyBorder(6, 9, 6, 9)));
+        txtField.setFont(new Font("Segoe UI", Font.PLAIN, 12)); txtField.setForeground(TEXT);
+        txtField.setBorder(BorderFactory.createCompoundBorder(new LineBorder(BORDER, 1, true), new EmptyBorder(6, 9, 6, 9)));
     }
 
     private JLabel createSectionTitle(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lbl.setForeground(new Color(32, 55, 92));
+        JLabel lbl = new JLabel(text); lbl.setFont(new Font("Segoe UI", Font.BOLD, 15)); lbl.setForeground(new Color(32, 55, 92));
         return lbl;
     }
 
     private JPanel createCardPanel() {
-        JPanel pnlCard = new JPanel();
-        pnlCard.setBackground(Color.WHITE);
-        pnlCard.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1, true),
-                new EmptyBorder(14, 16, 14, 16)));
+        JPanel pnlCard = new JPanel(); pnlCard.setBackground(Color.WHITE);
+        pnlCard.setBorder(BorderFactory.createCompoundBorder(new LineBorder(BORDER, 1, true), new EmptyBorder(14, 16, 14, 16)));
         return pnlCard;
     }
 
@@ -339,75 +240,57 @@ public class FrmDichVu extends JPanel {
         modelDichVu.setRowCount(0);
         for (DichVu dichVu : danhSachDichVu) {
             modelDichVu.addRow(new Object[] {
-                    dichVu.getMaDV(),
-                    dichVu.getTenDV(),
-                    df.format(dichVu.getGiaDV()),
-                    dichVu.getMoTaDV()
+                dichVu.getMaDV(), dichVu.getTenDV(), df.format(dichVu.getGiaDV()), dichVu.getMoTaDV()
             });
         }
     }
 
     public void hienThiLoi(String message) {
-        lblThongBao.setText(message);
+        setThongBao(message);
         lblThongBao.setForeground(new Color(190, 55, 55));
         JOptionPane.showMessageDialog(this, message, "Quản lý dịch vụ", JOptionPane.ERROR_MESSAGE);
     }
 
-    public DichVu layDichVuNhap() {
+    public void setThongBao(String msg) {
+        lblThongBao.setText(msg);
+        lblThongBao.setForeground(MUTED);
+    }
+
+    public DichVu docThongTinDichVu() {
         String maDV = txtMaDichVu.getText().trim();
         String tenDV = txtTenDichVu.getText().trim();
         String giaDVText = txtGiaTien.getText().trim();
 
-        if (maDV == null || maDV.isEmpty()) {
-            throw new IllegalArgumentException("Mã dịch vụ không được để trống");
-        }
-        if (tenDV == null || tenDV.isEmpty()) {
-            throw new IllegalArgumentException("Tên dịch vụ không được để trống");
-        }
+        if (maDV.isEmpty()) throw new IllegalArgumentException("Mã dịch vụ không được để trống");
+        if (tenDV.isEmpty()) throw new IllegalArgumentException("Tên dịch vụ không được để trống");
+        
         Double giaDV = null;
         if (!giaDVText.isEmpty()) {
-            try {
-                giaDV = Double.valueOf(giaDVText);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Giá tiền phải là số");
-            }
-            if (giaDV < 0) {
-                throw new IllegalArgumentException("Giá tiền không được âm");
-            }
+            try { giaDV = Double.valueOf(giaDVText.replaceAll("[^0-9]", "")); } 
+            catch (NumberFormatException e) { throw new IllegalArgumentException("Giá tiền phải là số"); }
+            if (giaDV < 0) throw new IllegalArgumentException("Giá tiền không được âm");
         }
+        
         DichVu dichVu = new DichVu();
-        dichVu.setMaDV(maDV);
-        dichVu.setTenDV(tenDV);
-        dichVu.setGiaDV(giaDV);
+        dichVu.setMaDV(maDV); dichVu.setTenDV(tenDV); dichVu.setGiaDV(giaDV);
         dichVu.setMoTaDV(giaTriRongLaNull(txtMoTa.getText()));
-
         return dichVu;
     }
 
     private String giaTriRongLaNull(String text) {
-        String trimmed = text.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        String trimmed = text.trim(); return trimmed.isEmpty() ? null : trimmed;
     }
 
-    public void lamMoiForm(String maMoi) {
-        txtMaDichVu.setText(maMoi);
-        txtTenDichVu.setText("");
-        txtGiaTien.setText("");
-        txtMoTa.setText("");
-        tblDichVu.clearSelection();
-
-        txtTenDichVu.requestFocusInWindow();
-
-        btnAdd.setEnabled(true);
-        btnUpdate.setEnabled(false);
-        btnDel.setEnabled(false);
+    public void lamMoiForm() {
+        txtMaDichVu.setText(controller.phatSinhMaDV());
+        txtTenDichVu.setText(""); txtGiaTien.setText(""); txtMoTa.setText("");
+        tblDichVu.clearSelection(); txtTenDichVu.requestFocusInWindow();
+        btnAdd.setEnabled(true); btnUpdate.setEnabled(false); btnDel.setEnabled(false);
     }
 
-    private void hienThiDichVuDaChon() {
+    public void hienThiDichVuDaChon() {
         int selectedRow = tblDichVu.getSelectedRow();
-        if (selectedRow < 0) {
-            return;
-        }
+        if (selectedRow < 0) return;
         int modelRow = tblDichVu.convertRowIndexToModel(selectedRow);
         txtMaDichVu.setText(cellText(modelDichVu.getValueAt(modelRow, 0)));
         txtTenDichVu.setText(cellText(modelDichVu.getValueAt(modelRow, 1)));
@@ -415,68 +298,20 @@ public class FrmDichVu extends JPanel {
         txtGiaTien.setText(cellText(giaStr.replaceAll("[^0-9]", "")));
         txtMoTa.setText(cellText(modelDichVu.getValueAt(modelRow, 3)));
 
-        btnAdd.setEnabled(false);
-        btnUpdate.setEnabled(true);
-        btnDel.setEnabled(true);
+        btnAdd.setEnabled(false); btnUpdate.setEnabled(true); btnDel.setEnabled(true);
     }
 
-    private String cellText(Object value) {
-        return value == null ? "" : value.toString();
-    }
+    private String cellText(Object value) { return value == null ? "" : value.toString(); }
 
-    public JButton layNutThem() {
-        return btnAdd;
-    }
-
-    public JButton layNutCapNhat() {
-        return btnUpdate;
-    }
-
-    public JButton layNutXoa() {
-        return btnDel;
-    }
-
-    public JButton layNutLamMoi() {
-        return btnReset;
-    }
-
-    public JButton layNutTaiLai() {
-        return btnTaiLai;
-    }
-
-    public String layMaDichVuNhap() {
-        return txtMaDichVu.getText().trim();
-    }
-
-    public int soLuongDichVu() {
-        return modelDichVu.getRowCount();
-    }
-
-    public void xoaBoLoc() {
-        txtLocMaDichVu.setText("");
-        txtLocTenDichVu.setText("");
-    }
-
-    public void thongBao(String message) {
-        lblThongBao.setForeground(MUTED);
-        lblThongBao.setText(message);
-    }
-
-    public void thongBaoThanhCong(String message) {
-        lblThongBao.setForeground(new Color(38, 130, 75));
-        lblThongBao.setText(message);
-    }
-
-    public void baoLoi(String tieuDe, String chiTiet) {
-        hienThiLoi(chiTiet == null || chiTiet.isBlank() ? tieuDe : tieuDe + ": " + chiTiet);
-    }
-
-    public boolean xacNhanXoa(String maDV) {
-        if (maDV.isEmpty()) {
-            baoLoi("Mã dịch vụ không được để trống", null);
-            return false;
-        }
-        return JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa dịch vụ " + maDV + "?",
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
-    }
+    // --- CÁC HÀM GETTER CHO CONTROLLER ---
+    public JButton getBtnAdd() { return btnAdd; }
+    public JButton getBtnUpdate() { return btnUpdate; }
+    public JButton getBtnDel() { return btnDel; }
+    public JButton getBtnReset() { return btnReset; }
+    public AppButton getBtnTaiLai() { return btnTaiLai; }
+    public JTable getTblDichVu() { return tblDichVu; }
+    public DefaultTableModel getModelDichVu() { return modelDichVu; }
+    public JTextField getTxtMaDichVu() { return txtMaDichVu; }
+    public JTextField getTxtLocMaDichVu() { return txtLocMaDichVu; }
+    public JTextField getTxtLocTenDichVu() { return txtLocTenDichVu; }
 }

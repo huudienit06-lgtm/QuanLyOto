@@ -73,12 +73,7 @@ public class FrmCongNo extends JPanel {
 
     // Phần 1: tìm kiếm / lọc (gọn trên một hàng)
     private JPanel dungKhungTimKiem() {
-        JPanel pnlTimKiem = new JPanel(new GridBagLayout());
-        pnlTimKiem.setBackground(UIConfig.COLOR_SURFACE);
-        pnlTimKiem.setOpaque(true);
-        pnlTimKiem.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1, true),
-                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+        JPanel pnlTimKiem = AppPanel.card(new GridBagLayout());
 
         txtTimKiem.setFont(font(Font.PLAIN, 12));
         txtTimKiem.setBorder(new CompoundBorder(new LineBorder(BORDER), new EmptyBorder(6, 9, 6, 9)));
@@ -560,20 +555,11 @@ public class FrmCongNo extends JPanel {
     }
 
     private static JScrollPane taoScr(JTable tbl) {
-        JScrollPane scr = new JScrollPane(tbl);
-        scr.setBorder(new LineBorder(UIConfig.COLOR_BORDER, 1));
-        scr.getViewport().setBackground(UIConfig.COLOR_SURFACE);
-        return scr;
+        return new AppScrollPane(tbl);
     }
 
     private static JPanel taoPnlThe() {
-        JPanel pnl = new JPanel();
-        pnl.setBackground(UIConfig.COLOR_SURFACE);
-        pnl.setOpaque(true);
-        pnl.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(UIConfig.COLOR_BORDER, 1, true),
-                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
-        return pnl;
+        return FormUI.createCard();
     }
 
     private static JLabel taoTieuMuc(String chu) {
