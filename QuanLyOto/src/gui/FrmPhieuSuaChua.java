@@ -821,6 +821,32 @@ public class FrmPhieuSuaChua extends JPanel {
     public void hienThiChiTiet(List<ChiTietPhieuSuaChua> danhSach,
             Map<String, PhuTung> phuTungTheoMa, Map<String, DichVu> dichVuTheoMa) {
         modelChiTiet.setRowCount(0);
+        hienThiChiTietNoiBo(danhSach, phuTungTheoMa, dichVuTheoMa);
+        lblThongBao.setText("Đã tải " + danhSach.size() + " chi tiết");
+    }
+
+    public void hienThiChiTietChoTaoPhieu(List<ChiTietPhieuSuaChua> danhSach) {
+        Map<String, PhuTung> phuTungTheoMa = new HashMap<>();
+        Map<String, DichVu> dichVuTheoMa = new HashMap<>();
+        for (int i = 0; i < cboPhuTung.getItemCount(); i++) {
+            PhuTung phuTung = cboPhuTung.getItemAt(i);
+            if (phuTung.getMaPhuTung() != null) {
+                phuTungTheoMa.put(phuTung.getMaPhuTung(), phuTung);
+            }
+        }
+        for (int i = 0; i < cboMaDichVu.getItemCount(); i++) {
+            DichVu dichVu = cboMaDichVu.getItemAt(i);
+            if (dichVu.getMaDV() != null) {
+                dichVuTheoMa.put(dichVu.getMaDV(), dichVu);
+            }
+        }
+        modelChiTiet.setRowCount(0);
+        hienThiChiTietNoiBo(danhSach, phuTungTheoMa, dichVuTheoMa);
+        lblThongBao.setText("Đang có " + danhSach.size() + " chi tiết chờ tạo phiếu");
+    }
+
+    private void hienThiChiTietNoiBo(List<ChiTietPhieuSuaChua> danhSach,
+            Map<String, PhuTung> phuTungTheoMa, Map<String, DichVu> dichVuTheoMa) {
         for (ChiTietPhieuSuaChua chiTiet : danhSach) {
             BigDecimal donGia = chiTiet.getDonGia() == null ? BigDecimal.ZERO : chiTiet.getDonGia();
             int soLuong = chiTiet.getSoLuong() == null ? 1 : chiTiet.getSoLuong();
@@ -831,10 +857,14 @@ public class FrmPhieuSuaChua extends JPanel {
                     phuTung == null ? "" : phuTung.getTenPhuTung(), chiTiet.getMaDV(),
                     dichVu == null ? "" : dichVu.getTenDV(), soLuong, donGia, thanhTien });
         }
-        lblThongBao.setText("Đã tải " + danhSach.size() + " chi tiết");
     }
 
     public void lamMoiFormChiTiet() {
+        modelChiTiet.setRowCount(0);
+        lamMoiNhapChiTiet();
+    }
+
+    public void lamMoiNhapChiTiet() {
         if (cboMaDichVu.getItemCount() > 0) {
             cboMaDichVu.setSelectedIndex(0);
         }
@@ -888,7 +918,13 @@ public class FrmPhieuSuaChua extends JPanel {
         if (selectedRow < 0)
             return null;
         int modelRow = tblChiTietCongViec.convertRowIndexToModel(selectedRow);
-        return Long.valueOf(modelChiTiet.getValueAt(modelRow, 0).toString());
+        Object maChiTiet = modelChiTiet.getValueAt(modelRow, 0);
+        return maChiTiet == null ? null : Long.valueOf(maChiTiet.toString());
+    }
+
+    public int layDongChiTietDangChon() {
+        int selectedRow = tblChiTietCongViec.getSelectedRow();
+        return selectedRow < 0 ? -1 : tblChiTietCongViec.convertRowIndexToModel(selectedRow);
     }
 
     public boolean xacNhanXoaPhieu(String maPSC) {
@@ -906,7 +942,7 @@ public class FrmPhieuSuaChua extends JPanel {
             baoLoi("Mã phiếu sửa chữa không được để trống", null);
             return false;
         }
-        if (layMaChiTietDangChon() == null) {
+        if (layDongChiTietDangChon() < 0) {
             baoLoi("Hãy chọn chi tiết cần xóa trong bảng", null);
             return false;
         }
