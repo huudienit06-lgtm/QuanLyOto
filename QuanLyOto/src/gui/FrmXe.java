@@ -363,17 +363,27 @@ public class FrmXe extends JPanel {
                 timKhachHangTheoThongTinNhap();
             }
         });
+        txtKhachHang.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                if (khachHangDuocChon != null) {
+                    batDauTimKhachHang();
+                }
+            }
+        });
         txtKhachHang.addActionListener(event -> chonKhachHangNeuDuyNhat());
         txtKhachHang.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent event) {
-                timKhachHangTheoThongTinNhap();
+                if (khachHangDuocChon == null) {
+                    timKhachHangTheoThongTinNhap();
+                }
             }
 
             @Override
             public void focusLost(FocusEvent event) {
                 SwingUtilities.invokeLater(() -> {
-                    if (!txtKhachHang.isFocusOwner()) {
+                    if (!txtKhachHang.isFocusOwner() && !conTroDangTrenGoiYKhachHang()) {
                         anGoiYKhachHang();
                     }
                 });
@@ -565,13 +575,29 @@ public class FrmXe extends JPanel {
         }
     }
 
+    private boolean conTroDangTrenGoiYKhachHang() {
+        return wndGoiYKhachHang != null
+                && wndGoiYKhachHang.isVisible()
+                && wndGoiYKhachHang.getMousePosition(true) != null;
+    }
+
     private void chonKhachHang(KhachHang khachHang) {
         khachHangDuocChon = khachHang;
         dangCapNhatOKhachHang = true;
         txtKhachHang.setText(khachHang.getMaKH() + " - " + khachHang.getHoTen()
                 + " | " + cellText(khachHang.getSoDT()));
+        txtKhachHang.setEditable(false);
         dangCapNhatOKhachHang = false;
         anGoiYKhachHang();
+    }
+
+    private void batDauTimKhachHang() {
+        khachHangDuocChon = null;
+        dangCapNhatOKhachHang = true;
+        txtKhachHang.setEditable(true);
+        txtKhachHang.setText("");
+        dangCapNhatOKhachHang = false;
+        timKhachHangTheoThongTinNhap();
     }
 
     private void chonKhachHangNeuDuyNhat() {
@@ -621,6 +647,7 @@ public class FrmXe extends JPanel {
         String maKhachHang = cellText(modelXe.getValueAt(modelRow, 7));
         khachHangDuocChon = null;
         dangCapNhatOKhachHang = true;
+        txtKhachHang.setEditable(true);
         txtKhachHang.setText("");
         dangCapNhatOKhachHang = false;
         for (KhachHang khachHang : danhSachKhachHang) {
@@ -644,6 +671,7 @@ public class FrmXe extends JPanel {
         txtSoMay.setText("");
         khachHangDuocChon = null;
         dangCapNhatOKhachHang = true;
+        txtKhachHang.setEditable(true);
         txtKhachHang.setText("");
         dangCapNhatOKhachHang = false;
         anGoiYKhachHang();
