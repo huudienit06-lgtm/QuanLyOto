@@ -2,12 +2,14 @@ package controller;
 
 import dao.KhachHangDAO;
 import dao.LichLamViecDAO;
+import dao.NhanVienDAO;
 import dao.PhieuKiemTraDAO;
 import dao.PhieuTiepNhanDAO;
 import dao.XeDAO;
 import entity.KhachHang;
 import entity.PhieuKiemTra;
 import entity.PhieuTiepNhan;
+import entity.NhanVien;
 import entity.Xe;
 import gui.FrmPhieuKiemTra;
 import java.sql.SQLException;
@@ -24,6 +26,7 @@ public final class PhieuKiemTraController {
     private final PhieuKiemTraDAO phieuKiemTraDAO = new PhieuKiemTraDAO();
     private final PhieuTiepNhanDAO phieuTiepNhanDAO = new PhieuTiepNhanDAO();
     private final LichLamViecDAO lichLamViecDAO = new LichLamViecDAO();
+    private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
     private final XeDAO xeDAO = new XeDAO();
     private final KhachHangDAO khachHangDAO = new KhachHangDAO();
     private List<PhieuKiemTra> danhSachPhieuKiemTra = new ArrayList<>();
@@ -83,10 +86,18 @@ public final class PhieuKiemTraController {
     }
 
     private void napDanhSachNhanVienTrongCa() {
-        view.hienThiDanhSachNhanVienTrongCa(List.of());
         try {
-            view.hienThiDanhSachNhanVienTrongCa(
-                    lichLamViecDAO.layNhanVienTrongCa(LocalDateTime.now()));
+            List<LichLamViecDAO.NhanVienTrongCa> danhSach = lichLamViecDAO.layNhanVienTrongCa(LocalDateTime.now());
+            if (danhSach.isEmpty()) {
+                danhSach = nhanVienDAO.findAll().stream()
+                        .filter(nhanVien -> "Đang làm việc".equals(nhanVien.getTrangThai()))
+                        .map(nhanVien -> new LichLamViecDAO.NhanVienTrongCa(
+                                nhanVien.getMaNV(), nhanVien.getHoTen()))
+                        .toList();
+            }
+            if (!danhSach.isEmpty()) {
+                view.hienThiDanhSachNhanVienTrongCa(danhSach);
+            }
         } catch (SQLException exception) {
             view.hienThiLoi("Không thể tải danh sách nhân viên đang trong ca: "
                     + exception.getMessage());
@@ -95,9 +106,9 @@ public final class PhieuKiemTraController {
 
     private void napDanhSachPhieuTiepNhan() {
         try {
-                List<PhieuTiepNhan> danhSachPhieuTiepNhan = phieuTiepNhanDAO.findAll().stream()
+            List<PhieuTiepNhan> danhSachPhieuTiepNhan = phieuTiepNhanDAO.findAll().stream()
                     .filter(phieu -> "Đã tiếp nhận".equals(phieu.getTrangThai())
-                        && PhieuTiepNhan.TIEN_DO_DA_TIEP_NHAN.equals(phieu.getTienDo()))
+                            && PhieuTiepNhan.TIEN_DO_DA_TIEP_NHAN.equals(phieu.getTienDo()))
                     .toList();
             Map<String, String> bienSoTheoMaXe = new HashMap<>();
             for (Xe xe : xeDAO.findAll()) {
