@@ -168,12 +168,12 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Lập hóa đơn");
 			return;
 		}
-		if ("Dịch vụ sửa chữa".equals(featureName)) {
+		if ("Dịch vụ".equals(featureName)) {
 			setContent(new FrmDichVu());
 			lblStatus.setText("Dịch vụ sửa chữa");
 			return;
 		}
-		if ("Cập nhật khuyến mãi".equals(featureName)) {
+		if ("Khuyến mãi".equals(featureName)) {
 			setContent(new FrmKhuyenMai());
 			lblStatus.setText("Quản lý khuyến mãi");
 			return;
