@@ -22,24 +22,25 @@ public class MenuQL extends JMenuBar {
 		JMenu mnuSearch = MenuBarSupport.createMenu("Tìm kiếm", MenuIcon.Type.SEARCH);
 		JMenu mnuReports = MenuBarSupport.createMenu("Báo biểu", MenuIcon.Type.CHART);
 
-		themItem(mnuSystem, "Trang Chủ","Quản lý tài khoản",
+		themItem(mnuSystem, "Trang Chủ", "Quản lý tài khoản",
 				"Đổi mật khẩu", "Đăng xuất");
 		themItem(mnuCatalog, "Khách hàng", "Xe", "Nhân viên", "Chức vụ", "Phụ tùng",
 				"Dịch vụ", "Khuyến mãi", "Ca làm việc", "Lịch làm việc",
 				"Chính sách bảo hành");
-		// themItem(mnuUpdate, "Cập nhật khách hàng", "Cập nhật xe", "Cập nhật nhân viên",
-		// 		"Cập nhật phụ tùng", "Cập nhật giá phụ tùng", "Cập nhật dịch vụ",
-		// 		"Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
+		// themItem(mnuUpdate, "Cập nhật khách hàng", "Cập nhật xe", "Cập nhật nhân
+		// viên",
+		// "Cập nhật phụ tùng", "Cập nhật giá phụ tùng", "Cập nhật dịch vụ",
+		// "Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
 		themItem(mnuProcess, "Tiếp nhận xe", "Kiểm tra xe", "Lập phiếu sửa chữa",
 				"Nhập/Xuất phụ tùng", "Lập hóa đơn",
 				"Thanh toán", "Tiếp nhận bảo hành", "Quản lý công nợ", "Bàn giao xe");
 		themItem(mnuSearch, "Khách hàng", "Xe", "Lịch sử sửa chữa", "Phiếu tiếp nhận",
 				"Phiếu sửa chữa", "Hóa đơn", "Phụ tùng", "Tìm kiếm nhân viên");
-		themItem(mnuReports, "Doanh thu", "Sửa chữa", "Khách hàng", "Phụ tùng tồn kho",
-				"Công nợ", "Số lượng xe sửa chữa", "Báo cáo tổng hợp");
+		themItem(mnuReports, "Thống kê Doanh thu", "Thống kê Sửa chữa", "Thống kê Công nợ",
+				"Thống kê Phụ tùng", "Báo cáo tổng hợp");
 
 		MenuBarSupport.configure(this,
-				new JMenu[] {mnuSystem, mnuCatalog, mnuUpdate, mnuProcess, mnuSearch, mnuReports},
+				new JMenu[] { mnuSystem, mnuCatalog, mnuUpdate, mnuProcess, mnuSearch, mnuReports },
 				taiKhoan);
 	}
 

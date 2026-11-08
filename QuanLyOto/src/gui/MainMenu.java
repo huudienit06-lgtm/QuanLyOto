@@ -10,10 +10,12 @@ public final class MainMenu extends JMenuBar {
 
 	private MainMenu() {
 	}
+
 	private void initialize(BaseFrame frame) {
 		JMenu mnuSystem = MenuBarSupport.createMenu("Hệ thống", MenuIcon.Type.SETTINGS);
 		JMenu mnuCatalog = MenuBarSupport.createMenu("Danh mục", MenuIcon.Type.DOCUMENT);
-		// JMenu mnuUpdate = MenuBarSupport.createMenu("Cập nhật", MenuIcon.Type.BACKUP);
+		// JMenu mnuUpdate = MenuBarSupport.createMenu("Cập nhật",
+		// MenuIcon.Type.BACKUP);
 		JMenu mnuProcess = MenuBarSupport.createMenu("Xử lý", MenuIcon.Type.TOOL);
 		JMenu mnuSearch = MenuBarSupport.createMenu("Tìm kiếm", MenuIcon.Type.SEARCH);
 		JMenu mnuReports = MenuBarSupport.createMenu("Báo biểu", MenuIcon.Type.CHART);
@@ -24,18 +26,18 @@ public final class MainMenu extends JMenuBar {
 				"Dịch vụ sửa chữa", "Khuyến mãi", "Ca làm việc", "Lịch làm việc",
 				"Chính sách bảo hành", "Dịch vụ");
 		// addItems(frame, mnuUpdate, "Cập nhật khách hàng", "Cập nhật xe",
-		// 		"Cập nhật nhân viên", "Cập nhật phụ tùng",
-		// 		"Cập nhật dịch vụ", "Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
+		// "Cập nhật nhân viên", "Cập nhật phụ tùng",
+		// "Cập nhật dịch vụ", "Cập nhật khuyến mãi", "Cập nhật lịch làm việc");
 		addItems(frame, mnuProcess, "Tiếp nhận xe", "Kiểm tra xe", "Lập phiếu sửa chữa",
 				"Nhập/Xuất phụ tùng", "Lập hóa đơn", "Tiếp nhận bảo hành",
 				"Quản lý công nợ", "Bàn giao xe");
 		addItems(frame, mnuSearch, "Khách hàng", "Xe", "Lịch sử sửa chữa",
 				"Phiếu tiếp nhận", "Phiếu sửa chữa", "Hóa đơn", "Phụ tùng", "Nhân viên");
 		addItems(frame, mnuReports, "Thống kê Doanh thu", "Thống kê Sửa chữa",
-				"Thống kê Phụ tùng", "Báo cáo tổng hợp");
+				"Thống kê Công nợ", "Thống kê Phụ tùng", "Báo cáo tổng hợp");
 
 		MenuBarSupport.configure(this,
-				new JMenu[] {mnuSystem, mnuCatalog, mnuProcess, mnuSearch, mnuReports},
+				new JMenu[] { mnuSystem, mnuCatalog, mnuProcess, mnuSearch, mnuReports },
 				null);
 		setBackground(BLUE);
 	}

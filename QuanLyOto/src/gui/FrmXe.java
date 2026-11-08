@@ -1,7 +1,5 @@
 package gui;
 
-import dao.KhachHangDAO;
-import dao.XeDAO;
 import entity.KhachHang;
 import entity.Xe;
 import java.awt.BorderLayout;
@@ -19,7 +17,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,13 +47,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import util.MaTuDong;
+import controller.XeController;
 
 public class FrmXe extends JPanel {
     private static final Set<String> MA_KHACH_HANG_DA_BIET = new HashSet<>();
-
-    private final XeDAO xeDAO = new XeDAO();
-    private final KhachHangDAO khachHangDAO = new KhachHangDAO();
 
     private final JTextField txtMaXe = createTextField(16);
     private final JTextField txtBienSo = createTextField(16);
@@ -78,7 +72,7 @@ public class FrmXe extends JPanel {
     private final JTextField txtLocDongXe = createTextField(12);
     private final JLabel lblThongBao = new JLabel("Sẵn sàng");
     private final DefaultTableModel modelXe = new DefaultTableModel(
-            new Object[] {"Mã xe", "Biển số", "Hãng xe", "Dòng xe", "Năm SX", "Số khung", "Số máy", "Mã KH"}, 0) {
+            new Object[] { "Mã xe", "Biển số", "Hãng xe", "Dòng xe", "Năm SX", "Số khung", "Số máy", "Mã KH" }, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -86,6 +80,16 @@ public class FrmXe extends JPanel {
     };
     private final JTable tblXe = new JTable(modelXe);
     private final TableRowSorter<DefaultTableModel> sorterXe = new TableRowSorter<>(modelXe);
+    private final JButton btnThem = createButton("Thêm xe", "/resources/icons/plus.png", UIConfig.COLOR_PRIMARY,
+            Color.WHITE);
+    private final JButton btnSua = createButton("Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_SUCCESS,
+            Color.WHITE);
+    private final JButton btnXoa = createButton("Xóa xe", "/resources/icons/trash.png", UIConfig.COLOR_DANGER,
+            Color.WHITE);
+    private final JButton btnLamMoi = createButton("Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY,
+            UIConfig.COLOR_TEXT);
+    private final JButton btnTaiLai = createButton("Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY,
+            UIConfig.COLOR_TEXT);
 
     public FrmXe() {
         setLayout(new BorderLayout(0, 8));
@@ -98,9 +102,7 @@ public class FrmXe extends JPanel {
         add(createStatusBar(), BorderLayout.SOUTH);
 
         configureComponents();
-        napKhachHang();
-        napDanhSachXe();
-        lamMoiForm();
+        new XeController(this).khoiTao();
     }
 
     private JPanel createHeading() {
@@ -156,14 +158,6 @@ public class FrmXe extends JPanel {
 
         JPanel pnlButtons = new JPanel(new GridBagLayout());
         pnlButtons.setOpaque(false);
-        JButton btnThem = createButton("Thêm xe", "/resources/icons/plus.png", UIConfig.COLOR_PRIMARY, Color.WHITE);
-        JButton btnSua = createButton("Cập nhật", "/resources/icons/update.png", UIConfig.COLOR_SUCCESS, Color.WHITE);
-        JButton btnXoa = createButton("Xóa xe", "/resources/icons/trash.png", UIConfig.COLOR_DANGER, Color.WHITE);
-        JButton btnLamMoi = createButton("Làm mới", "/resources/icons/reset.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
-        btnThem.addActionListener(event -> themXe());
-        btnSua.addActionListener(event -> capNhatXe());
-        btnXoa.addActionListener(event -> xoaXe());
-        btnLamMoi.addActionListener(event -> lamMoiForm());
         pnlButtons.add(btnThem, buttonConstraints(0));
         pnlButtons.add(btnSua, buttonConstraints(1));
         pnlButtons.add(btnXoa, buttonConstraints(2));
@@ -188,11 +182,6 @@ public class FrmXe extends JPanel {
         JPanel pnlTitleBar = new JPanel(new BorderLayout(8, 0));
         pnlTitleBar.setOpaque(false);
         JLabel lblTableTitle = createSectionTitle("Danh sách xe đã tiếp nhận");
-        JButton btnTaiLai = createButton("Tải lại", "/resources/icons/reload.png", UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
-        btnTaiLai.addActionListener(event -> {
-            xoaBoLocXe();
-            napDanhSachXe();
-        });
         pnlTitleBar.add(lblTableTitle, BorderLayout.WEST);
         pnlTitleBar.add(btnTaiLai, BorderLayout.EAST);
         JPanel pnlLoc = new JPanel(new GridLayout(1, 4, 10, 0));
@@ -217,7 +206,7 @@ public class FrmXe extends JPanel {
         tblXe.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblXe.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         tblXe.setFillsViewportHeight(true);
-        int[] doRongCot = {85, 105, 125, 120, 75, 150, 150, 85};
+        int[] doRongCot = { 85, 105, 125, 120, 75, 150, 150, 85 };
         for (int cot = 0; cot < doRongCot.length; cot++) {
             tblXe.getColumnModel().getColumn(cot).setPreferredWidth(doRongCot[cot]);
         }
@@ -378,7 +367,6 @@ public class FrmXe extends JPanel {
         txtKhachHang.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent event) {
-                napKhachHang(false);
                 timKhachHangTheoThongTinNhap();
             }
 
@@ -393,110 +381,29 @@ public class FrmXe extends JPanel {
         });
     }
 
-    private void napKhachHang() {
-        napKhachHang(true);
-    }
-
-    private void napKhachHang(boolean thongBaoNeuChuaCoKhachHang) {
-        try {
-            List<KhachHang> danhSachMoi = khachHangDAO.findAll();
-            List<KhachHang> khachHangMoiThem = new ArrayList<>();
-            List<KhachHang> khachHangDaCo = new ArrayList<>();
-            for (KhachHang khachHang : danhSachMoi) {
-                if (MA_KHACH_HANG_DA_BIET.contains(khachHang.getMaKH())) {
-                    khachHangDaCo.add(khachHang);
-                } else {
-                    khachHangMoiThem.add(khachHang);
-                    MA_KHACH_HANG_DA_BIET.add(khachHang.getMaKH());
-                }
+    public void capNhatDanhSachKhachHang(List<KhachHang> danhSachMoi) {
+        List<KhachHang> khachHangMoiThem = new ArrayList<>();
+        List<KhachHang> khachHangDaCo = new ArrayList<>();
+        for (KhachHang khachHang : danhSachMoi) {
+            if (MA_KHACH_HANG_DA_BIET.contains(khachHang.getMaKH())) {
+                khachHangDaCo.add(khachHang);
+            } else {
+                khachHangMoiThem.add(khachHang);
+                MA_KHACH_HANG_DA_BIET.add(khachHang.getMaKH());
             }
-            danhSachKhachHang.clear();
-            danhSachKhachHang.addAll(khachHangMoiThem);
-            danhSachKhachHang.addAll(khachHangDaCo);
-            if (thongBaoNeuChuaCoKhachHang && danhSachKhachHang.isEmpty()) {
-                hienThiLoi("Chưa có khách hàng. Hãy thêm khách hàng trước khi nhập xe.");
-            }
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể tải danh sách khách hàng: " + exception.getMessage());
         }
+        danhSachKhachHang.clear();
+        danhSachKhachHang.addAll(khachHangMoiThem);
+        danhSachKhachHang.addAll(khachHangDaCo);
     }
 
-    private void napDanhSachXe() {
-        try {
-            hienThiDanhSach(xeDAO.findAll());
-            locDanhSachXe();
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể tải danh sách xe: " + exception.getMessage());
-        }
-    }
-
-    private void hienThiDanhSach(List<Xe> danhSachXe) {
+    public void hienThiDanhSach(List<Xe> danhSachXe) {
         modelXe.setRowCount(0);
         for (Xe xe : danhSachXe) {
             modelXe.addRow(new Object[] {
                     xe.getMaXe(), xe.getBienSo(), xe.getHangXe(), xe.getDongXe(),
                     xe.getNamSanXuat(), xe.getSoKhung(), xe.getSoMay(), xe.getMaKH()
             });
-        }
-    }
-
-    private void themXe() {
-        try {
-            Xe xe = docThongTinXe();
-            if (xeDAO.insert(xe)) {
-                napDanhSachXe();
-                lamMoiForm();
-                lblThongBao.setText("Đã thêm xe " + xe.getMaXe());
-            }
-        } catch (IllegalArgumentException exception) {
-            hienThiLoi(exception.getMessage());
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể thêm xe: " + exception.getMessage());
-        }
-    }
-
-    private void capNhatXe() {
-        try {
-            Xe xe = docThongTinXe();
-            if (xeDAO.update(xe)) {
-                napDanhSachXe();
-                lblThongBao.setText("Đã cập nhật xe " + xe.getMaXe());
-            } else {
-                hienThiLoi("Không tìm thấy xe cần cập nhật.");
-            }
-        } catch (IllegalArgumentException exception) {
-            hienThiLoi(exception.getMessage());
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể cập nhật xe: " + exception.getMessage());
-        }
-    }
-
-    private void xoaXe() {
-        String maXe = txtMaXe.getText().trim();
-        if (maXe.isEmpty()) {
-            hienThiLoi("Hãy chọn xe trong bảng hoặc nhập mã xe cần xóa.");
-            return;
-        }
-        int luaChon = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc muốn xóa xe " + maXe + "?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-        if (luaChon != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        try {
-            if (xeDAO.deleteById(maXe)) {
-                napDanhSachXe();
-                lamMoiForm();
-                lblThongBao.setText("Đã xóa xe " + maXe);
-            } else {
-                hienThiLoi("Không tìm thấy xe cần xóa.");
-            }
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể xóa xe: " + exception.getMessage());
         }
     }
 
@@ -547,14 +454,14 @@ public class FrmXe extends JPanel {
         }
     }
 
-    private void xoaBoLocXe() {
+    public void xoaBoLocXe() {
         txtLocMaXe.setText("");
         txtLocBienSo.setText("");
         txtLocHangXe.setText("");
         txtLocDongXe.setText("");
     }
 
-    private Xe docThongTinXe() {
+    public Xe docThongTinXe() {
         String maXe = txtMaXe.getText().trim();
         String bienSo = txtBienSo.getText().trim().toUpperCase(Locale.ROOT);
         if (maXe.isEmpty() || bienSo.isEmpty()) {
@@ -698,7 +605,7 @@ public class FrmXe extends JPanel {
                 .toLowerCase(Locale.ROOT);
     }
 
-    private void hienThiXeDaChon() {
+    public void hienThiXeDaChon() {
         int selectedRow = tblXe.getSelectedRow();
         if (selectedRow < 0) {
             return;
@@ -729,13 +636,7 @@ public class FrmXe extends JPanel {
         return value == null ? "" : value.toString();
     }
 
-    private void lamMoiForm() {
-        try {
-            txtMaXe.setText(MaTuDong.sinhMa(
-                    MaTuDong.TIEN_TO_XE, xeDAO.findAll(), Xe::getMaXe));
-        } catch (SQLException exception) {
-            hienThiLoi("Không thể phát sinh mã xe: " + exception.getMessage());
-        }
+    public void lamMoiForm() {
         txtBienSo.setText("");
         txtHangXe.setText("");
         txtDongXe.setText("");
@@ -760,9 +661,49 @@ public class FrmXe extends JPanel {
         return gbc;
     }
 
-    private void hienThiLoi(String message) {
+    public void hienThiLoi(String message) {
         lblThongBao.setText(message);
         lblThongBao.setForeground(new Color(190, 55, 55));
         JOptionPane.showMessageDialog(this, message, "Quản lý xe", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public JButton getBtnThem() {
+        return btnThem;
+    }
+
+    public JButton getBtnSua() {
+        return btnSua;
+    }
+
+    public JButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public JButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public JButton getBtnTaiLai() {
+        return btnTaiLai;
+    }
+
+    public JTable getTblXe() {
+        return tblXe;
+    }
+
+    public JTextField getTxtMaXe() {
+        return txtMaXe;
+    }
+
+    public void setMaXe(String maXe) {
+        txtMaXe.setText(maXe);
+    }
+
+    public void locDanhSach() {
+        locDanhSachXe();
+    }
+
+    public void setThongBao(String message) {
+        lblThongBao.setText(message);
     }
 }
