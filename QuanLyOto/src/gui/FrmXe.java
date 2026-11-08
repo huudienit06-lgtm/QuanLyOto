@@ -1,5 +1,6 @@
 package gui;
 
+import controller.XeController;
 import entity.KhachHang;
 import entity.Xe;
 import java.awt.BorderLayout;
@@ -47,7 +48,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import controller.XeController;
 
 public class FrmXe extends JPanel {
     private static final Set<String> MA_KHACH_HANG_DA_BIET = new HashSet<>();
@@ -153,8 +153,8 @@ public class FrmXe extends JPanel {
         addField(pnlFields, "Dòng xe *", txtDongXe, 2, 1);
         addField(pnlFields, "Năm sản xuất *", txtNamSanXuat, 0, 2);
         addField(pnlFields, "Khách hàng *", txtKhachHang, 2, 2);
-        addField(pnlFields, "Số khung *", txtSoKhung, 0, 3);
-        addField(pnlFields, "Số máy *", txtSoMay, 2, 3);
+        addField(pnlFields, "Số khung", txtSoKhung, 0, 3);
+        addField(pnlFields, "Số máy", txtSoMay, 2, 3);
 
         JPanel pnlButtons = new JPanel(new GridBagLayout());
         pnlButtons.setOpaque(false);
@@ -476,10 +476,9 @@ public class FrmXe extends JPanel {
         String namSanXuatText = txtNamSanXuat.getText().trim();
         String soKhung = txtSoKhung.getText().trim();
         String soMay = txtSoMay.getText().trim();
-        if (hangXe.isEmpty() || dongXe.isEmpty() || namSanXuatText.isEmpty()
-                || soKhung.isEmpty() || soMay.isEmpty()) {
+        if (hangXe.isEmpty() || dongXe.isEmpty() || namSanXuatText.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Hãng xe, dòng xe, năm sản xuất, số khung và số máy không được để trống.");
+                "Hãng xe, dòng xe và năm sản xuất không được để trống.");
         }
         if (!FormValidator.isWithinMaxLength(txtHangXe.getText().trim(), 50)
                 || !FormValidator.isWithinMaxLength(txtDongXe.getText().trim(), 50)) {
