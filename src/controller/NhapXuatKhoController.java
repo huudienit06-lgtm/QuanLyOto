@@ -3,6 +3,7 @@ package controller;
 import dao.PhieuNhapXuatKhoDAO;
 import dao.PhuTungDAO;
 import entity.ChiTietPhieuNhap;
+import entity.NhanVien;
 import entity.PhieuNhapXuatKho;
 import entity.PhuTung;
 import gui.FrmNhapXuatPhuTung;
@@ -224,7 +225,11 @@ public class NhapXuatKhoController {
             for (PhieuNhapXuatKho p : dsPhieu) {
                 double tongTien = giaoDichDAO.tinhTongTienPhieu(p.getMaPhieuNhapXuat());
                 String ngayStr = p.getNgayLapPhieu() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(p.getNgayLapPhieu()) : "";
-                view.getModelLichSu().addRow(new Object[]{ p.getMaPhieuNhapXuat(), p.getMaNV(), ngayStr, p.getKieuPhieu(), layGhiChuPhieu(p.getMaPhieuNhapXuat()), df.format(tongTien) });
+                
+                // Trích xuất mã nhân viên từ Object NhanVien
+                String maNVSearch = (p.getNhanVien() != null) ? p.getNhanVien().getMaNV() : "";
+                
+                view.getModelLichSu().addRow(new Object[]{ p.getMaPhieuNhapXuat(), maNVSearch, ngayStr, p.getKieuPhieu(), layGhiChuPhieu(p.getMaPhieuNhapXuat()), df.format(tongTien) });
             }
             view.getLblSoLuongPhieu().setText("Đã tải " + dsPhieu.size() + " phiếu giao dịch");
         } else {
@@ -238,12 +243,13 @@ public class NhapXuatKhoController {
         List<ChiTietPhieuNhap> dsChiTiet = giaoDichDAO.layChiTietPhieu(maPhieu); 
         if (dsChiTiet != null) {
             for (ChiTietPhieuNhap ct : dsChiTiet) {
-                soLuongCuTheoPhuTung.put(ct.getMaPhuTung(), ct.getSoLuong());
+                String maPT = ct.getPhuTung().getMaPhuTung(); // Trích xuất từ đối tượng
+                soLuongCuTheoPhuTung.put(maPT, ct.getSoLuong());
                 try {
-                    PhuTung pt = phuTungDAO.findById(ct.getMaPhuTung());
+                    PhuTung pt = phuTungDAO.findById(maPT);
                     String tenPT = pt != null ? pt.getTenPhuTung() : "Phụ tùng chưa xác định";
                     double tongLine = (ct.getSoLuong() != null ? ct.getSoLuong() : 0) * (ct.getDonGia() != null ? ct.getDonGia() : 0);
-                    view.getModelChiTiet().addRow(new Object[]{ ct.getMaPhuTung(), tenPT, ct.getSoLuong(), df.format(ct.getDonGia() != null ? ct.getDonGia() : 0), df.format(tongLine) });
+                    view.getModelChiTiet().addRow(new Object[]{ maPT, tenPT, ct.getSoLuong(), df.format(ct.getDonGia() != null ? ct.getDonGia() : 0), df.format(tongLine) });
                 } catch (SQLException e) { e.printStackTrace(); }
             }
         }
@@ -260,14 +266,16 @@ public class NhapXuatKhoController {
             int count = 0;
             for (PhieuNhapXuatKho p : dsPhieu) {
                 boolean matchMaP = maP.isEmpty() || p.getMaPhieuNhapXuat().toLowerCase().contains(maP);
-                boolean matchMaNV = maNV.isEmpty() || (p.getMaNV() != null && p.getMaNV().toLowerCase().contains(maNV));
+                boolean matchMaNV = maNV.isEmpty() || (p.getNhanVien() != null && p.getNhanVien().getMaNV() != null && p.getNhanVien().getMaNV().toLowerCase().contains(maNV));
                 boolean matchPT = phuTungText.isEmpty();
+                
                 if (!phuTungText.isEmpty()) {
                     List<ChiTietPhieuNhap> dsChiTiet = giaoDichDAO.layChiTietPhieu(p.getMaPhieuNhapXuat());
                     if (dsChiTiet != null) {
                         for (ChiTietPhieuNhap ct : dsChiTiet) {
                             try {
-                                PhuTung pt = phuTungDAO.findById(ct.getMaPhuTung());
+                                String ptMa = ct.getPhuTung().getMaPhuTung();
+                                PhuTung pt = phuTungDAO.findById(ptMa);
                                 if (pt != null && pt.getTenPhuTung() != null && pt.getTenPhuTung().toLowerCase().contains(phuTungText)) {
                                     matchPT = true; break;
                                 }
@@ -275,10 +283,12 @@ public class NhapXuatKhoController {
                         }
                     }
                 }
+                
                 if (matchMaP && matchMaNV && matchPT) {
                     double tongTien = giaoDichDAO.tinhTongTienPhieu(p.getMaPhieuNhapXuat());
                     String ngayStr = p.getNgayLapPhieu() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(p.getNgayLapPhieu()) : "";
-                    view.getModelLichSu().addRow(new Object[]{ p.getMaPhieuNhapXuat(), p.getMaNV(), ngayStr, p.getKieuPhieu(), layGhiChuPhieu(p.getMaPhieuNhapXuat()), df.format(tongTien) });
+                    String maNVSearch = p.getNhanVien() != null ? p.getNhanVien().getMaNV() : "";
+                    view.getModelLichSu().addRow(new Object[]{ p.getMaPhieuNhapXuat(), maNVSearch, ngayStr, p.getKieuPhieu(), layGhiChuPhieu(p.getMaPhieuNhapXuat()), df.format(tongTien) });
                     count++;
                 }
             }
@@ -306,7 +316,10 @@ public class NhapXuatKhoController {
 
         PhieuNhapXuatKho phieu = new PhieuNhapXuatKho();
         phieu.setMaPhieuNhapXuat(maPhieu);
-        phieu.setMaNV(view.getTaiKhoanHienTai().getNhanVien().getMaNV().trim());
+        
+        // Khởi tạo đối tượng Nhân Viên thay vì kiểu String
+        phieu.setNhanVien(new NhanVien(view.getTaiKhoanHienTai().getNhanVien().getMaNV().trim()));
+        
         phieu.setNgayLapPhieu(new java.sql.Timestamp(System.currentTimeMillis()));
         phieu.setKieuPhieu(isNhap ? "Nhập" : "Xuất");
 
@@ -314,8 +327,11 @@ public class NhapXuatKhoController {
         String ghiChuChung = view.getTxtGhiChu().getText().trim(); 
         for (int i = 0; i < view.getModelChiTiet().getRowCount(); i++) {
             ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
-            ct.setMaPhieuNhapXuat(maPhieu);
-            ct.setMaPhuTung(view.getModelChiTiet().getValueAt(i, 0).toString());
+            
+            // Set thông qua Khóa Đối Tượng (OOP)
+            ct.setPhieuNhapXuatKho(new PhieuNhapXuatKho(maPhieu));
+            ct.setPhuTung(new PhuTung(view.getModelChiTiet().getValueAt(i, 0).toString()));
+            
             ct.setSoLuong(Integer.parseInt(view.getModelChiTiet().getValueAt(i, 2).toString()));
             ct.setDonGia(Double.parseDouble(view.getModelChiTiet().getValueAt(i, 3).toString().replace(" đ", "").replace(",", "")));
             ct.setGhiChu(ghiChuChung); 

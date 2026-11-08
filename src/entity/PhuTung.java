@@ -1,8 +1,6 @@
 package entity;
 
 public class PhuTung {
-    
-    // TÊN CÁC BIẾN NÀY PHẢI KHỚP 100% VỚI TÊN CỘT TRONG SQL SERVER
     private String maPhuTung;
     private String tenPhuTung;
     private String donViTinh;
@@ -11,11 +9,14 @@ public class PhuTung {
     private int soLuongTon;
     private String nhaCungCap;
     private String trangThai;
-    // Constructor rỗng
-    public PhuTung() {
+
+    public PhuTung() {}
+
+    // Bổ sung Constructor theo mã để xử lý DAO dễ dàng
+    public PhuTung(String maPhuTung) {
+        this.maPhuTung = maPhuTung;
     }
 
-    // Constructor đầy đủ tham số để lấy dữ liệu từ Form
     public PhuTung(String maPhuTung, String tenPhuTung, String donViTinh, double giaNhap, double giaBan, int soLuongTon, String nhaCungCap, String trangThai) {
         this.maPhuTung = maPhuTung;
         this.tenPhuTung = tenPhuTung;
@@ -26,7 +27,7 @@ public class PhuTung {
         this.nhaCungCap = nhaCungCap;
         this.trangThai = trangThai;
     }
-    // Getter và Setter cho tất cả các thuộc tính
+
     public String getMaPhuTung() { return maPhuTung; }
     public void setMaPhuTung(String maPhuTung) { this.maPhuTung = maPhuTung; }
 
@@ -50,4 +51,8 @@ public class PhuTung {
 
     public String getTrangThai() { return trangThai; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+
+    public boolean isBlank() {
+        throw new UnsupportedOperationException("Unimplemented method 'isBlank'");
+    }
 }

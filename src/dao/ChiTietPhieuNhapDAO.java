@@ -2,6 +2,9 @@ package dao;
 
 import connectDB.ConnectDB;
 import entity.ChiTietPhieuNhap;
+import entity.PhieuNhapXuatKho;
+import entity.PhuTung;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,10 +14,8 @@ import java.util.List;
 
 public class ChiTietPhieuNhapDAO {
     
-    public ChiTietPhieuNhapDAO() {
-    }
+    public ChiTietPhieuNhapDAO() {}
 
-    // Hàm gọi từ PhieuNhapXuatKhoDAO (chiTietDAO.findByField("maPhieuNhapXuat", ...))
     public List<ChiTietPhieuNhap> findByField(String fieldName, Object value) throws SQLException {
         List<ChiTietPhieuNhap> ds = new ArrayList<>();
         String sql = "SELECT * FROM ChiTietPhieuNhap WHERE " + fieldName + " = ?";
@@ -24,8 +25,9 @@ public class ChiTietPhieuNhapDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     ChiTietPhieuNhap ct = new ChiTietPhieuNhap();
-                    ct.setMaPhieuNhapXuat(rs.getString("maPhieuNhapXuat"));
-                    ct.setMaPhuTung(rs.getString("maPhuTung"));
+                    // Set Đối Tượng
+                    ct.setPhieuNhapXuatKho(new PhieuNhapXuatKho(rs.getString("maPhieuNhapXuat")));
+                    ct.setPhuTung(new PhuTung(rs.getString("maPhuTung")));
                     ct.setSoLuong(rs.getInt("soLuong"));
                     ct.setDonGia(rs.getDouble("donGia"));
                     ct.setGhiChu(rs.getString("ghiChu"));
@@ -36,7 +38,6 @@ public class ChiTietPhieuNhapDAO {
         return ds;
     }
 
-    // Hàm gọi từ PhieuNhapXuatKhoDAO (chiTietDAO.deleteById(maPhieu, maPhuTung))
     public boolean deleteById(Object... keyValues) throws SQLException {
         String sql = "DELETE FROM ChiTietPhieuNhap WHERE maPhieuNhapXuat = ? AND maPhuTung = ?";
         try (Connection con = ConnectDB.getConnection();
