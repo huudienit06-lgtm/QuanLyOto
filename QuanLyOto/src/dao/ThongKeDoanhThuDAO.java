@@ -30,15 +30,15 @@ public class ThongKeDoanhThuDAO {
 
     // Danh sách khách hàng
     private static final String SQL_KHACH_HANG = "SELECT maKH, hoTen, soDT FROM KhachHang ORDER BY maKH";
-
-    // Hóa đơn kèm khách hàng (qua phiếu sửa chữa)
     private static final String SQL_HOA_DON = "SELECT hd.maHoaDon, hd.ngayLap, hd.maNV, hd.soTien, " +
-            "       psc.maKH AS maKH, " +
+            "       COALESCE(hd.maKH, psc.maKH) AS maKH, " +
             "       kh.hoTen AS tenKhachHang, " +
             "       kh.soDT AS soDT " +
             "FROM HoaDon hd " +
-            "LEFT JOIN PhieuSuaChua psc ON hd.maPhieuSuaChua = psc.maPhieuSuaChua " +
-            "LEFT JOIN KhachHang kh ON psc.maKH = kh.maKH " +
+            "LEFT JOIN PhieuSuaChua psc " +
+            "    ON hd.maPhieuSuaChua = psc.maPhieuSuaChua " +
+            "LEFT JOIN KhachHang kh " +
+            "    ON kh.maKH = COALESCE(hd.maKH, psc.maKH) " +
             "ORDER BY hd.ngayLap DESC";
 
     // Tổng tiền đã thu thành công của từng hóa đơn

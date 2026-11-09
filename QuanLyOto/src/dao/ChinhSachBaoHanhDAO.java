@@ -8,9 +8,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import dao.HoaDonDAO.DongChiTiet;
 
 public class ChinhSachBaoHanhDAO {
     public record PhuTungBaoHanh(String maPhuTung, String tenPhuTung, int soLuong,
@@ -53,6 +57,88 @@ public class ChinhSachBaoHanhDAO {
         return dsChinhSach;
     }
 
+    public List<PhuTungBaoHanh> layPhuTungBaoHanhTheoDanhSach(
+            List<DongChiTiet> dsChiTiet) throws SQLException {
+
+        // Gộp số lượng theo mã phụ tùng
+        Map<String, Integer> soLuongTheoMa = new LinkedHashMap<>();
+
+        for (DongChiTiet d : dsChiTiet) {
+            if (d == null || d.dichVu() || d.ma() == null || d.ma().isBlank()) {
+                continue;
+            }
+
+            soLuongTheoMa.merge(d.ma(), d.soLuong(), Integer::sum);
+        }
+
+        if (soLuongTheoMa.isEmpty()) {
+            return List.of();
+        }
+
+        StringBuilder values = new StringBuilder();
+
+        for (int i = 0; i < soLuongTheoMa.size(); i++) {
+            if (i > 0) {
+                values.append(", ");
+            }
+            values.append("(?, ?)");
+        }
+
+        String sql = """
+                WITH PhuTungTrongHoaDon AS (
+                    SELECT maPhuTung, SUM(soLuong) AS soLuong
+                    FROM (VALUES %s) AS ds(maPhuTung, soLuong)
+                    GROUP BY maPhuTung
+                )
+                SELECT pt.maPhuTung, pt.tenPhuTung, p.soLuong,
+                       cs.tenChinhSach, cs.thoiHanBaoHanh, cs.donViThoiGian,
+                       cs.noiDungBaoHanh, cs.dieuKienBaoHanh, cs.truongHopTuChoi
+                FROM PhuTungTrongHoaDon p
+                JOIN PhuTung pt ON pt.maPhuTung = p.maPhuTung
+                CROSS APPLY (
+                    SELECT TOP (1)
+                           cs.tenChinhSach, cs.thoiHanBaoHanh,
+                           cs.donViThoiGian, cs.noiDungBaoHanh,
+                           cs.dieuKienBaoHanh, cs.truongHopTuChoi
+                    FROM ChinhSachBaoHanh_PhuTung csp
+                    JOIN ChinhSachBaoHanh cs ON cs.maCSBH = csp.maCSBH
+                    WHERE csp.maPhuTung = p.maPhuTung
+                      AND cs.trangThai = 1
+                    ORDER BY cs.ngayTao DESC, cs.maCSBH DESC
+                ) cs
+                ORDER BY pt.tenPhuTung, pt.maPhuTung
+                """.formatted(values);
+
+        List<PhuTungBaoHanh> dsBaoHanh = new ArrayList<>();
+
+        try (Connection con = ketNoi();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            int viTri = 1;
+
+            for (Map.Entry<String, Integer> entry : soLuongTheoMa.entrySet()) {
+                ps.setString(viTri++, entry.getKey());
+                ps.setInt(viTri++, entry.getValue());
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    dsBaoHanh.add(new PhuTungBaoHanh(
+                            rs.getString("maPhuTung"),
+                            rs.getString("tenPhuTung"),
+                            rs.getInt("soLuong"),
+                            rs.getString("tenChinhSach"),
+                            rs.getInt("thoiHanBaoHanh"),
+                            rs.getString("donViThoiGian"),
+                            rs.getString("noiDungBaoHanh"),
+                            rs.getString("dieuKienBaoHanh"),
+                            rs.getString("truongHopTuChoi")));
+                }
+            }
+        }
+        return dsBaoHanh;
+    }
+
     public String layMaTiepTheo() throws SQLException {
         try (Connection con = ketNoi()) {
             return layMaTiepTheo(con, false);
@@ -83,6 +169,57 @@ public class ChinhSachBaoHanhDAO {
             }
         }
         return dsPhuTung;
+    }
+
+    public List<PhuTungBaoHanh> layPhuTungBaoHanhTheoHoaDon(
+            String maHoaDon) throws SQLException {
+        String sql = """
+                WITH PhuTungTrongHoaDon AS (
+                    SELECT maPhuTung, SUM(soLuong) AS soLuong
+                    FROM ChiTietHoaDon
+                    WHERE maHoaDon = ?
+                      AND maPhuTung IS NOT NULL
+                    GROUP BY maPhuTung
+                )
+                SELECT pt.maPhuTung, pt.tenPhuTung, p.soLuong,
+                       cs.tenChinhSach, cs.thoiHanBaoHanh, cs.donViThoiGian,
+                       cs.noiDungBaoHanh, cs.dieuKienBaoHanh, cs.truongHopTuChoi
+                FROM PhuTungTrongHoaDon p
+                JOIN PhuTung pt ON pt.maPhuTung = p.maPhuTung
+                CROSS APPLY (
+                    SELECT TOP (1)
+                           cs.tenChinhSach, cs.thoiHanBaoHanh,
+                           cs.donViThoiGian, cs.noiDungBaoHanh,
+                           cs.dieuKienBaoHanh, cs.truongHopTuChoi
+                    FROM ChinhSachBaoHanh_PhuTung csp
+                    JOIN ChinhSachBaoHanh cs
+                        ON cs.maCSBH = csp.maCSBH
+                    WHERE csp.maPhuTung = p.maPhuTung
+                      AND cs.trangThai = 1
+                    ORDER BY cs.ngayTao DESC, cs.maCSBH DESC
+                ) cs
+                ORDER BY pt.tenPhuTung, pt.maPhuTung
+                """;
+        List<PhuTungBaoHanh> dsBaoHanh = new ArrayList<>();
+        try (Connection con = ketNoi();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maHoaDon);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    dsBaoHanh.add(new PhuTungBaoHanh(
+                            rs.getString("maPhuTung"),
+                            rs.getString("tenPhuTung"),
+                            rs.getInt("soLuong"),
+                            rs.getString("tenChinhSach"),
+                            rs.getInt("thoiHanBaoHanh"),
+                            rs.getString("donViThoiGian"),
+                            rs.getString("noiDungBaoHanh"),
+                            rs.getString("dieuKienBaoHanh"),
+                            rs.getString("truongHopTuChoi")));
+                }
+            }
+        }
+        return dsBaoHanh;
     }
 
     public void luu(ChinhSachBaoHanh chinhSach) throws SQLException {

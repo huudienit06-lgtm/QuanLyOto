@@ -213,6 +213,13 @@ CREATE TABLE HoaDon (
     CONSTRAINT FK_HD_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
     CONSTRAINT FK_HD_ChuongTrinhKM FOREIGN KEY (maKM) REFERENCES ChuongTrinhKhuyenMai(maKM)
 );
+-- Bổ sung mã khách hàng trực tiếp vào hóa đơn
+ALTER TABLE HoaDon
+ADD maKH VARCHAR(20) NULL;
+-- Tạo khóa ngoại đến bảng KhachHang
+ALTER TABLE HoaDon
+ADD CONSTRAINT FK_HoaDon_KhachHang
+FOREIGN KEY (maKH) REFERENCES KhachHang(maKH);
 
 CREATE TABLE ChiTietHoaDon (
     maChiTietHD BIGINT IDENTITY(1,1) PRIMARY KEY,

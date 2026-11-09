@@ -1,5 +1,6 @@
 package controller;
 
+import dao.ChinhSachBaoHanhDAO;
 import dao.ChinhSachBaoHanhDAO.PhuTungBaoHanh;
 import dao.HoaDonDAO.DongChiTiet;
 import dao.HoaDonDAO.KhuyenMai;
@@ -10,18 +11,29 @@ import dao.HoaDonDAO;
 import dao.HoaDonDAO.HoaDonDaLuu;
 import dao.HoaDonDAO.PhieuDayDu;
 import dao.HoaDonDAO.TongKet;
+import dao.TimKiemHoaDonDAO;
+import entity.GiaoDichThanhToan;
 import gui.FrmHoaDon;
 import gui.FrmThanhToan;
+import java.awt.Color;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import javax.swing.SwingWorker;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.math.BigDecimal;
 
 import static dao.HoaDonDAO.CHUA_THANH_TOAN;
 import static dao.HoaDonDAO.DINH_DANG_NGAY;
@@ -29,17 +41,15 @@ import static dao.HoaDonDAO.MUA_PHU_TUNG;
 import static dao.HoaDonDAO.SUA_CHUA;
 import static dao.HoaDonDAO.coPhieu;
 
-/**
- * Controller: gắn các sự kiện của FrmHoaDon vào xử lý. Việc tính toán và truy
- * vấn dữ liệu nằm ở HoaDonDAO; việc hiển thị nằm ở FrmHoaDon.
- */
 public class HoaDonController {
     public static final String MSG_CHON_PHIEU = "Chọn phiếu sửa chữa để kiểm tra bảo hành.";
     public static final String MSG_KHONG_BAO_HANH = "Phiếu này không có phụ tùng thuộc chính sách đang áp dụng.";
     public static final String MSG_HD_MUA_PHU_TUNG = "Hóa đơn mua phụ tùng không có phiếu sửa chữa.";
+    private int lanYeuCauBaoHanh = 0;
 
     private final FrmHoaDon view;
     private final HoaDonDAO dao = new HoaDonDAO();
+    private final ChinhSachBaoHanhDAO baoHanhDAO = new ChinhSachBaoHanhDAO();
 
     // Số liệu tổng kết đang hiển thị
     private TongKet tongKet = TongKet.RONG;
@@ -71,12 +81,179 @@ public class HoaDonController {
         view.khiNhanLamMoi(this::xacNhanLamMoi);
         view.khiNhanLuu(this::luuHoaDon);
         view.khiNhanThanhToan(this::moFormThanhToan);
-
-        // Bảng chi tiết hoặc khuyến mãi đổi thì tính lại tổng
-        view.khiDoiChiTiet(this::tinhTongNeuDangLap);
+        view.khiDoiChiTiet(this::xuLyKhiDoiChiTiet);
         view.khiDoiKhuyenMai(this::tinhTongNeuDangLap);
+        view.khiChonLichSu(maHD -> moKhungThongTin(maHD));
+    }
 
-        view.khiChonLichSu(this::xemHoaDonLichSu);
+    private void xuLyKhiDoiChiTiet() {
+        tinhTongNeuDangLap();
+        if (dangNapHoaDonCu) {
+            return;
+        }
+        capNhatBaoHanhTheoChiTiet();
+    }
+
+    private void capNhatBaoHanhTheoChiTiet() {
+        int lanHienTai = ++lanYeuCauBaoHanh;
+        List<DongChiTiet> dsChiTiet = new ArrayList<>(
+                view.layChiTietTuBang());
+        new SwingWorker<List<PhuTungBaoHanh>, Void>() {
+            @Override
+            protected List<PhuTungBaoHanh> doInBackground() throws Exception {
+                return baoHanhDAO.layPhuTungBaoHanhTheoDanhSach(dsChiTiet);
+            }
+
+            @Override
+            protected void done() {
+                if (lanHienTai != lanYeuCauBaoHanh) {
+                    return;
+                }
+                try {
+                    List<PhuTungBaoHanh> dsBaoHanh = get();
+                    view.hienThiBaoHanh(
+                            dsBaoHanh,
+                            MSG_KHONG_BAO_HANH);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException ex) {
+                    Throwable goc = ex.getCause() != null
+                            ? ex.getCause()
+                            : ex;
+                    view.xoaBaoHanh("Không thể tải thông tin bảo hành.");
+                    view.baoLoi(
+                            "Không thể kiểm tra chính sách bảo hành",
+                            goc instanceof Exception
+                                    ? (Exception) goc
+                                    : new Exception(goc));
+                }
+            }
+        }.execute();
+    }
+
+    private static final NumberFormat NF_TIEN = NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN"));
+
+    // Bấm một hóa đơn trong lịch sử: hiện khung thông tin, không đổ lên form lập
+    private void moKhungThongTin(String maHD) {
+        if (dangDongBoLichSu) {
+            return;
+        }
+        try {
+            HoaDonDaLuu cu = dao.taiHoaDon(maHD);
+            if (cu == null) {
+                view.canhBao("Không tìm thấy hóa đơn " + maHD + ".");
+                return;
+            }
+            ThongTinHoaDon hd = cu.hd();
+            TongKet tk = dao.tongKetHoaDonCu(hd, cu.dsChiTiet());
+            TimKiemHoaDonDAO daoTK = new TimKiemHoaDonDAO();
+            String[] khXe = daoTK.layMaKhachHangVaXe(maHD);
+            BigDecimal tongGiaoDich = BigDecimal.ZERO;
+            for (GiaoDichThanhToan gd : daoTK.layGiaoDichThanhCong(maHD)) {
+                if (gd.getSoTienThanhToan() != null) {
+                    tongGiaoDich = tongGiaoDich.add(gd.getSoTienThanhToan());
+                }
+            }
+
+            // Bảng dịch vụ, phụ tùng
+            // Bảng dịch vụ, phụ tùng và thông tin bảo hành
+            DefaultTableModel modelDong = view.taoModelDongHang();
+            BigDecimal tongChuaVAT = BigDecimal.ZERO;
+            int stt = 1;
+
+            // Lấy chính sách bảo hành của các phụ tùng trong hóa đơn
+            List<PhuTungBaoHanh> dsBaoHanh = baoHanhDAO.layPhuTungBaoHanhTheoDanhSach(cu.dsChiTiet());
+
+            // Ánh xạ mã phụ tùng với thông tin bảo hành
+            Map<String, PhuTungBaoHanh> baoHanhTheoMa = new HashMap<>();
+
+            for (PhuTungBaoHanh bh : dsBaoHanh) {
+                baoHanhTheoMa.put(bh.maPhuTung(), bh);
+            }
+
+            // Đổ từng dòng chi tiết vào bảng
+            for (DongChiTiet d : cu.dsChiTiet()) {
+                tongChuaVAT = tongChuaVAT.add(d.thanhTien());
+                String thongTinBaoHanh = "—";
+                // Chỉ phụ tùng mới có thông tin bảo hành
+                if (!d.dichVu()) {
+                    PhuTungBaoHanh bh = baoHanhTheoMa.get(d.ma());
+                    if (bh != null) {
+                        thongTinBaoHanh = bh.thoiHan() + " "
+                                + switch (bh.donViThoiGian().toUpperCase()) {
+                                    case "NGAY" -> "ngày";
+                                    case "THANG" -> "tháng";
+                                    case "NAM" -> "năm";
+                                    default -> bh.donViThoiGian();
+                                };
+                    } else {
+                        thongTinBaoHanh = "---";
+                    }
+                }
+                modelDong.addRow(new Object[] {
+                        stt++, d.ma(), d.ten(), d.soLuong(), tien(d.donGia()), tien(d.thanhTien()), thongTinBaoHanh
+                });
+            }
+
+            String trangThai = view.layTrangThaiLichSu(maHD);
+            boolean daTT = "Đã thanh toán".equals(trangThai);
+            boolean motPhan = "Thanh toán một phần".equals(trangThai);
+            boolean chuaTT = "Chưa thanh toán".equals(trangThai);
+            BigDecimal daTra = daTT ? tk.tongThanhToan() : (motPhan ? tongGiaoDich : BigDecimal.ZERO);
+            BigDecimal conLai = tk.tongThanhToan().subtract(daTra).max(BigDecimal.ZERO);
+
+            Color chu = new Color(40, 50, 65), xanh = new Color(22, 130, 70);
+            Color do_ = new Color(220, 53, 69), nut = new Color(37, 99, 235);
+
+            String[][] thongTin = {
+                    { "Khách hàng", hienThi(hd.tenKH()) },
+                    { "Mã khách hàng", hienThi(hd.maKH()) },
+                    { "Ngày lập", hd.ngayLap() == null ? "---" : hd.ngayLap().format(DINH_DANG_NGAY) },
+                    { "Biển số xe", hienThi(hd.bienSo()) },
+                    { "Mã xe", hienThi(khXe == null ? null : khXe[1]) },
+                    { "Mã nhân viên", hienThi(hd.maNV()) },
+                    { "Phiếu sửa chữa", hienThi(hd.maPhieu()) },
+                    { "Mã khuyến mãi", hienThi(hd.maKM()) },
+                    { "Trạng thái", trangThai } };
+
+            List<Object[]> dongTien = new ArrayList<>();
+            dongTien.add(new Object[] { "Tổng hóa đơn (chưa gồm VAT)", tien(tongChuaVAT) + " đ", chu, true });
+            dongTien.add(new Object[] { "Tiền thuế (VAT)", tien(tk.tienVAT()) + " đ", chu, false });
+            dongTien.add(new Object[] { "Tiền giảm", "- " + tien(tk.tienGiam()) + " đ", do_, false });
+            dongTien.add(new Object[] { "TỔNG THANH TOÁN", tien(tk.tongThanhToan()) + " đ", nut, true });
+            if (daTT || motPhan) {
+                dongTien.add(new Object[] { "Đã thanh toán", tien(daTra) + " đ", xanh, true });
+            }
+            if (motPhan || chuaTT) {
+                dongTien.add(new Object[] { "Còn lại", tien(conLai) + " đ", do_, true });
+            }
+
+            view.hienThiKhungThongTin(maHD, thongTin, modelDong, dongTien,
+                    chuaTT || motPhan, () -> moThanhToanHoaDon(maHD));
+        } catch (Exception ex) {
+            view.baoLoi("Không thể tải thông tin hóa đơn", ex);
+        }
+    }
+
+    private void moThanhToanHoaDon(String maHD) {
+        FrmThanhToan frm = new FrmThanhToan(maHD);
+        frm.setDefaultCloseOperation(javax.swing.JFrame.DISPOSE_ON_CLOSE);
+        frm.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                taiLaiLichSuAsync();
+            }
+        });
+        frm.setLocationRelativeTo(view);
+        frm.setVisible(true);
+    }
+
+    private static String tien(BigDecimal so) {
+        return so == null ? "0" : NF_TIEN.format(so);
+    }
+
+    private static String hienThi(String s) {
+        return (s == null || s.isBlank()) ? "---" : s;
     }
 
     // TẢI DỮ LIỆU
@@ -151,8 +328,7 @@ public class HoaDonController {
             }
             view.hienThiPhieu(kq.phieu());
             view.datChiTiet(kq.dsChiTiet());
-            view.hienThiBaoHanh(kq.dsBaoHanh(), MSG_KHONG_BAO_HANH);
-
+            capNhatBaoHanhTheoChiTiet();
             if (kq.dsChiTiet().isEmpty()) {
                 view.canhBao("Phiếu sửa chữa chưa có dịch vụ hoặc phụ tùng.");
             }
@@ -160,38 +336,6 @@ public class HoaDonController {
         } catch (SQLException ex) {
             view.baoLoi("Không thể tải thông tin phiếu hoặc kiểm tra bảo hành", ex);
             return false;
-        }
-    }
-
-    // XEM LẠI HÓA ĐƠN TỪ LỊCH SỬ
-    private void xemHoaDonLichSu(String maHD) {
-        if (dangDongBoLichSu) {
-            return;
-        }
-        chayNen(() -> dao.taiHoaDon(maHD), this::hienThiHoaDonCu, "Không thể tải thông tin hóa đơn");
-    }
-
-    private void hienThiHoaDonCu(HoaDonDaLuu cu) {
-        ThongTinHoaDon hd = cu.hd();
-        boolean laSuaChua = coPhieu(hd.maPhieu());
-
-        dangNapHoaDonCu = true;
-        try {
-            dangXemHoaDonCu = true;
-            maHoaDonVuaLuu = null; // hóa đơn cũ không dùng để thanh toán lại từ màn này
-
-            view.hienThiThongTinHoaDon(hd, laSuaChua);
-            view.datChiTiet(cu.dsChiTiet());
-            view.chonKhuyenMaiDaLuu(hd.maKM(), hd.tenKM(), hd.tileGiam());
-
-            tongKet = dao.tongKetHoaDonCu(hd, cu.dsChiTiet());
-            view.hienThiTong(tongKet);
-
-            List<PhuTungBaoHanh> dsBaoHanh = cu.dsBaoHanh();
-            view.hienThiBaoHanh(dsBaoHanh, laSuaChua ? MSG_KHONG_BAO_HANH : MSG_HD_MUA_PHU_TUNG);
-            view.capNhatBoCuc();
-        } finally {
-            dangNapHoaDonCu = false;
         }
     }
 
@@ -308,22 +452,7 @@ public class HoaDonController {
             view.canhBao("Vui lòng lưu hóa đơn trước khi thanh toán!");
             return;
         }
-
-        FrmThanhToan frm = new FrmThanhToan(maHoaDonVuaLuu);
-
-        // Đảm bảo cửa sổ được đóng hoàn toàn khi người dùng thoát.
-        frm.setDefaultCloseOperation(javax.swing.JFrame.DISPOSE_ON_CLOSE);
-
-        // Khi đóng cửa sổ thanh toán, tải lại lịch sử từ database.
-        frm.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                taiLaiLichSuAsync();
-            }
-        });
-
-        frm.setLocationRelativeTo(view);
-        frm.setVisible(true);
+        moThanhToanHoaDon(maHoaDonVuaLuu);
     }
 
     // Tải lại lịch sử hóa đơn sau khi đóng cửa sổ thanh toán.

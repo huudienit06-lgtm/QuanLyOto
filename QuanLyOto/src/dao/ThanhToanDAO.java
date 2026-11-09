@@ -26,54 +26,45 @@ public class ThanhToanDAO {
     }
 
     public static class ChiTiet {
-        public String loai, tenHang;
+        public String loai, tenHang, maPhuTung;
         public int soLuong;
         public BigDecimal donGia = BigDecimal.ZERO;
         public BigDecimal thanhTien = BigDecimal.ZERO;
     }
 
-    // ===================== Kết nối =====================
-    /** Không đóng connection dùng chung (singleton) của ConnectDB. */
     private Connection layKetNoi() throws SQLException {
         ConnectDB.getInstance().connect();
         return ConnectDB.getConnection();
     }
 
-    // ===================== Hóa đơn =====================
-    /** Trả về null nếu không tìm thấy hóa đơn. */
     public ThongTinHoaDon layHoaDon(String maHD) throws SQLException {
         String sql = """
                 SELECT
-                hd.maHoaDon,
-                psc.maKH,
-                kh.hoTen AS tenKH,
-                hd.maPhieuSuaChua,
-                hd.ngayLap,
-                hd.soTien,
-                hd.thueVAT,
-                hd.tienGiamGia,
-                hd.maNV,
-                psc.maXe
+                    hd.maHoaDon,
+                    COALESCE(hd.maKH, psc.maKH) AS maKH,
+                    kh.hoTen AS tenKH,
+                    hd.maPhieuSuaChua,
+                    hd.ngayLap,
+                    hd.soTien,
+                    hd.thueVAT,
+                    hd.tienGiamGia,
+                    hd.maNV,
+                    psc.maXe
                 FROM HoaDon hd
                 LEFT JOIN PhieuSuaChua psc
                     ON hd.maPhieuSuaChua = psc.maPhieuSuaChua
                 LEFT JOIN KhachHang kh
-                    ON psc.maKH = kh.maKH
+                    ON kh.maKH = COALESCE(hd.maKH, psc.maKH)
                 WHERE hd.maHoaDon = ?
                 """;
-
         Connection conn = layKetNoi();
-
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maHD);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     return null;
                 }
-
                 ThongTinHoaDon hd = new ThongTinHoaDon();
-
                 hd.maHoaDon = rs.getString("maHoaDon");
                 hd.maKhachHang = rs.getString("maKH");
                 hd.tenKhachHang = rs.getString("tenKH");
@@ -84,7 +75,6 @@ public class ThanhToanDAO {
                 hd.tienGiamGia = rs.getBigDecimal("tienGiamGia");
                 hd.maNhanVien = trim(rs.getString("maNV"));
                 hd.maXe = trim(rs.getString("maXe"));
-
                 return hd;
             }
         }
@@ -93,10 +83,13 @@ public class ThanhToanDAO {
     public List<ChiTiet> layChiTiet(String maHD) throws SQLException {
         List<ChiTiet> ds = new ArrayList<>();
         String sql = """
-                SELECT CASE WHEN ct.maDV IS NOT NULL THEN 'DV' ELSE 'PT' END AS loai,
-                       COALESCE(dv.tenDV, pt.tenPhuTung) AS tenHang,
-                       ct.soLuong, ct.donGia,
-                       CAST(ct.soLuong AS DECIMAL(18, 2)) * ct.donGia AS thanhTien
+                SELECT
+                    CASE WHEN ct.maDV IS NOT NULL THEN 'DV' ELSE 'PT' END AS loai,
+                    ct.maPhuTung,
+                    COALESCE(dv.tenDV, pt.tenPhuTung) AS tenHang,
+                    ct.soLuong,
+                    ct.donGia,
+                    CAST(ct.soLuong AS DECIMAL(18, 2)) * ct.donGia AS thanhTien
                 FROM ChiTietHoaDon ct
                 LEFT JOIN DichVu dv ON ct.maDV = dv.maDV
                 LEFT JOIN PhuTung pt ON ct.maPhuTung = pt.maPhuTung
@@ -111,6 +104,7 @@ public class ThanhToanDAO {
                 while (rs.next()) {
                     ChiTiet ct = new ChiTiet();
                     ct.loai = rs.getString("loai");
+                    ct.maPhuTung = rs.getString("maPhuTung");
                     ct.tenHang = nvl(rs.getString("tenHang"));
                     ct.soLuong = rs.getInt("soLuong");
                     ct.donGia = bd(rs.getBigDecimal("donGia"));
@@ -154,57 +148,89 @@ public class ThanhToanDAO {
         return ds;
     }
 
-    // ===================== Ghi nhận thanh toán =====================
-    /**
-     * Ghi một giao dịch thanh toán thành công trong một transaction.
-     * Kiểm tra lại số tiền còn nợ ở phía CSDL để tránh thanh toán vượt (vd: 2 máy
-     * cùng thu).
-     *
-     * @return mã giao dịch vừa tạo
-     */
     public String ghiNhanThanhToan(GiaoDichThanhToan gd) throws SQLException {
-        if (gd == null || gd.getMaHoaDon() == null || gd.getMaHoaDon().isEmpty())
+        return ghiNhanThanhToan(gd, null);
+    }
+
+    public String ghiNhanThanhToan(GiaoDichThanhToan gd, String maKH) throws SQLException {
+        if (gd == null || gd.getMaHoaDon() == null || gd.getMaHoaDon().isEmpty()) {
             throw new SQLException("Giao dịch chưa gắn với hóa đơn nào.");
+        }
         final String maHD = gd.getMaHoaDon();
         final BigDecimal soTien = gd.getSoTienThanhToan();
-        if (soTien == null || soTien.signum() <= 0)
+        if (soTien == null || soTien.signum() <= 0) {
             throw new SQLException("Số tiền thanh toán phải lớn hơn 0.");
+        }
         Connection conn = layKetNoi();
         boolean autoCu = conn.getAutoCommit();
         try {
             conn.setAutoCommit(false);
-
             BigDecimal tong = null;
+            String maKHDaGan = null;
+            boolean laHoaDonMuaPhuTung = false;
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT soTien FROM HoaDon WITH (UPDLOCK, ROWLOCK) WHERE maHoaDon = ?")) {
+                    """
+                            SELECT soTien, maKH, maPhieuSuaChua
+                            FROM HoaDon WITH (UPDLOCK, ROWLOCK)
+                            WHERE maHoaDon = ?
+                            """)) {
                 ps.setString(1, maHD);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next())
-                        tong = bd(rs.getBigDecimal(1));
+                    if (rs.next()) {
+                        tong = bd(rs.getBigDecimal("soTien"));
+                        maKHDaGan = rs.getString("maKH");
+                        laHoaDonMuaPhuTung = rs.getString("maPhieuSuaChua") == null;
+                    }
                 }
             }
-            if (tong == null)
+            if (tong == null) {
                 throw new SQLException("Không tìm thấy hóa đơn " + maHD + ".");
+            }
+            // Chỉ liên kết khách hàng trực tiếp với hóa đơn mua phụ tùng.
+            if (maKH != null && !maKH.trim().isEmpty()) {
+                if (!laHoaDonMuaPhuTung) {
+                    throw new SQLException("Chỉ hóa đơn mua phụ tùng mới được liên kết khách hàng trực tiếp.");
+                }
+                if (maKHDaGan != null && !maKHDaGan.equals(maKH)) {
+                    throw new SQLException("Hóa đơn đã được liên kết với một khách hàng khác.");
+                }
+                if (maKHDaGan == null) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "UPDATE HoaDon SET maKH = ? WHERE maHoaDon = ? AND maKH IS NULL")) {
+                        ps.setString(1, maKH);
+                        ps.setString(2, maHD);
 
+                        if (ps.executeUpdate() == 0) {
+                            throw new SQLException("Không thể liên kết khách hàng với hóa đơn.");
+                        }
+                    }
+                }
+            }
             BigDecimal da = BigDecimal.ZERO;
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT ISNULL(SUM(soTienThanhToan), 0) FROM GiaoDichThanhToan "
-                            + "WHERE maHoaDon = ? AND trangThaiGD = ?")) {
+                    """
+                            SELECT ISNULL(SUM(soTienThanhToan), 0)
+                            FROM GiaoDichThanhToan
+                            WHERE maHoaDon = ? AND trangThaiGD = ?
+                            """)) {
                 ps.setString(1, maHD);
                 ps.setString(2, GiaoDichThanhToan.TT_THANH_CONG);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next())
+                    if (rs.next()) {
                         da = bd(rs.getBigDecimal(1));
+                    }
                 }
             }
-            if (soTien.compareTo(tong.subtract(da)) > 0)
+            if (soTien.compareTo(tong.subtract(da)) > 0) {
                 throw new SQLException("Số tiền thanh toán vượt quá số còn nợ của hóa đơn.");
-
+            }
             String maGD = taoMaGD(conn);
             try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO GiaoDichThanhToan "
-                            + "(maGD, maHoaDon, phuongThucThanhToan, thoiGianGD, trangThaiGD, soTienThanhToan) "
-                            + "VALUES (?, ?, ?, ?, ?, ?)")) {
+                    """
+                            INSERT INTO GiaoDichThanhToan
+                                (maGD, maHoaDon, phuongThucThanhToan, thoiGianGD, trangThaiGD, soTienThanhToan)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            """)) {
                 gd.setMaGD(maGD);
                 gd.setThoiGianGD(new Timestamp(System.currentTimeMillis()));
                 gd.setTrangThaiGD(GiaoDichThanhToan.TT_THANH_CONG);
@@ -216,9 +242,7 @@ public class ThanhToanDAO {
                 ps.setBigDecimal(6, soTien);
                 ps.executeUpdate();
             }
-            // Cập nhật trạng thái hóa đơn sau khi đã ghi nhận giao dịch.
             BigDecimal daThanhToanMoi = da.add(soTien);
-
             String trangThai;
             if (daThanhToanMoi.compareTo(tong) >= 0) {
                 trangThai = "Đã thanh toán";
@@ -227,31 +251,32 @@ public class ThanhToanDAO {
             } else {
                 trangThai = "Chưa thanh toán";
             }
-
             try (PreparedStatement ps = conn.prepareStatement(
                     "UPDATE HoaDon SET trangThai = ? WHERE maHoaDon = ?")) {
                 ps.setString(1, trangThai);
                 ps.setString(2, maHD);
-
                 if (ps.executeUpdate() == 0) {
                     throw new SQLException("Không thể cập nhật trạng thái hóa đơn.");
                 }
             }
-
             if (daThanhToanMoi.compareTo(tong) >= 0) {
-                String sqlTienDo = "UPDATE ptn SET tienDo = ? "
-                        + "FROM PhieuTiepNhan ptn "
-                        + "JOIN PhieuKiemTra pkt ON pkt.maPhieuTiepNhan = ptn.maPhieuTiepNhan "
-                        + "JOIN PhieuSuaChua psc ON psc.maPhieuKiemTra = pkt.maPhieuKiemTra "
-                        + "JOIN HoaDon hd ON hd.maPhieuSuaChua = psc.maPhieuSuaChua "
-                        + "WHERE hd.maHoaDon = ?";
+                String sqlTienDo = """
+                        UPDATE ptn SET tienDo = ?
+                        FROM PhieuTiepNhan ptn
+                        JOIN PhieuKiemTra pkt
+                            ON pkt.maPhieuTiepNhan = ptn.maPhieuTiepNhan
+                        JOIN PhieuSuaChua psc
+                            ON psc.maPhieuKiemTra = pkt.maPhieuKiemTra
+                        JOIN HoaDon hd
+                            ON hd.maPhieuSuaChua = psc.maPhieuSuaChua
+                        WHERE hd.maHoaDon = ?
+                        """;
                 try (PreparedStatement ps = conn.prepareStatement(sqlTienDo)) {
                     ps.setString(1, PhieuTiepNhan.TIEN_DO_HOAN_THANH);
                     ps.setString(2, maHD);
                     ps.executeUpdate();
                 }
             }
-
             conn.commit();
             return maGD;
         } catch (SQLException ex) {

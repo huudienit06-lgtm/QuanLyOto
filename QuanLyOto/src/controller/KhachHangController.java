@@ -87,6 +87,10 @@ public final class KhachHangController {
                 view.hienThiLoi("Không thêm được khách hàng vào cơ sở dữ liệu.");
                 return;
             }
+            if (view.isCheDoTaoMoi()) {
+                view.dongDialogSauKhiTao(khachHang.getMaKH());
+                return;
+            }
             taiDanhSachKhachHang();
             lamMoiForm();
             view.thongBaoThanhCong("Đã thêm khách hàng thành công.", "Thêm khách hàng");

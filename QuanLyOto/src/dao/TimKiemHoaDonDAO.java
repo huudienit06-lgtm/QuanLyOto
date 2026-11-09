@@ -23,14 +23,17 @@ public class TimKiemHoaDonDAO {
                    kh.hoTen AS tenKhachHang, x.bienSo, hd.maKM,
                    hd.ngayLap, hd.soTien, hd.trangThai
             FROM HoaDon hd
-            LEFT JOIN PhieuSuaChua p ON hd.maPhieuSuaChua = p.maPhieuSuaChua
-            LEFT JOIN KhachHang kh ON p.maKH = kh.maKH
-            LEFT JOIN Xe x ON p.maXe = x.maXe
+            LEFT JOIN PhieuSuaChua p
+                ON hd.maPhieuSuaChua = p.maPhieuSuaChua
+            LEFT JOIN KhachHang kh
+                ON kh.maKH = COALESCE(hd.maKH, p.maKH)
+            LEFT JOIN Xe x
+                ON p.maXe = x.maXe
             WHERE (? = '' OR hd.maHoaDon LIKE ?)
               AND (? = '' OR hd.maPhieuSuaChua LIKE ?)
               AND (? = '' OR hd.maNV LIKE ?)
               AND (? = '' OR ISNULL(hd.maKM, '') LIKE ?)
-              AND (? = '' OR p.maKH LIKE ? OR kh.hoTen LIKE ?)
+              AND (? = '' OR COALESCE(hd.maKH, p.maKH) LIKE ? OR kh.hoTen LIKE ?)
               AND (? = '' OR p.maXe LIKE ? OR x.bienSo LIKE ?)
               AND (? IS NULL OR (hd.ngayLap >= ? AND hd.ngayLap < DATEADD(DAY, 1, ?)))
               AND (? IS NULL OR hd.trangThai = ?)
@@ -46,10 +49,13 @@ public class TimKiemHoaDonDAO {
 
     // maKH, maXe lấy qua phiếu sửa chữa
     private static final String SQL_MA_KH_MA_XE = """
-            SELECT p.maKH, p.maXe
-            FROM HoaDon hd
-            LEFT JOIN PhieuSuaChua p ON hd.maPhieuSuaChua = p.maPhieuSuaChua
-            WHERE hd.maHoaDon = ?
+                SELECT
+                COALESCE(hd.maKH, p.maKH) AS maKH,
+                p.maXe
+                FROM HoaDon hd
+                LEFT JOIN PhieuSuaChua p
+                ON hd.maPhieuSuaChua = p.maPhieuSuaChua
+                WHERE hd.maHoaDon = ?
             """;
 
     // Dịch vụ xếp trước, phụ tùng xếp sau

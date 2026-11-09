@@ -1,6 +1,7 @@
 package gui;
 
 import dao.ThongKeHoatDongGaraDAO;
+import controller.TimKiemHoaDonController;
 import entity.TaiKhoan;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -135,9 +136,9 @@ public class BaseFrame extends JFrame {
 			lblStatus.setText("Báo cáo tổng hợp");
 			return;
 		}
-		if ("Thống kê Doanh thu".equals(featureName)) {
+		if ("Doanh thu".equals(featureName) || "Thống kê Doanh thu".equals(featureName)) {
 			setContent(new FrmThongKeDoanhThu());
-			lblStatus.setText("Thống kê doanh thu");
+			lblStatus.setText("Doanh thu");
 			return;
 		}
 		if ("Doanh thu".equals(featureName)) {
@@ -166,7 +167,10 @@ public class BaseFrame extends JFrame {
 			return;
 		}
 		if ("Hóa đơn".equals(featureName)) {
-			setContent(new FrmTimKiemHoaDon());
+			FrmTimKiemHoaDon frmTimKiem = new FrmTimKiemHoaDon();
+			new TimKiemHoaDonController(frmTimKiem);
+			frmTimKiem.setKhiNhanThem(() -> onMenuAction("Lập hóa đơn"));
+			setContent(frmTimKiem);
 			lblStatus.setText("Tìm kiếm hóa đơn");
 			return;
 		}

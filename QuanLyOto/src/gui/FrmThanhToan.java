@@ -1,6 +1,7 @@
 package gui;
 
 import controller.ThanhToanController;
+import dao.ChinhSachBaoHanhDAO.PhuTungBaoHanh;
 import dao.ThanhToanDAO;
 import entity.GiaoDichThanhToan;
 
@@ -19,10 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-/**
- * Chỉ chứa giao diện. Mọi sự kiện được gắn trong ThanhToanController,
- * mọi truy vấn dữ liệu nằm trong ThanhToanDAO.
- */
 public class FrmThanhToan extends JFrame {
     private static final String TEN_GARA = "AUTOGARA PRO";
     private static final String DIA_CHI_GARA = "Địa chỉ: 12 Nguyễn Văn Bảo, P.4, Q. Gò Vấp, TP. Hồ Chí Minh";
@@ -45,9 +42,6 @@ public class FrmThanhToan extends JFrame {
     private static final String CARD_TIEN_MAT = "TIEN_MAT";
     private static final String CARD_CHUYEN_KHOAN = "CHUYEN_KHOAN";
 
-    // ===================== Dữ liệu truyền giữa Controller và View
-    // =====================
-    /** Số liệu cho khung "Tổng quan thanh toán". */
     public static class TongQuan {
         public boolean coHoaDon;
         public BigDecimal tienDV = BigDecimal.ZERO, tienPT = BigDecimal.ZERO,
@@ -55,15 +49,14 @@ public class FrmThanhToan extends JFrame {
                 tongThanhToan = BigDecimal.ZERO, daThanhToan = BigDecimal.ZERO, conNo = BigDecimal.ZERO;
     }
 
-    /** Dữ liệu để dựng hóa đơn in. */
     public static class DuLieuHoaDon {
         public String maHoaDon, ngayLap, tenKhach, maKhach, maPhieu, phuongThuc, ngayIn, maXe, maNhanVien;
         public List<ThanhToanDAO.ChiTiet> chiTiet;
+        public List<PhuTungBaoHanh> dsBaoHanh = new ArrayList<>();
         public BigDecimal tienDV, tienPT, thue, giamGia, tongHoaDon, tongTien, daTraTruoc, lanNay, conLai;
         public BigDecimal khachDua, tienThua;
     }
 
-    // ===================== Component =====================
     private JTextField txtMaHoaDon, txtNgayLap, txtMaKhachHang, txtTenKhachHang;
     private JTextField txtMaPhieuSuaChua, txtMaNhanVien, txtTrangThaiHoaDon;
     private JLabel lblPill, lblTienDV, lblTienPT, lblTongHoaDon, lblThue, lblGiamGia;
@@ -93,7 +86,6 @@ public class FrmThanhToan extends JFrame {
         new ThanhToanController(this, maHoaDon);
     }
 
-    // ===================== Getter cho Controller =====================
     public JButton getBtnDong() {
         return btnDong;
     }
@@ -163,8 +155,6 @@ public class FrmThanhToan extends JFrame {
         return btnTienMat.isSelected();
     }
 
-    // ===================== Cập nhật hiển thị (Controller gọi)
-    // =====================
     public void hienThiThongTinHoaDon(ThanhToanDAO.ThongTinHoaDon hd) {
         txtMaHoaDon.setText(nvl(hd.maHoaDon));
         txtMaKhachHang.setText(nvl(hd.maKhachHang));
@@ -236,7 +226,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    /** Bật/tắt các ô nhập và nút thanh toán. Khi tắt sẽ xóa nội dung ô nhập. */
     public void datChoPhep(boolean choPhep) {
         txtSoTienThanhToan.setEnabled(choPhep);
         txtTienKhachDua.setEnabled(choPhep);
@@ -251,7 +240,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    /** chenh = khách đưa - số tiền thanh toán; null nếu chưa tính được. */
     public void hienThiTienThua(BigDecimal chenh) {
         if (chenh == null) {
             lblNhanTienThua.setText("Tiền thừa trả khách");
@@ -280,7 +268,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    // ===================== Thông báo / hộp thoại =====================
     public void xoaThongBao() {
         datThongBao(" ", MUTED);
     }
@@ -317,7 +304,6 @@ public class FrmThanhToan extends JFrame {
                 "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    /** @return true nếu người dùng đồng ý đổi về số còn nợ. */
     public boolean hoiDoiVeSoConNo(BigDecimal soTien, BigDecimal conNo) {
         int chon = JOptionPane.showConfirmDialog(this,
                 "Số tiền nhập (" + dinhDangTien(soTien) + ") lớn hơn số còn nợ ("
@@ -333,7 +319,6 @@ public class FrmThanhToan extends JFrame {
         return chon == 0;
     }
 
-    // ===================== Dựng giao diện chính =====================
     private void khoiTaoGiaoDien() {
         JPanel root = new JPanel(new BorderLayout(0, 14));
         root.setBackground(SOFT);
@@ -686,7 +671,6 @@ public class FrmThanhToan extends JFrame {
         return footer;
     }
 
-    // ===================== Hóa đơn in =====================
     public void hienThiHoaDon(DuLieuHoaDon d) {
         JDialog dlg = new JDialog(this, "Hóa đơn thanh toán - " + d.maHoaDon, true);
         JPanel giay = taoHoaDonIn(d);
@@ -826,11 +810,18 @@ public class FrmThanhToan extends JFrame {
         JPanel bang = new JPanel(new GridBagLayout());
         bang.setBackground(Color.WHITE);
         bang.setBorder(new MatteBorder(1, 1, 0, 0, TEXT));
-        int[] rong = { 44, 270, 54, 60, 112, 130 };
-        double[] gian = { 0, 1, 0, 0, 0, 0 };
-        String[] td = { "STT", "Tên hàng hóa, dịch vụ", "ĐVT", "SL", "Đơn giá", "Thành tiền" };
-        int[] can = { SwingConstants.CENTER, SwingConstants.LEFT, SwingConstants.CENTER,
-                SwingConstants.CENTER, SwingConstants.RIGHT, SwingConstants.RIGHT };
+        int[] rong = { 40, 230, 45, 45, 100, 110, 90 };
+        double[] gian = { 0, 1, 0, 0, 0, 0, 0 };
+        String[] td = { "STT", "Tên hàng hóa, dịch vụ", "ĐVT", "SL", "Đơn giá", "Thành tiền", "Bảo hành" };
+        int[] can = {
+                SwingConstants.CENTER,
+                SwingConstants.LEFT,
+                SwingConstants.CENTER,
+                SwingConstants.CENTER,
+                SwingConstants.RIGHT,
+                SwingConstants.RIGHT,
+                SwingConstants.CENTER
+        };
         GridBagConstraints b = new GridBagConstraints();
         b.fill = GridBagConstraints.BOTH;
         b.gridy = 0;
@@ -844,8 +835,9 @@ public class FrmThanhToan extends JFrame {
             b.gridx = 0;
             b.gridwidth = 6;
             b.weightx = 1;
-            bang.add(oBang("Hóa đơn chưa có chi tiết dịch vụ / phụ tùng.",
-                    SwingConstants.CENTER, false, Color.WHITE, 100), b);
+            b.gridwidth = 7;
+            bang.add(oBang("Hóa đơn chưa có chi tiết dịch vụ / phụ tùng.", SwingConstants.CENTER, false, Color.WHITE,
+                    100), b);
         } else {
             int stt = 1;
             for (ThanhToanDAO.ChiTiet ct : d.chiTiet) {
@@ -853,9 +845,16 @@ public class FrmThanhToan extends JFrame {
                 b.gridwidth = 1;
                 String tenHang = "<html><div style='width:" + (rong[1] - 14) + "px'>"
                         + nvl(ct.tenHang).replace("&", "&amp;").replace("<", "&lt;") + "</div></html>";
-                String[] gt = { String.valueOf(stt), tenHang,
+                String baoHanh = layThoiHanBaoHanh(ct, d.dsBaoHanh);
+                String[] gt = {
+                        String.valueOf(stt),
+                        tenHang,
                         ThanhToanDAO.LOAI_DV.equals(ct.loai) ? "Lần" : "Cái",
-                        String.valueOf(ct.soLuong), dinhDangSo(ct.donGia), dinhDangSo(ct.thanhTien) };
+                        String.valueOf(ct.soLuong),
+                        dinhDangSo(ct.donGia),
+                        dinhDangSo(ct.thanhTien),
+                        baoHanh
+                };
                 for (int i = 0; i < gt.length; i++) {
                     b.gridx = i;
                     b.weightx = gian[i];
@@ -925,6 +924,38 @@ public class FrmThanhToan extends JFrame {
         p.setMaximumSize(kich);
         p.setSize(kich);
         return p;
+    }
+
+    private String layThoiHanBaoHanh(
+            ThanhToanDAO.ChiTiet ct,
+            List<PhuTungBaoHanh> dsBaoHanh) {
+        if (ThanhToanDAO.LOAI_DV.equals(ct.loai)) {
+            return "-";
+        }
+        if (ct.maPhuTung == null || dsBaoHanh == null) {
+            return "Không";
+        }
+        for (PhuTungBaoHanh b : dsBaoHanh) {
+            if (ct.maPhuTung.equals(b.maPhuTung())) {
+                String donVi = b.donViThoiGian() == null
+                        ? ""
+                        : b.donViThoiGian().toUpperCase(Locale.ROOT);
+                String tenDonVi;
+                switch (donVi) {
+                    case "NGAY":
+                        tenDonVi = "ngày";
+                        break;
+                    case "NAM":
+                        tenDonVi = "năm";
+                        break;
+                    default:
+                        tenDonVi = "tháng";
+                        break;
+                }
+                return b.thoiHan() + " " + tenDonVi;
+            }
+        }
+        return "Không";
     }
 
     private void themVaoGiay(JPanel parent, JComponent child) {
@@ -1039,8 +1070,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    // ===================== QR chuyển khoản =====================
-    /** @return true nếu nhân viên bấm "Khách đã chuyển khoản". */
     public boolean hienThiQR(String maHoaDon, BigDecimal soTien) {
         final boolean[] ketQua = { false };
         JDialog dlg = new JDialog(this, "Thanh toán chuyển khoản", true);
@@ -1101,7 +1130,6 @@ public class FrmThanhToan extends JFrame {
         return ketQua[0];
     }
 
-    /** Mã QR minh họa (không phải QR chuẩn VietQR). */
     private static class QrPanel extends JPanel {
         private static final int N = 29;
         private final boolean[][] cells = new boolean[N][N];
@@ -1175,7 +1203,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    // ===================== Hàm dựng component =====================
     private JPanel taoCard() {
         JPanel p = new JPanel();
         p.setBackground(Color.WHITE);
@@ -1333,8 +1360,6 @@ public class FrmThanhToan extends JFrame {
         }
     }
 
-    // ===================== Định dạng (dùng chung với Controller)
-    // =====================
     public static String dinhDangSo(BigDecimal value) {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag("vi-VN"));
         symbols.setGroupingSeparator('.');
