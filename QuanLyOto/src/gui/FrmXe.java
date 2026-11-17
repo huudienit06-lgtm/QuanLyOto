@@ -1,6 +1,7 @@
 package gui;
 
 import controller.XeController;
+import dao.DanhMucXeDAO;
 import entity.KhachHang;
 import entity.Xe;
 import java.awt.BorderLayout;
@@ -21,8 +22,11 @@ import java.awt.event.MouseEvent;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
@@ -30,6 +34,8 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -54,8 +60,9 @@ public class FrmXe extends JPanel {
 
     private final JTextField txtMaXe = createTextField(16);
     private final JTextField txtBienSo = createTextField(16);
-    private final JTextField txtHangXe = createTextField(16);
-    private final JTextField txtDongXe = createTextField(16);
+    private final JComboBox<String> cboHangXe = createComboBox();
+    private final JComboBox<String> cboDongXe = createComboBox();
+    private final Map<String, Set<String>> danhMucXe = new LinkedHashMap<>();
     private final JTextField txtNamSanXuat = createTextField(16);
     private final JTextField txtSoKhung = createTextField(16);
     private final JTextField txtSoMay = createTextField(16);
@@ -101,6 +108,8 @@ public class FrmXe extends JPanel {
         add(createContent(), BorderLayout.CENTER);
         add(createStatusBar(), BorderLayout.SOUTH);
 
+        khoiTaoDanhMucXe();
+        napDanhMucXe();
         configureComponents();
         new XeController(this).khoiTao();
     }
@@ -149,8 +158,8 @@ public class FrmXe extends JPanel {
         pnlFields.setOpaque(false);
         addField(pnlFields, "Mã xe (tự động)", txtMaXe, 0, 0);
         addField(pnlFields, "Biển số *", txtBienSo, 2, 0);
-        addField(pnlFields, "Hãng xe *", txtHangXe, 0, 1);
-        addField(pnlFields, "Dòng xe *", txtDongXe, 2, 1);
+        addField(pnlFields, "Hãng xe *", cboHangXe, 0, 1);
+        addField(pnlFields, "Dòng xe *", cboDongXe, 2, 1);
         addField(pnlFields, "Năm sản xuất *", txtNamSanXuat, 0, 2);
         addField(pnlFields, "Khách hàng *", txtKhachHang, 2, 2);
         addField(pnlFields, "Số khung", txtSoKhung, 0, 3);
@@ -162,6 +171,17 @@ public class FrmXe extends JPanel {
         pnlButtons.add(btnSua, buttonConstraints(1));
         pnlButtons.add(btnXoa, buttonConstraints(2));
         pnlButtons.add(btnLamMoi, buttonConstraints(3));
+        JButton btnDanhMuc = createButton("Quản lý hãng / dòng xe", null,
+                UIConfig.COLOR_SECONDARY, UIConfig.COLOR_TEXT);
+        btnDanhMuc.addActionListener(event -> {
+            JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                    "Quản lý hãng xe và dòng xe", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+            dialog.setContentPane(new FrmHangXe(this::napDanhMucXe));
+            dialog.pack();
+            dialog.setLocationRelativeTo(this);
+            dialog.setVisible(true);
+        });
+        pnlButtons.add(btnDanhMuc, buttonConstraints(4));
 
         JPanel pnlLower = new JPanel(new BorderLayout());
         pnlLower.setOpaque(false);
@@ -249,6 +269,73 @@ public class FrmXe extends JPanel {
         return tf;
     }
 
+    private JComboBox<String> createComboBox() {
+        JComboBox<String> comboBox = new JComboBox<>();
+        comboBox.setFont(UIConfig.FONT_REGULAR);
+        comboBox.setForeground(UIConfig.COLOR_TEXT);
+        comboBox.setBackground(UIConfig.COLOR_SURFACE);
+        comboBox.setPreferredSize(new Dimension(180, 32));
+        comboBox.setMaximumRowCount(10);
+        return comboBox;
+    }
+
+    private void khoiTaoDanhMucXe() {
+        themDanhMucXe("Toyota", "Vios", "Corolla Altis", "Corolla Cross", "Camry", "Yaris", "Wigo", "Raize", "Veloz Cross", "Avanza Premio", "Innova", "Fortuner", "Hilux", "Land Cruiser");
+        themDanhMucXe("Honda", "City", "Civic", "Accord", "Brio", "HR-V", "CR-V", "BR-V");
+        themDanhMucXe("Hyundai", "Grand i10", "Accent", "Elantra", "Sonata", "Venue", "Creta", "Tucson", "Santa Fe", "Custin", "Stargazer", "Palisade");
+        themDanhMucXe("Mazda", "Mazda2", "Mazda3", "Mazda6", "CX-3", "CX-30", "CX-5", "CX-8", "BT-50");
+        themDanhMucXe("Ford", "Ranger", "Everest", "Explorer", "EcoSport", "Focus", "Fiesta", "Transit", "Territory");
+        themDanhMucXe("Kia", "Morning", "Soluto", "K3", "Cerato", "K5", "Seltos", "Sonet", "Sportage", "Sorento", "Carnival", "Carens");
+        themDanhMucXe("Mitsubishi", "Attrage", "Mirage", "Xpander", "Xpander Cross", "Xforce", "Outlander", "Pajero Sport", "Triton");
+        themDanhMucXe("Mercedes-Benz", "C200", "C300", "E200", "E300", "S450", "GLA", "GLB", "GLC", "GLE", "GLS");
+        themDanhMucXe("VinFast", "Fadil", "Lux A2.0", "Lux SA2.0", "VF e34", "VF 3", "VF 5", "VF 6", "VF 7", "VF 8", "VF 9");
+        themDanhMucXe("Suzuki", "Swift", "Ciaz", "Ertiga", "XL7", "Jimny", "Carry");
+        themDanhMucXe("Nissan", "Almera", "Sunny", "Navara", "X-Trail", "Terra", "Kicks");
+        themDanhMucXe("Chevrolet", "Spark", "Aveo", "Cruze", "Captiva", "Colorado", "Trailblazer");
+        themDanhMucXe("BMW", "320i", "330i", "520i", "530i", "730Li", "X1", "X3", "X5", "X7");
+        cboHangXe.addItem("");
+        for (String hangXe : danhMucXe.keySet()) {
+            cboHangXe.addItem(hangXe);
+        }
+        cboHangXe.addActionListener(event -> capNhatDongXe());
+        capNhatDongXe();
+    }
+
+    private void themDanhMucXe(String hangXe, String... cacDongXe) {
+        Set<String> dongXe = danhMucXe.computeIfAbsent(hangXe, key -> new LinkedHashSet<>());
+        java.util.Collections.addAll(dongXe, cacDongXe);
+    }
+
+    private void napDanhMucXe() {
+        try {
+            Map<String, Set<String>> danhMuc = new DanhMucXeDAO().findAll();
+            String hangDangChon = cellText(cboHangXe.getSelectedItem());
+            String dongDangChon = cellText(cboDongXe.getSelectedItem());
+            danhMuc.forEach((hang, dongXe) -> {
+                boolean hangMoi = !danhMucXe.containsKey(hang);
+                themDanhMucXe(hang, dongXe.toArray(new String[0]));
+                if (hangMoi) cboHangXe.addItem(hang);
+            });
+            cboHangXe.setSelectedItem(hangDangChon);
+            capNhatDongXe();
+            cboDongXe.setSelectedItem(dongDangChon);
+        } catch (java.sql.SQLException ex) {
+            lblThongBao.setText("Chưa tải được danh mục hãng / dòng xe. Kiểm tra database và Migration_DanhMucXe.sql.");
+        }
+    }
+
+    private void capNhatDongXe() {
+        cboDongXe.removeAllItems();
+        cboDongXe.addItem("");
+        Set<String> cacDongXe = danhMucXe.get(cellText(cboHangXe.getSelectedItem()));
+        if (cacDongXe != null) {
+            for (String dongXe : cacDongXe) {
+                cboDongXe.addItem(dongXe);
+            }
+        }
+        cboDongXe.setEnabled(cacDongXe != null && !cacDongXe.isEmpty());
+    }
+
     private JButton createButton(String text, String iconPath, Color background, Color foreground) {
         JButton btn = new JButton(text);
         btn.setFont(UIConfig.FONT_BOLD);
@@ -267,6 +354,9 @@ public class FrmXe extends JPanel {
     }
 
     private ImageIcon getScaledIcon(String path, int width, int height) {
+        if (path == null) {
+            return null;
+        }
         try {
             java.net.URL url = getClass().getResource(path);
             if (url != null) {
@@ -408,6 +498,26 @@ public class FrmXe extends JPanel {
     }
 
     public void hienThiDanhSach(List<Xe> danhSachXe) {
+        napDanhMucXe();
+        String hangDangChon = cellText(cboHangXe.getSelectedItem());
+        String dongDangChon = cellText(cboDongXe.getSelectedItem());
+        for (Xe xe : danhSachXe) {
+            String hangXe = cellText(xe.getHangXe()).trim();
+            String dongXe = cellText(xe.getDongXe()).trim();
+            if (!hangXe.isEmpty()) {
+                boolean hangMoi = !danhMucXe.containsKey(hangXe);
+                themDanhMucXe(hangXe);
+                if (!dongXe.isEmpty()) {
+                    themDanhMucXe(hangXe, dongXe);
+                }
+                if (hangMoi) {
+                    cboHangXe.addItem(hangXe);
+                }
+            }
+        }
+        cboHangXe.setSelectedItem(hangDangChon);
+        capNhatDongXe();
+        cboDongXe.setSelectedItem(dongDangChon);
         modelXe.setRowCount(0);
         for (Xe xe : danhSachXe) {
             modelXe.addRow(new Object[] {
@@ -481,8 +591,8 @@ public class FrmXe extends JPanel {
             throw new IllegalArgumentException(
                     "Biển số xe không đúng định dạng (ví dụ: 30A-123.45 hoặc 30A-12345).");
         }
-        String hangXe = txtHangXe.getText().trim();
-        String dongXe = txtDongXe.getText().trim();
+        String hangXe = cellText(cboHangXe.getSelectedItem()).trim();
+        String dongXe = cellText(cboDongXe.getSelectedItem()).trim();
         String namSanXuatText = txtNamSanXuat.getText().trim();
         String soKhung = txtSoKhung.getText().trim();
         String soMay = txtSoMay.getText().trim();
@@ -490,8 +600,8 @@ public class FrmXe extends JPanel {
             throw new IllegalArgumentException(
                 "Hãng xe, dòng xe và năm sản xuất không được để trống.");
         }
-        if (!FormValidator.isWithinMaxLength(txtHangXe.getText().trim(), 50)
-                || !FormValidator.isWithinMaxLength(txtDongXe.getText().trim(), 50)) {
+        if (!FormValidator.isWithinMaxLength(hangXe, 50)
+                || !FormValidator.isWithinMaxLength(dongXe, 50)) {
             throw new IllegalArgumentException("Hãng xe và dòng xe không được vượt quá 50 ký tự.");
         }
         if (!FormValidator.isWithinMaxLength(txtSoKhung.getText().trim(), 50)
@@ -638,8 +748,8 @@ public class FrmXe extends JPanel {
         int modelRow = tblXe.convertRowIndexToModel(selectedRow);
         txtMaXe.setText(String.valueOf(modelXe.getValueAt(modelRow, 0)));
         txtBienSo.setText(cellText(modelXe.getValueAt(modelRow, 1)));
-        txtHangXe.setText(cellText(modelXe.getValueAt(modelRow, 2)));
-        txtDongXe.setText(cellText(modelXe.getValueAt(modelRow, 3)));
+        cboHangXe.setSelectedItem(cellText(modelXe.getValueAt(modelRow, 2)).trim());
+        cboDongXe.setSelectedItem(cellText(modelXe.getValueAt(modelRow, 3)).trim());
         txtNamSanXuat.setText(cellText(modelXe.getValueAt(modelRow, 4)));
         txtSoKhung.setText(cellText(modelXe.getValueAt(modelRow, 5)));
         txtSoMay.setText(cellText(modelXe.getValueAt(modelRow, 6)));
@@ -664,8 +774,8 @@ public class FrmXe extends JPanel {
 
     public void lamMoiForm() {
         txtBienSo.setText("");
-        txtHangXe.setText("");
-        txtDongXe.setText("");
+        cboHangXe.setSelectedIndex(0);
+        capNhatDongXe();
         txtNamSanXuat.setText("");
         txtSoKhung.setText("");
         txtSoMay.setText("");
