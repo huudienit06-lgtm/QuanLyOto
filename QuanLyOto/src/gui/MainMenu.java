@@ -22,7 +22,7 @@ public final class MainMenu extends JMenuBar {
 
 		addItems(frame, mnuSystem, "Quản lý tài khoản", "Phân quyền nhân viên",
 				"Quản lý", "Đổi mật khẩu", "Đăng xuất");
-		addItems(frame, mnuCatalog, "Khách hàng", "Xe", "Nhân viên", "Chức vụ", "Phụ tùng",
+		addItems(frame, mnuCatalog, "Khách hàng", "Xe", "Nhân viên", "Chức vụ", "Phụ tùng", "Hãng xe",
 				"Dịch vụ sửa chữa", "Khuyến mãi", "Ca làm việc", "Lịch làm việc",
 				"Chính sách bảo hành", "Dịch vụ");
 		// addItems(frame, mnuUpdate, "Cập nhật khách hàng", "Cập nhật xe",

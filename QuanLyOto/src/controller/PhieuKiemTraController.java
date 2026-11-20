@@ -9,7 +9,6 @@ import dao.XeDAO;
 import entity.KhachHang;
 import entity.PhieuKiemTra;
 import entity.PhieuTiepNhan;
-import entity.NhanVien;
 import entity.Xe;
 import gui.FrmPhieuKiemTra;
 import java.sql.SQLException;
@@ -22,6 +21,7 @@ import java.util.Map;
 import util.MaTuDong;
 
 public final class PhieuKiemTraController {
+
     private final FrmPhieuKiemTra view;
     private final PhieuKiemTraDAO phieuKiemTraDAO = new PhieuKiemTraDAO();
     private final PhieuTiepNhanDAO phieuTiepNhanDAO = new PhieuTiepNhanDAO();

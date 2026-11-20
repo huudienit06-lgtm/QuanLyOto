@@ -37,7 +37,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
-public class FrmThongKeCongNo extends JFrame {
+public class FrmThongKeCongNo extends JPanel {
     private static final Color BG = new Color(244, 249, 255);
     private static final Color BLUE = new Color(35, 128, 238);
     private static final Color DARK_BLUE = new Color(18, 58, 119);
@@ -132,15 +132,14 @@ public class FrmThongKeCongNo extends JFrame {
     private DefaultTableModel modelHoaDon;
     private JLabel lblTieuDeDanhSach, lblTieuDeBieuDo, lblSoHoaDon, lblTongNoKy;
     private BieuDoCongNo pnlBieuDo;
+    private final Runnable khiDong;
 
     // KHỞI TẠO
-    public FrmThongKeCongNo() {
-        setTitle("Hệ thống quản lý gara ô tô");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(1200, 720));
-        setSize(1500, 900);
-        setLocationRelativeTo(null);
-        getContentPane().setBackground(BG);
+    public FrmThongKeCongNo(Runnable khiDong) {
+        this.khiDong = java.util.Objects.requireNonNull(khiDong, "khiDong không được null");
+        setBackground(BG);
+        setOpaque(true);
+        setPreferredSize(new Dimension(1200, 720));
         setLayout(new BorderLayout());
         try {
             controller.taiDuLieu();
@@ -471,9 +470,9 @@ public class FrmThongKeCongNo extends JFrame {
 
     private JPanel dungThanhNut() {
         ActionButton btnLamMoi = new ActionButton("Làm mới", false);
-        ActionButton btnDong = new ActionButton("Đóng", false);
+        ActionButton btnDong = new ActionButton("Quay lại", false);
         btnLamMoi.addActionListener(e -> lamMoiBoLoc());
-        btnDong.addActionListener(e -> dispose());
+        btnDong.addActionListener(e -> khiDong.run());
 
         JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         pnlNut.setOpaque(false);
@@ -1001,7 +1000,10 @@ public class FrmThongKeCongNo extends JFrame {
     // Khung chi tiết công nợ: 1) Thông tin hóa đơn và khách hàng, 2) Tài chính, 3)
     // Lịch sử thanh toán
     private void hienChiTietHoaDon(HoaDon hd) {
-        JDialog winChiTiet = new JDialog(this, "Chi tiết công nợ - " + hd.ma, true);
+        JDialog winChiTiet = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Chi tiết công nợ - " + hd.ma,
+                Dialog.ModalityType.APPLICATION_MODAL);
 
         // Phần 1: thông tin hóa đơn và khách hàng
         JPanel pnlThongTin = taoPnlThe();
@@ -1702,7 +1704,13 @@ public class FrmThongKeCongNo extends JFrame {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {
             }
-            new FrmThongKeCongNo().setVisible(true);
+            JFrame frame = new JFrame("Thống kê công nợ");
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setContentPane(new FrmThongKeCongNo(frame::dispose));
+            frame.setMinimumSize(new Dimension(1200, 720));
+            frame.setSize(1500, 900);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
         });
     }
 }

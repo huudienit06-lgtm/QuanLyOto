@@ -62,6 +62,30 @@ BEGIN TRY
     ('NV009', 'NV009', '654321', N'Quản lý', N'Hoạt động'),
     ('NV010', 'NV010', '654321', N'Quản lý', N'Hoạt động');
 
+    INSERT INTO dbo.HangXe (tenHangXe) VALUES
+    (N'Toyota'),
+    (N'Honda'),
+    (N'Hyundai'),
+    (N'Mazda'),
+    (N'Ford'),
+    (N'Kia'),
+    (N'Mitsubishi'),
+    (N'Mercedes-Benz'),
+    (N'VinFast');
+
+    INSERT INTO dbo.DongXe (tenHangXe, tenDongXe) VALUES
+    (N'Toyota', N'Vios'),
+    (N'Honda', N'City'),
+    (N'Hyundai', N'Accent'),
+    (N'Mazda', N'CX-5'),
+    (N'Ford', N'Ranger'),
+    (N'Kia', N'Seltos'),
+    (N'Mitsubishi', N'Xforce'),
+    (N'Mercedes-Benz', N'C200'),
+    (N'VinFast', N'VF 8'),
+    (N'Toyota', N'Corolla Cross'),
+    (N'Honda', N'CR-V');
+
     INSERT INTO dbo.Xe (maXe, bienSo, hangXe, dongXe, namSanXuat, soKhung, soMay, maKH) VALUES
     ('X001', '51A-10001', N'Toyota', N'Vios', 2021, 'DMVIN001', 'DMMOT001', 'KH001'),
     ('X002', '51B-10002', N'Honda', N'City', 2020, 'DMVIN002', 'DMMOT002', 'KH002'),

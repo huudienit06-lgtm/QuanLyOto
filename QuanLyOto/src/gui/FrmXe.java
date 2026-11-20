@@ -63,6 +63,7 @@ public class FrmXe extends JPanel {
     private final JComboBox<String> cboHangXe = createComboBox();
     private final JComboBox<String> cboDongXe = createComboBox();
     private final Map<String, Set<String>> danhMucXe = new LinkedHashMap<>();
+    private boolean dangNapDanhMucXe;
     private final JTextField txtNamSanXuat = createTextField(16);
     private final JTextField txtSoKhung = createTextField(16);
     private final JTextField txtSoMay = createTextField(16);
@@ -108,7 +109,6 @@ public class FrmXe extends JPanel {
         add(createContent(), BorderLayout.CENTER);
         add(createStatusBar(), BorderLayout.SOUTH);
 
-        khoiTaoDanhMucXe();
         napDanhMucXe();
         configureComponents();
         new XeController(this).khoiTao();
@@ -279,61 +279,51 @@ public class FrmXe extends JPanel {
         return comboBox;
     }
 
-    private void khoiTaoDanhMucXe() {
-        themDanhMucXe("Toyota", "Vios", "Corolla Altis", "Corolla Cross", "Camry", "Yaris", "Wigo", "Raize", "Veloz Cross", "Avanza Premio", "Innova", "Fortuner", "Hilux", "Land Cruiser");
-        themDanhMucXe("Honda", "City", "Civic", "Accord", "Brio", "HR-V", "CR-V", "BR-V");
-        themDanhMucXe("Hyundai", "Grand i10", "Accent", "Elantra", "Sonata", "Venue", "Creta", "Tucson", "Santa Fe", "Custin", "Stargazer", "Palisade");
-        themDanhMucXe("Mazda", "Mazda2", "Mazda3", "Mazda6", "CX-3", "CX-30", "CX-5", "CX-8", "BT-50");
-        themDanhMucXe("Ford", "Ranger", "Everest", "Explorer", "EcoSport", "Focus", "Fiesta", "Transit", "Territory");
-        themDanhMucXe("Kia", "Morning", "Soluto", "K3", "Cerato", "K5", "Seltos", "Sonet", "Sportage", "Sorento", "Carnival", "Carens");
-        themDanhMucXe("Mitsubishi", "Attrage", "Mirage", "Xpander", "Xpander Cross", "Xforce", "Outlander", "Pajero Sport", "Triton");
-        themDanhMucXe("Mercedes-Benz", "C200", "C300", "E200", "E300", "S450", "GLA", "GLB", "GLC", "GLE", "GLS");
-        themDanhMucXe("VinFast", "Fadil", "Lux A2.0", "Lux SA2.0", "VF e34", "VF 3", "VF 5", "VF 6", "VF 7", "VF 8", "VF 9");
-        themDanhMucXe("Suzuki", "Swift", "Ciaz", "Ertiga", "XL7", "Jimny", "Carry");
-        themDanhMucXe("Nissan", "Almera", "Sunny", "Navara", "X-Trail", "Terra", "Kicks");
-        themDanhMucXe("Chevrolet", "Spark", "Aveo", "Cruze", "Captiva", "Colorado", "Trailblazer");
-        themDanhMucXe("BMW", "320i", "330i", "520i", "530i", "730Li", "X1", "X3", "X5", "X7");
-        cboHangXe.addItem("");
-        for (String hangXe : danhMucXe.keySet()) {
-            cboHangXe.addItem(hangXe);
-        }
-        cboHangXe.addActionListener(event -> capNhatDongXe());
-        capNhatDongXe();
-    }
-
-    private void themDanhMucXe(String hangXe, String... cacDongXe) {
-        Set<String> dongXe = danhMucXe.computeIfAbsent(hangXe, key -> new LinkedHashSet<>());
-        java.util.Collections.addAll(dongXe, cacDongXe);
-    }
-
     private void napDanhMucXe() {
+        String hangDangChon = cellText(cboHangXe.getSelectedItem());
+        String dongDangChon = cellText(cboDongXe.getSelectedItem());
+        dangNapDanhMucXe = true;
         try {
             Map<String, Set<String>> danhMuc = new DanhMucXeDAO().findAll();
-            String hangDangChon = cellText(cboHangXe.getSelectedItem());
-            String dongDangChon = cellText(cboDongXe.getSelectedItem());
-            danhMuc.forEach((hang, dongXe) -> {
-                boolean hangMoi = !danhMucXe.containsKey(hang);
-                themDanhMucXe(hang, dongXe.toArray(new String[0]));
-                if (hangMoi) cboHangXe.addItem(hang);
-            });
-            cboHangXe.setSelectedItem(hangDangChon);
-            capNhatDongXe();
-            cboDongXe.setSelectedItem(dongDangChon);
+            danhMucXe.clear();
+            danhMuc.forEach((hang, dongXe) ->
+                    danhMucXe.put(hang, new LinkedHashSet<>(dongXe)));
+            cboHangXe.removeAllItems();
+            cboHangXe.addItem("");
+            for (String hangXe : danhMucXe.keySet()) {
+                cboHangXe.addItem(hangXe);
+            }
+            cboHangXe.setSelectedItem(danhMucXe.containsKey(hangDangChon) ? hangDangChon : "");
         } catch (java.sql.SQLException ex) {
-            lblThongBao.setText("Chưa tải được danh mục hãng / dòng xe. Kiểm tra database và Migration_DanhMucXe.sql.");
+            danhMucXe.clear();
+            cboHangXe.removeAllItems();
+            cboHangXe.addItem("");
+            cboHangXe.setSelectedIndex(0);
+            lblThongBao.setForeground(UIConfig.COLOR_DANGER);
+            lblThongBao.setText("Không tải được danh mục hãng/dòng xe: " + ex.getMessage());
+        } finally {
+            dangNapDanhMucXe = false;
+        }
+        capNhatDongXe();
+        if (danhMucXe.containsKey(hangDangChon)
+                && danhMucXe.get(hangDangChon).contains(dongDangChon)) {
+            cboDongXe.setSelectedItem(dongDangChon);
         }
     }
 
     private void capNhatDongXe() {
         cboDongXe.removeAllItems();
         cboDongXe.addItem("");
-        Set<String> cacDongXe = danhMucXe.get(cellText(cboHangXe.getSelectedItem()));
-        if (cacDongXe != null) {
-            for (String dongXe : cacDongXe) {
-                cboDongXe.addItem(dongXe);
-            }
+        String hangXe = cellText(cboHangXe.getSelectedItem()).trim();
+        Set<String> cacDongXe = danhMucXe.get(hangXe);
+        if (hangXe.isEmpty() || cacDongXe == null) {
+            cboDongXe.setEnabled(false);
+            return;
         }
-        cboDongXe.setEnabled(cacDongXe != null && !cacDongXe.isEmpty());
+        for (String dongXe : cacDongXe) {
+            cboDongXe.addItem(dongXe);
+        }
+        cboDongXe.setEnabled(!cacDongXe.isEmpty());
     }
 
     private JButton createButton(String text, String iconPath, Color background, Color foreground) {
@@ -397,6 +387,11 @@ public class FrmXe extends JPanel {
     }
 
     private void configureComponents() {
+        cboHangXe.addActionListener(event -> {
+            if (!dangNapDanhMucXe) {
+                capNhatDongXe();
+            }
+        });
         tblXe.setFont(UIConfig.FONT_REGULAR);
         tblXe.setForeground(UIConfig.COLOR_TEXT);
         tblXe.setRowHeight(30);
@@ -499,25 +494,6 @@ public class FrmXe extends JPanel {
 
     public void hienThiDanhSach(List<Xe> danhSachXe) {
         napDanhMucXe();
-        String hangDangChon = cellText(cboHangXe.getSelectedItem());
-        String dongDangChon = cellText(cboDongXe.getSelectedItem());
-        for (Xe xe : danhSachXe) {
-            String hangXe = cellText(xe.getHangXe()).trim();
-            String dongXe = cellText(xe.getDongXe()).trim();
-            if (!hangXe.isEmpty()) {
-                boolean hangMoi = !danhMucXe.containsKey(hangXe);
-                themDanhMucXe(hangXe);
-                if (!dongXe.isEmpty()) {
-                    themDanhMucXe(hangXe, dongXe);
-                }
-                if (hangMoi) {
-                    cboHangXe.addItem(hangXe);
-                }
-            }
-        }
-        cboHangXe.setSelectedItem(hangDangChon);
-        capNhatDongXe();
-        cboDongXe.setSelectedItem(dongDangChon);
         modelXe.setRowCount(0);
         for (Xe xe : danhSachXe) {
             modelXe.addRow(new Object[] {
@@ -748,8 +724,18 @@ public class FrmXe extends JPanel {
         int modelRow = tblXe.convertRowIndexToModel(selectedRow);
         txtMaXe.setText(String.valueOf(modelXe.getValueAt(modelRow, 0)));
         txtBienSo.setText(cellText(modelXe.getValueAt(modelRow, 1)));
-        cboHangXe.setSelectedItem(cellText(modelXe.getValueAt(modelRow, 2)).trim());
-        cboDongXe.setSelectedItem(cellText(modelXe.getValueAt(modelRow, 3)).trim());
+        String hangXe = cellText(modelXe.getValueAt(modelRow, 2)).trim();
+        String dongXe = cellText(modelXe.getValueAt(modelRow, 3)).trim();
+        if (danhMucXe.containsKey(hangXe)) {
+            cboHangXe.setSelectedItem(hangXe);
+            capNhatDongXe();
+            if (danhMucXe.get(hangXe).contains(dongXe)) {
+                cboDongXe.setSelectedItem(dongXe);
+            }
+        } else {
+            cboHangXe.setSelectedIndex(0);
+            capNhatDongXe();
+        }
         txtNamSanXuat.setText(cellText(modelXe.getValueAt(modelRow, 4)));
         txtSoKhung.setText(cellText(modelXe.getValueAt(modelRow, 5)));
         txtSoMay.setText(cellText(modelXe.getValueAt(modelRow, 6)));

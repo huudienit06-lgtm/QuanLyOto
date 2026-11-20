@@ -1,8 +1,18 @@
 package dao;
 
 import connectDB.ConnectDB;
-import java.sql.*;
-import java.util.*;
+import entity.DongXe;
+import entity.HangXe;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DanhMucXeDAO {
     private Connection moKetNoi() throws SQLException {
@@ -13,38 +23,136 @@ public class DanhMucXeDAO {
         return connection;
     }
 
-    public Map<String, Set<String>> findAll() throws SQLException {
-        Map<String, Set<String>> result = new LinkedHashMap<>();
-        String sql = "SELECT h.tenHangXe, d.tenDongXe FROM HangXe h LEFT JOIN DongXe d "
-                + "ON d.tenHangXe = h.tenHangXe ORDER BY h.tenHangXe, d.tenDongXe";
+    public List<HangXe> findAllHangXe() throws SQLException {
+        List<HangXe> danhSach = new ArrayList<>();
+        String sql = "SELECT tenHangXe FROM HangXe ORDER BY tenHangXe";
         try (Connection connection = moKetNoi();
                 PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet rs = statement.executeQuery()) {
-            while (rs.next()) {
-                Set<String> models = result.computeIfAbsent(rs.getString(1), key -> new LinkedHashSet<>());
-                if (rs.getString(2) != null) {
-                    models.add(rs.getString(2));
+                ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                danhSach.add(new HangXe(resultSet.getString("tenHangXe")));
+            }
+        }
+        return danhSach;
+    }
+
+    public List<DongXe> findDongXeByHang(String tenHangXe) throws SQLException {
+        List<DongXe> danhSach = new ArrayList<>();
+        String sql = "SELECT tenHangXe, tenDongXe FROM DongXe "
+                + "WHERE tenHangXe = ? ORDER BY tenDongXe";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, tenHangXe);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    danhSach.add(new DongXe(
+                            resultSet.getString("tenHangXe"),
+                            resultSet.getString("tenDongXe")));
                 }
             }
         }
-        return result;
+        return danhSach;
     }
 
-    public void themHangXe(String ten) throws SQLException {
+    public Map<String, Set<String>> findAll() throws SQLException {
+        Map<String, Set<String>> danhMuc = new LinkedHashMap<>();
+        String sql = "SELECT h.tenHangXe, d.tenDongXe FROM HangXe h "
+                + "LEFT JOIN DongXe d ON d.tenHangXe = h.tenHangXe "
+                + "ORDER BY h.tenHangXe, d.tenDongXe";
         try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement("INSERT INTO HangXe (tenHangXe) VALUES (?)")) {
-            statement.setNString(1, ten);
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                Set<String> cacDongXe = danhMuc.computeIfAbsent(
+                        resultSet.getString("tenHangXe"), key -> new LinkedHashSet<>());
+                String tenDongXe = resultSet.getString("tenDongXe");
+                if (tenDongXe != null) {
+                    cacDongXe.add(tenDongXe);
+                }
+            }
+        }
+        return danhMuc;
+    }
+
+    public void themHangXe(HangXe hangXe) throws SQLException {
+        String sql = "INSERT INTO HangXe (tenHangXe) VALUES (?)";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, hangXe.getTenHangXe());
             statement.executeUpdate();
         }
     }
 
-    public void themDongXe(String hang, String dong) throws SQLException {
+    public boolean capNhatHangXe(String tenHangXeCu, HangXe hangXe) throws SQLException {
+        String sql = "UPDATE HangXe SET tenHangXe = ? WHERE tenHangXe = ?";
         try (Connection connection = moKetNoi();
-                PreparedStatement statement = connection.prepareStatement(
-                        "INSERT INTO DongXe (tenHangXe, tenDongXe) VALUES (?, ?)")) {
-            statement.setNString(1, hang);
-            statement.setNString(2, dong);
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, hangXe.getTenHangXe());
+            statement.setNString(2, tenHangXeCu);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    public boolean xoaHangXe(String tenHangXe) throws SQLException {
+        String sql = "DELETE FROM HangXe WHERE tenHangXe = ?";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, tenHangXe);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    public void themDongXe(DongXe dongXe) throws SQLException {
+        String sql = "INSERT INTO DongXe (tenHangXe, tenDongXe) VALUES (?, ?)";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, dongXe.getTenHangXe());
+            statement.setNString(2, dongXe.getTenDongXe());
             statement.executeUpdate();
+        }
+    }
+
+    public boolean capNhatDongXe(String tenDongXeCu, DongXe dongXe) throws SQLException {
+        String sql = "UPDATE DongXe SET tenDongXe = ? "
+                + "WHERE tenHangXe = ? AND tenDongXe = ?";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, dongXe.getTenDongXe());
+            statement.setNString(2, dongXe.getTenHangXe());
+            statement.setNString(3, tenDongXeCu);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    public boolean xoaDongXe(String tenHangXe, String tenDongXe) throws SQLException {
+        String sql = "DELETE FROM DongXe WHERE tenHangXe = ? AND tenDongXe = ?";
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, tenHangXe);
+            statement.setNString(2, tenDongXe);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    public boolean coDongXe(String tenHangXe) throws SQLException {
+        return tonTai("SELECT 1 FROM DongXe WHERE tenHangXe = ?", tenHangXe, null);
+    }
+
+    public boolean coXe(String tenHangXe, String tenDongXe) throws SQLException {
+        return tonTai("SELECT 1 FROM Xe WHERE hangXe = ? AND dongXe = ?", tenHangXe, tenDongXe);
+    }
+
+    private boolean tonTai(String sql, String giaTriThuNhat, String giaTriThuHai)
+            throws SQLException {
+        try (Connection connection = moKetNoi();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, giaTriThuNhat);
+            if (giaTriThuHai != null) {
+                statement.setNString(2, giaTriThuHai);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
         }
     }
 }

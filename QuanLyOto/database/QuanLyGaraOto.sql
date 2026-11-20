@@ -33,7 +33,8 @@ CREATE TABLE DongXe (
     tenHangXe NVARCHAR(50) NOT NULL,
     tenDongXe NVARCHAR(50) NOT NULL,
     CONSTRAINT PK_DongXe PRIMARY KEY (tenHangXe, tenDongXe),
-    CONSTRAINT FK_DongXe_HangXe FOREIGN KEY (tenHangXe) REFERENCES HangXe(tenHangXe),
+    CONSTRAINT FK_DongXe_HangXe FOREIGN KEY (tenHangXe)
+        REFERENCES HangXe(tenHangXe) ON UPDATE CASCADE,
     CONSTRAINT CK_DongXe_Ten CHECK (LEN(LTRIM(RTRIM(tenDongXe))) > 0)
 );
 
@@ -46,7 +47,9 @@ CREATE TABLE Xe (
     soKhung VARCHAR(50) NOT NULL,
     soMay VARCHAR(50) NOT NULL,
     maKH VARCHAR(20) NOT NULL,
-    CONSTRAINT FK_Xe_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH) ON DELETE CASCADE
+    CONSTRAINT FK_Xe_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH) ON DELETE CASCADE,
+    CONSTRAINT FK_Xe_DongXe FOREIGN KEY (hangXe, dongXe)
+        REFERENCES DongXe(tenHangXe, tenDongXe) ON UPDATE CASCADE
 );
 
 -- Chức vụ là danh mục riêng; NhanVien tham chiếu bằng maChucVu.

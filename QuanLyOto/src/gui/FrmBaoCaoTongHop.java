@@ -61,7 +61,7 @@ public class FrmBaoCaoTongHop extends JPanel {
 
     // ── DAO và bảng dữ liệu ───────────────────────────────────────────────────
     private final DefaultTableModel modelBaoCao = new DefaultTableModel(
-            new Object[] { "Chỉ tiêu", "Kỳ trước", "Kỳ báo cáo", "Chênh lệch" }, 0) {
+            new Object[]{"Chỉ tiêu", "Kỳ trước", "Kỳ báo cáo", "Chênh lệch"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -266,9 +266,9 @@ public class FrmBaoCaoTongHop extends JPanel {
         JPanel pnlSummary = new JPanel(new GridLayout(3, 3, 12, 12));
         pnlSummary.setOpaque(false);
         String[] tieuChiMacDinh = {
-                "Doanh thu", "Hóa đơn", "Phiếu sửa chữa",
-                "Khách hàng", "Nhân viên", "Phụ tùng bán",
-                "Công nợ", "Nhập kho", "Xuất kho"
+            "Doanh thu", "Hóa đơn", "Phiếu sửa chữa",
+            "Khách hàng", "Nhân viên", "Phụ tùng bán",
+            "Công nợ", "Nhập kho", "Xuất kho"
         };
         for (int index = 0; index < lblTieuChiTongHop.length; index++) {
             pnlSummary.add(createMetricCard(index, tieuChiMacDinh[index]));
@@ -363,17 +363,25 @@ public class FrmBaoCaoTongHop extends JPanel {
         LocalDate denNgay = layNgayKetThuc(tuNgay);
         String loaiKy = (String) cboLoaiKy.getSelectedItem();
         LocalDate tuKyTruoc = switch (loaiKy) {
-            case "Ngày" -> tuNgay.minusDays(1);
-            case "Tháng" -> tuNgay.minusMonths(1);
-            case "Năm" -> tuNgay.minusYears(1);
-            default -> throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
+            case "Ngày" ->
+                tuNgay.minusDays(1);
+            case "Tháng" ->
+                tuNgay.minusMonths(1);
+            case "Năm" ->
+                tuNgay.minusYears(1);
+            default ->
+                throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
         };
         String nhomDuocChon = (String) cboNhomBaoCao.getSelectedItem();
         String doPhanGiai = switch (loaiKy) {
-            case "Ngày" -> "HOUR";
-            case "Tháng" -> "DAY";
-            case "Năm" -> "MONTH";
-            default -> throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
+            case "Ngày" ->
+                "HOUR";
+            case "Tháng" ->
+                "DAY";
+            case "Năm" ->
+                "MONTH";
+            default ->
+                throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
         };
         try {
             List<ChiTieuBaoCao> tatCaChiTieu = baoCaoTongHopDAO.layBaoCao(tuKyTruoc, tuNgay, denNgay);
@@ -384,11 +392,11 @@ public class FrmBaoCaoTongHop extends JPanel {
                     .toList();
             modelBaoCao.setRowCount(0);
             for (ChiTieuBaoCao chiTieu : chiTieuHienThi) {
-                modelBaoCao.addRow(new Object[] {
-                        chiTieu.chiTieu(),
-                        dinhDangSo(chiTieu.kyTruoc()),
-                        dinhDangSo(chiTieu.kyBaoCao()),
-                        dinhDangSo(chiTieu.kyBaoCao() - chiTieu.kyTruoc())
+                modelBaoCao.addRow(new Object[]{
+                    chiTieu.chiTieu(),
+                    dinhDangSo(chiTieu.kyTruoc()),
+                    dinhDangSo(chiTieu.kyBaoCao()),
+                    dinhDangSo(chiTieu.kyBaoCao() - chiTieu.kyTruoc())
                 });
             }
             capNhatTheTongHop(tatCaChiTieu);
@@ -405,19 +413,27 @@ public class FrmBaoCaoTongHop extends JPanel {
     private LocalDate layNgayBatDau() {
         LocalDate homNay = LocalDate.now();
         return switch ((String) cboLoaiKy.getSelectedItem()) {
-            case "Ngày" -> homNay;
-            case "Tháng" -> homNay.withDayOfMonth(1);
-            case "Năm" -> homNay.withDayOfYear(1);
-            default -> throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
+            case "Ngày" ->
+                homNay;
+            case "Tháng" ->
+                homNay.withDayOfMonth(1);
+            case "Năm" ->
+                homNay.withDayOfYear(1);
+            default ->
+                throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
         };
     }
 
     private LocalDate layNgayKetThuc(LocalDate tuNgay) {
         return switch ((String) cboLoaiKy.getSelectedItem()) {
-            case "Ngày" -> tuNgay.plusDays(1);
-            case "Tháng" -> tuNgay.plusMonths(1);
-            case "Năm" -> tuNgay.plusYears(1);
-            default -> throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
+            case "Ngày" ->
+                tuNgay.plusDays(1);
+            case "Tháng" ->
+                tuNgay.plusMonths(1);
+            case "Năm" ->
+                tuNgay.plusYears(1);
+            default ->
+                throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
         };
     }
 
@@ -448,10 +464,14 @@ public class FrmBaoCaoTongHop extends JPanel {
         }
         capNhatBieuDo(nhan, tenDuong, giaTri);
         String ky = switch ((String) cboLoaiKy.getSelectedItem()) {
-            case "Ngày" -> tuNgay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            case "Tháng" -> tuNgay.format(DateTimeFormatter.ofPattern("MM/yyyy"));
-            case "Năm" -> String.valueOf(tuNgay.getYear());
-            default -> throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
+            case "Ngày" ->
+                tuNgay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            case "Tháng" ->
+                tuNgay.format(DateTimeFormatter.ofPattern("MM/yyyy"));
+            case "Năm" ->
+                String.valueOf(tuNgay.getYear());
+            default ->
+                throw new IllegalStateException("Kỳ thống kê không hợp lệ.");
         };
         lblTieuDeBieuDo.setText("Xu hướng " + nhom + " — " + ky);
     }
@@ -460,17 +480,23 @@ public class FrmBaoCaoTongHop extends JPanel {
             LocalDate tuNgay, LocalDate denNgay, String doPhanGiai) {
         List<LocalDateTime> cacMoc = new ArrayList<>();
         LocalDateTime moc = switch (doPhanGiai) {
-            case "HOUR", "DAY", "MONTH" -> tuNgay.atStartOfDay();
-            default -> throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
+            case "HOUR", "DAY", "MONTH" ->
+                tuNgay.atStartOfDay();
+            default ->
+                throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
         };
         LocalDateTime ketThuc = denNgay.atStartOfDay();
         while (moc.isBefore(ketThuc)) {
             cacMoc.add(moc);
             moc = switch (doPhanGiai) {
-                case "HOUR" -> moc.plusHours(1);
-                case "DAY" -> moc.plusDays(1);
-                case "MONTH" -> moc.plusMonths(1);
-                default -> throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
+                case "HOUR" ->
+                    moc.plusHours(1);
+                case "DAY" ->
+                    moc.plusDays(1);
+                case "MONTH" ->
+                    moc.plusMonths(1);
+                default ->
+                    throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
             };
         }
         return cacMoc;
@@ -478,37 +504,49 @@ public class FrmBaoCaoTongHop extends JPanel {
 
     private String dinhDangMoc(LocalDateTime moc, String doPhanGiai) {
         return switch (doPhanGiai) {
-            case "HOUR" -> moc.format(DateTimeFormatter.ofPattern("HH:mm"));
-            case "DAY" -> moc.format(DateTimeFormatter.ofPattern("dd"));
-            case "MONTH" -> moc.format(DateTimeFormatter.ofPattern("MM/yyyy"));
-            default -> throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
+            case "HOUR" ->
+                moc.format(DateTimeFormatter.ofPattern("HH:mm"));
+            case "DAY" ->
+                moc.format(DateTimeFormatter.ofPattern("dd"));
+            case "MONTH" ->
+                moc.format(DateTimeFormatter.ofPattern("MM/yyyy"));
+            default ->
+                throw new IllegalArgumentException("Độ phân giải thời gian không hợp lệ.");
         };
     }
 
     private String tenChiTieuTheoNhom(String nhom) {
         return switch (nhom) {
-            case "Doanh thu" -> "Tổng doanh thu";
-            case "Sửa chữa" -> "Số phiếu sửa chữa";
-            case "Khách hàng" -> "Khách hàng sử dụng dịch vụ";
-            case "Nhân viên" -> "Nhân viên được phân công";
-            case "Phụ tùng" -> "Số lượng phụ tùng đã xuất";
-            case "Công nợ" -> "Công nợ còn lại của hóa đơn trong kỳ";
-            case "Kho" -> "Số lượng phụ tùng nhập kho";
-            default -> throw new IllegalArgumentException("Nhóm báo cáo không hợp lệ: " + nhom);
+            case "Doanh thu" ->
+                "Tổng doanh thu";
+            case "Sửa chữa" ->
+                "Số phiếu sửa chữa";
+            case "Khách hàng" ->
+                "Khách hàng sử dụng dịch vụ";
+            case "Nhân viên" ->
+                "Nhân viên được phân công";
+            case "Phụ tùng" ->
+                "Số lượng phụ tùng đã xuất";
+            case "Công nợ" ->
+                "Công nợ còn lại của hóa đơn trong kỳ";
+            case "Kho" ->
+                "Số lượng phụ tùng nhập kho";
+            default ->
+                throw new IllegalArgumentException("Nhóm báo cáo không hợp lệ: " + nhom);
         };
     }
 
     private void capNhatTheTongHop(List<ChiTieuBaoCao> chiTieu) {
         String[] tieuChiCanHienThi = {
-                "Tổng doanh thu", "Số hóa đơn", "Số phiếu sửa chữa",
-                "Khách hàng sử dụng dịch vụ", "Nhân viên được phân công",
-                "Số lượng phụ tùng đã xuất", "Công nợ còn lại của hóa đơn trong kỳ",
-                "Số lượng phụ tùng nhập kho", "Số lượng phụ tùng xuất kho"
+            "Tổng doanh thu", "Số hóa đơn", "Số phiếu sửa chữa",
+            "Khách hàng sử dụng dịch vụ", "Nhân viên được phân công",
+            "Số lượng phụ tùng đã xuất", "Công nợ còn lại của hóa đơn trong kỳ",
+            "Số lượng phụ tùng nhập kho", "Số lượng phụ tùng xuất kho"
         };
         String[] nhanThe = {
-                "Doanh thu", "Hóa đơn", "Phiếu sửa chữa",
-                "Khách hàng", "Nhân viên", "Phụ tùng bán",
-                "Công nợ", "Nhập kho", "Xuất kho"
+            "Doanh thu", "Hóa đơn", "Phiếu sửa chữa",
+            "Khách hàng", "Nhân viên", "Phụ tùng bán",
+            "Công nợ", "Nhập kho", "Xuất kho"
         };
         for (int index = 0; index < tieuChiCanHienThi.length; index++) {
             String tenChiTieu = tieuChiCanHienThi[index];
@@ -545,15 +583,17 @@ public class FrmBaoCaoTongHop extends JPanel {
         try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             writer.write('\uFEFF');
             for (int column = 0; column < modelBaoCao.getColumnCount(); column++) {
-                if (column > 0)
+                if (column > 0) {
                     writer.write(',');
+                }
                 writer.write(csv(modelBaoCao.getColumnName(column)));
             }
             writer.newLine();
             for (int row = 0; row < modelBaoCao.getRowCount(); row++) {
                 for (int column = 0; column < modelBaoCao.getColumnCount(); column++) {
-                    if (column > 0)
+                    if (column > 0) {
                         writer.write(',');
+                    }
                     Object value = modelBaoCao.getValueAt(row, column);
                     writer.write(csv(value == null ? "" : value.toString()));
                 }
@@ -583,14 +623,15 @@ public class FrmBaoCaoTongHop extends JPanel {
 
     // ── Lớp nội: vẽ biểu đồ đường ────────────────────────────────────────────
     private static final class BieuDoDuong extends JComponent {
+
         private static final int PADDING_LEFT = 64;
         private static final int PADDING_RIGHT = 28;
         private static final int PADDING_TOP = 42;
         private static final int PADDING_BOTTOM = 54;
         private static final Color[] MAU_DUONG = {
-                UIConfig.COLOR_PRIMARY,
-                UIConfig.COLOR_SUCCESS,
-                UIConfig.COLOR_DANGER
+            UIConfig.COLOR_PRIMARY,
+            UIConfig.COLOR_SUCCESS,
+            UIConfig.COLOR_DANGER
         };
         private String[] nhan = new String[0];
         private String[] tenDuong = new String[0];
@@ -623,8 +664,9 @@ public class FrmBaoCaoTongHop extends JPanel {
                 int height = getHeight();
                 int chartWidth = width - PADDING_LEFT - PADDING_RIGHT;
                 int chartHeight = height - PADDING_TOP - PADDING_BOTTOM;
-                if (chartWidth <= 0 || chartHeight <= 0)
+                if (chartWidth <= 0 || chartHeight <= 0) {
                     return;
+                }
 
                 if (nhan.length == 0 || giaTri.length == 0) {
                     g2.setColor(UIConfig.COLOR_MUTED);
@@ -676,8 +718,9 @@ public class FrmBaoCaoTongHop extends JPanel {
                                 : PADDING_LEFT + (int) ((long) diem * chartWidth / (nhan.length - 1));
                         int y = PADDING_TOP + chartHeight
                                 - (int) Math.round(giaTri[duong][diem] / mocTruc * chartHeight);
-                        if (xTruoc >= 0)
+                        if (xTruoc >= 0) {
                             g2.drawLine(xTruoc, yTruoc, x, y);
+                        }
                         g2.fillOval(x - 4, y - 4, 8, 8);
                         xTruoc = x;
                         yTruoc = y;
